@@ -105,9 +105,15 @@ exports.addActions = (req, res, next) => {
   } else {
     database.execute("INSERT INTO actions (actions,name) VALUES (NULL,?)", [
       name,
-    ]);
+    ]).then(resData=>{
+        this.getAllActions(req, res, next);
+    })
+    .catch(err=>{
+        if(!err.statusCode) err.statusCode =500;
+        next(err);
+    })
   }
-  this.getAllActions(req, res, next);
+  
 };
 
 exports.deletePost = (req, res, next) => {
