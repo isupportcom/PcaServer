@@ -10,4 +10,5 @@ router.post('/deletePost',dashboardController.deletePost);
 router.post('/getActions',dashboardController.getAllActions);
 router.post('/addActions',dashboardController.addActions);
 router.post('/updateActions',dashboardController.updateActions);
+router.post('/deleteAction',dashboardController.deleteAction);
 module.exports = router;

@@ -134,10 +134,45 @@ exports.deletePost = (req,res,next) =>{
     }
 }
 
-exports.updateActions= (req,res,next)=>{
-    
+exports.updateActions=async (req,res,next)=>{
+    const actions = req.body.actions;
+
+    if(!actions) res.status(402).json({message:"fill the required fields"});
+    else{
+        // ελεγχος για το μηκος του πινακα για να μην κανει περιττους ελεγχους
+        if(actions.length > 0){
+            for(let i = 0 ; i < actions.length ; i++){
+                try{
+                let update = await database.execute('update actions set name=? where actions=?',
+                [actions[i].name,actions[i].actions]
+                )
+                }catch(err){
+                    if(!err.statusCode) err.statusCode =500;
+                    next(err);
+                }
+            }
+            this.getAllActions(req,res,next);
+        }else{
+            res.status(200).json({message:"Ulready Up to Date"})
+        }
+    }
 }
 
+exports.deleteAction = (req,res,next) =>{
+    const actionID = req.body.action;
+
+    if(!actionID) res.status(402).json({message:"fill the required fields"});
+    else{
+        database.execute('delete from actions where actions=?',[actionID])
+            .then(deleteRes=>{
+                this.getAllActions(req,res,next);
+            })
+            .catch(err=>{
+                if(!err.statusCode) err.statusCode =500;
+                next(err);
+            })
+    }
+}
 
 
 
