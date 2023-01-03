@@ -118,7 +118,25 @@ exports.addActions = (req, res, next) => {
 };
 
 
+exports.deletePost = (req,res,next) =>{
+    const postId = req.body.post;
 
+    if(!postId) res.status(402).json({message:"fill the required fields"});
+    else{
+        database.execute('delete from post where post=?',[postId])
+        .then(deleteRes =>{
+            this.getAllPosts(req,res,next);
+        })
+        .catch(err=>{
+            if(!err.statusCode) err.statusCode =500;
+            next(err);
+        })
+    }
+}
+
+exports.updateActions= (req,res,next)=>{
+    
+}
 
 
 
