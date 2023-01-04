@@ -182,16 +182,16 @@ exports.deleteAction = (req, res, next) => {
 
   if (!actionID) res.status(402).json({ message: "fill the required fields" });
   else {
-    if(this.isInPost(actionID)){
-    database
-      .execute("delete from actions where actions=?", [actionID])
-      .then((deleteRes) => {
-        this.getAllActions(req, res, next);
-      })
-      .catch((err) => {
-        if (!err.statusCode) err.statusCode = 500;
-        next(err);
-      });
+    if (this.isInPost(actionID)) {
+      database
+        .execute("delete from actions where actions=?", [actionID])
+        .then((deleteRes) => {
+          this.getAllActions(req, res, next);
+        })
+        .catch((err) => {
+          if (!err.statusCode) err.statusCode = 500;
+          next(err);
+        });
     }
   }
 };
@@ -219,7 +219,6 @@ exports.getUsers = (req, res, next) => {
             lname: users[0][i].lname,
             password: users[0][i].password,
           };
-          
         }
         res.status(200).json({ message: "Users", users: returnUsers });
       } else {
@@ -253,16 +252,28 @@ exports.addUsers = (req, res, next) => {
   }
 };
 
-exports.updateUsers = (req, res, next) => {
+exports.updateUsers = async (req, res, next) => {
+  const user = req.body.user;
+  if (!user) res.status(402).json({ message: "fill the required fields" });
+  else {
+    if (user.length > 0) {
+      for (let i = 0; i < user.length; i++) {
+        let update = await database.execute(
+          "update users set fname=?,lname=? where id=?",
+          [user[i].fname, user[i].lname, user[i].id]
+        );
+      }
+      this.getUsers(req, res, next);
+    }
+  }
+};
+
+exports.deleteUser = (req, res, next) => {
   const user = req.body.user;
   if (!user) res.status(402).json({ message: "fill the required fields" });
   else {
     database
-      .execute("update users set fname=?,lname=? where id=?", [
-        user.fname,
-        user.lname,
-        user.id,
-      ])
+      .execute("delete from users where id=?", [user.id])
       .then((results) => {
         this.getUsers(req, res, next);
       })
@@ -271,22 +282,6 @@ exports.updateUsers = (req, res, next) => {
         next(err);
       });
   }
-};
-
-exports.deleteUser = (req, res, next) => {
-    const user = req.body.user;
-    if(!user)
-        res.status(402).json({message:"fill the required fields"});
-    else{
-        database.execute("delete from users where id=?",[user.id])
-            .then(results=>{
-                this.getUsers(req,res,next);
-            })
-            .catch(err=>{
-                if(!err.statusCode) err.statusCode =500;
-                next(err);
-            })
-    }
 };
 
 /******************************************************************************                                                   
@@ -350,8 +345,4 @@ exports.passwordGenerator = () => {
   return password;
 };
 
-exports.isInPost = async(actionId) =>{
-
-
-
-}
+exports.isInPost = async (actionId) => {};
