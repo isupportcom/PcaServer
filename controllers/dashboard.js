@@ -182,6 +182,7 @@ exports.deleteAction = (req, res, next) => {
 
   if (!actionID) res.status(402).json({ message: "fill the required fields" });
   else {
+    if(this.isInPost(actionID)){
     database
       .execute("delete from actions where actions=?", [actionID])
       .then((deleteRes) => {
@@ -191,6 +192,7 @@ exports.deleteAction = (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
+    }
   }
 };
 
@@ -217,8 +219,9 @@ exports.getUsers = (req, res, next) => {
             lname: users[0][i].lname,
             password: users[0][i].password,
           };
-          res.status(200).json({ message: "Users", users: returnUsers });
+          
         }
+        res.status(200).json({ message: "Users", users: returnUsers });
       } else {
         res.status(200).json({ message: "No Users" });
       }
@@ -237,8 +240,7 @@ exports.addUsers = (req, res, next) => {
     database
       .execute("insert into users (fname,lname,password) VALUES(?,?,?)", [
         user.fname,
-        user,
-        lname,
+        user.lname,
         this.passwordGenerator(),
       ])
       .then((insertedUser) => {
@@ -256,7 +258,7 @@ exports.updateUsers = (req, res, next) => {
   if (!user) res.status(402).json({ message: "fill the required fields" });
   else {
     database
-      .execute("update user set fname=?,lname=? where id=?", [
+      .execute("update users set fname=?,lname=? where id=?", [
         user.fname,
         user.lname,
         user.id,
@@ -347,3 +349,9 @@ exports.passwordGenerator = () => {
 
   return password;
 };
+
+exports.isInPost = async(actionId) =>{
+
+
+
+}
