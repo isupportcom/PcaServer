@@ -22,7 +22,7 @@ exports.getAllPosts = (req, res, next) => {
           post: posts[0][i].post,
           username: posts[0][i].username,
           password: posts[0][i].password,
-          actions: await this.getActions(posts[0][i].actions),
+          actions: await this.getActions(posts[0][i].post),
         };
       }
       res.status(200).json({ message: "All Posts", posts: returnposts });
@@ -42,12 +42,22 @@ exports.addPosts = (req, res, next) => {
     res.status(402).json({ message: "Fill The Required Fields" });
   } else {
     database
-      .execute(
-        "INSERT INTO post (post,username,password,actions) VALUES (NULL,?,?,?)",
-        [username, password, actions.join(",")]
-      )
+      .execute("INSERT INTO post (post,username,password) VALUES (NULL,?,?)", [
+        username,
+        password,
+      ])
       .then((inserted) => {
-        this.getAllPosts(req, res, next);
+        database.execute("select max(post) from post").then(async (max) => {
+          console.log(max[0][0]["max(post)"]);
+          let maxP = max[0][0]["max(post)"];
+          for (let i = 0; i < actions.length; i++) {
+            let insert = await database.execute(
+              "insert into actionspost (post,action) VALUES (?,?)",
+              [maxP, actions[i]]
+            );
+          }
+          this.getAllPosts(req, res, next);
+        });
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -69,14 +79,19 @@ exports.updatePosts = async (req, res, next) => {
       for (let i = 0; i < posts.length; i++) {
         try {
           let update = await database.execute(
-            "update post set username=?,password=?,actions=? where post=?",
-            [
-              posts[i].username,
-              posts[i].password,
-              this.joinedActions(posts[i].actions),
-              posts[i].post,
-            ]
+            "update post set username=?,password=? where post=?",
+            [posts[i].username, posts[i].password, posts[i].post]
           );
+          let deleteActionsPost = await database.execute(
+            "delete from actionspost where post=?",
+            [posts[i].post]
+          );
+          for (let j = 0; j < posts[i].actions.length; j++) {
+            let insert = await database.execute(
+              "insert into actionspost (post,action) VALUES (?,?)",
+              [posts[i].post, posts[i].actions[j].actions]
+            );
+          }
         } catch (err) {
           if (!err.statusCode) err.statusCode = 500;
           next(err);
@@ -177,12 +192,12 @@ exports.updateActions = async (req, res, next) => {
   }
 };
 
-exports.deleteAction = (req, res, next) => {
+exports.deleteAction = async(req, res, next) => {
   const actionID = req.body.action;
 
   if (!actionID) res.status(402).json({ message: "fill the required fields" });
   else {
-    if (this.isInPost(actionID)) {
+    if (await this.isInPost(actionID)) {
       database
         .execute("delete from actions where actions=?", [actionID])
         .then((deleteRes) => {
@@ -192,6 +207,8 @@ exports.deleteAction = (req, res, next) => {
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         });
+    }else{
+        res.status(200).json({message:"You can not delete an action while is in post/posts"});
     }
   }
 };
@@ -297,20 +314,33 @@ exports.deleteUser = (req, res, next) => {
 //function που χρησιμοποιώ εσωτερικά
 //Μετατροπή του πίνακα actions απο [1,2,3] σε πίνακα με τις ονομασίες τους [action1,action2,action3]
 exports.getActions = async (action) => {
-  let actionsObj = [];
-  let actions = this.fromStringToArray(action);
-  for (let i = 0; i < actions.length; i++) {
-    let sActions = await database.execute(
-      "select * from actions where actions =?",
-      [actions[i]]
-    );
+  let actionObj = [];
 
-    actionsObj[i] = {
-      actions: sActions[0][0].actions,
-      name: sActions[0][0].name,
-    };
+  try {
+    let actionsPost = await database.execute(
+      "select * from actionspost where post=?",
+      [action]
+    );
+    console.log(actionsPost[0]);
+    if (actionsPost[0].length > 0) {
+      for (let i = 0; i < actionsPost[0].length; i++) {
+        let actions = await database.execute(
+          "select * from actions where actions=?",
+          [actionsPost[0][i].action]
+        );
+        actionObj[i] = {
+          id: actions[0][0].actions,
+          name: actions[0][0].name,
+        };
+      }
+      return actionObj;
+    }
+
+    return actionObj;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
   }
-  return actionsObj;
 };
 
 //Για μετατροπή απο string id (πχ 1,2,3) σε πίνακα [1,2,3]
@@ -345,4 +375,16 @@ exports.passwordGenerator = () => {
   return password;
 };
 
-exports.isInPost = async (actionId) => {};
+exports.isInPost = async (actionId) => {
+  try {
+    let findAction = await database.execute(
+      "select * from actionspost where action=?",
+      [actionId]
+    );
+    if (findAction[0].length > 0) return false;
+    else return true;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
