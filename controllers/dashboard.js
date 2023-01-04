@@ -111,7 +111,11 @@ exports.deletePost = (req, res, next) => {
     database
       .execute("delete from post where post=?", [postId])
       .then((deleteRes) => {
-        this.getAllPosts(req, res, next);
+        database.execute('delete from actionspost where post=?',[postId])
+        .then(deleteRes=>{
+
+            this.getAllPosts(req, res, next);
+        })
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
