@@ -1,5 +1,16 @@
 const { default: axios } = require("axios");
 const database = require("../database");
+const generator = require("generate-password");
+
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                               Ποστα                                        *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
 
 exports.getAllPosts = (req, res, next) => {
   database
@@ -77,6 +88,32 @@ exports.updatePosts = async (req, res, next) => {
     }
   }
 };
+exports.deletePost = (req, res, next) => {
+  const postId = req.body.post;
+
+  if (!postId) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("delete from post where post=?", [postId])
+      .then((deleteRes) => {
+        this.getAllPosts(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
+
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                              Actions                                       *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
 
 exports.getAllActions = (req, res, next) => {
   database
@@ -103,28 +140,10 @@ exports.addActions = (req, res, next) => {
   if (!name) {
     res.status(402).json({ message: "Fill The Required Fields" });
   } else {
-    database.execute("INSERT INTO actions (actions,name) VALUES (NULL,?)", [
-      name,
-    ]).then(resData=>{
-        this.getAllActions(req, res, next);
-    })
-    .catch(err=>{
-        if(!err.statusCode) err.statusCode =500;
-        next(err);
-    })
-  }
-  
-};
-
-exports.deletePost = (req, res, next) => {
-  const postId = req.body.post;
-
-  if (!postId) res.status(402).json({ message: "fill the required fields" });
-  else {
     database
-      .execute("delete from post where post=?", [postId])
-      .then((deleteRes) => {
-        this.getAllPosts(req, res, next);
+      .execute("INSERT INTO actions (actions,name) VALUES (NULL,?)", [name])
+      .then((resData) => {
+        this.getAllActions(req, res, next);
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -175,6 +194,109 @@ exports.deleteAction = (req, res, next) => {
   }
 };
 
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                               Users                                        *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
+exports.getUsers = (req, res, next) => {
+  database
+    .execute("select * from users")
+    .then((users) => {
+      if (users[0].length > 0) {
+        let returnUsers = [];
+        for (let i = 0; i < users[0].length; i++) {
+          returnUsers[i] = {
+            id: users[0][i].id,
+            fname: users[0][i].fname,
+            lname: users[0][i].lname,
+            password: users[0][i].password,
+          };
+          res.status(200).json({ message: "Users", users: returnUsers });
+        }
+      } else {
+        res.status(200).json({ message: "No Users" });
+      }
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
+
+exports.addUsers = (req, res, next) => {
+  const user = req.body.user;
+
+  if (!user) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("insert into users (fname,lname,password) VALUES(?,?,?)", [
+        user.fname,
+        user,
+        lname,
+        this.passwordGenerator(),
+      ])
+      .then((insertedUser) => {
+        this.getUsers(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
+
+exports.updateUsers = (req, res, next) => {
+  const user = req.body.user;
+  if (!user) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("update user set fname=?,lname=? where id=?", [
+        user.fname,
+        user.lname,
+        user.id,
+      ])
+      .then((results) => {
+        this.getUsers(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
+
+exports.deleteUser = (req, res, next) => {
+    const user = req.body.user;
+    if(!user)
+        res.status(402).json({message:"fill the required fields"});
+    else{
+        database.execute("delete from users where id=?",[user.id])
+            .then(results=>{
+                this.getUsers(req,res,next);
+            })
+            .catch(err=>{
+                if(!err.statusCode) err.statusCode =500;
+                next(err);
+            })
+    }
+};
+
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                            Functions                                       *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
 //function που χρησιμοποιώ εσωτερικά
 //Μετατροπή του πίνακα actions απο [1,2,3] σε πίνακα με τις ονομασίες τους [action1,action2,action3]
 exports.getActions = async (action) => {
@@ -208,4 +330,20 @@ exports.joinedActions = (actions) => {
   }
 
   return tempArr.join(",");
+};
+
+// function για να κανει generate ενα password
+exports.passwordGenerator = () => {
+  var password = generator.generate({
+    length: 10,
+    numbers: true,
+    symbols: true,
+    lowercase: true,
+    uppercase: true,
+    excludeSimilarCharacters: true,
+    strict: true,
+  });
+  console.log(password);
+
+  return password;
 };
