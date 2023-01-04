@@ -89,7 +89,7 @@ exports.updatePosts = async (req, res, next) => {
           for (let j = 0; j < posts[i].actions.length; j++) {
             let insert = await database.execute(
               "insert into actionspost (post,action) VALUES (?,?)",
-              [posts[i].post, posts[i].actions[j].actions]
+              [posts[i].post, posts[i].actions[j].id]
             );
           }
         } catch (err) {
@@ -329,7 +329,7 @@ exports.getActions = async (action) => {
           [actionsPost[0][i].action]
         );
         actionObj[i] = {
-          id: actions[0][0].actions,
+          actions: actions[0][0].actions,
           name: actions[0][0].name,
         };
       }
