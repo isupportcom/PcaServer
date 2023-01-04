@@ -208,7 +208,7 @@ exports.deleteAction = async(req, res, next) => {
           next(err);
         });
     }else{
-        res.status(200).json({message:"You can not delete an action while is in post/posts"});
+        res.status(404).json({message:"You can not delete an action while is in post/posts"});
     }
   }
 };
