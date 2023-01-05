@@ -20,4 +20,11 @@ router.post('/getActions',dashboardController.getAllActions);
 router.post('/addActions',dashboardController.addActions);
 router.post('/updateActions',dashboardController.updateActions);
 router.post('/deleteAction',dashboardController.deleteAction);
+
+//Παραγγελειες
+router.post('/getCatPost',dashboardController.getcatPost);
+router.post('/addcatPost',dashboardController.addcatPost);
+router.post('/updatecatPost',dashboardController.updatecatPost);
+router.post('/deletecatPost',dashboardController.deletecatPost);
+
 module.exports = router;

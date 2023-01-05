@@ -111,11 +111,11 @@ exports.deletePost = (req, res, next) => {
     database
       .execute("delete from post where post=?", [postId])
       .then((deleteRes) => {
-        database.execute('delete from actionspost where post=?',[postId])
-        .then(deleteRes=>{
-
+        database
+          .execute("delete from actionspost where post=?", [postId])
+          .then((deleteRes) => {
             this.getAllPosts(req, res, next);
-        })
+          });
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -196,7 +196,7 @@ exports.updateActions = async (req, res, next) => {
   }
 };
 
-exports.deleteAction = async(req, res, next) => {
+exports.deleteAction = async (req, res, next) => {
   const actionID = req.body.action;
 
   if (!actionID) res.status(402).json({ message: "fill the required fields" });
@@ -211,8 +211,10 @@ exports.deleteAction = async(req, res, next) => {
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         });
-    }else{
-        res.status(404).json({message:"You can not delete an action while is in post/posts"});
+    } else {
+      res.status(404).json({
+        message: "You can not delete an action while is in post/posts",
+      });
     }
   }
 };
@@ -309,6 +311,101 @@ exports.deleteUser = (req, res, next) => {
  *                                                                            *
  *                                                                            *
  *                                                                            *
+ *                               Categories                                   *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
+exports.getcatPost = (req, res, next) => {
+  database
+    .execute("select * from categories")
+    .then(async (categories) => {
+      console.log(categories[0]);
+      let returnCategory = [];
+      for (let i = 0; i < categories[0].length; i++) {
+        console.log(categories[0][i]);
+        returnCategory[i] = {
+          name: categories[0][i].name,
+          category: categories[0][i].category,
+          categoryPost: await this.getCatPostData(categories[0][i].category),
+        };
+      }
+      console.log(returnCategory);
+      res
+        .status(200)
+        .json({ message: "All Categories", categories: returnCategory });
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
+
+exports.addcatPost = (req, res, next) => {
+    const catId = req.body.catId;
+    const postId= req.body.postId;
+    const orderBy = req.body.orderBy;
+
+    if(!catId || !postId || !orderBy){
+        res.status(402).json({message:"fill the requried fields"});
+    }else{
+        database.execute('insert into catpost (catId,postId,orderBy) VALUES (?,?,?)',[catId,postId,orderBy])
+            .then(inserted=>{
+                this.getcatPost(req,res,next);
+            })  
+            .catch(err=>{
+                if(!err.statusCode) 
+                    err.statusCode = 500;
+                next(err);
+            })
+    }
+};
+
+exports.updatecatPost = async(req, res, next) => {
+    const catPost =req.body.catPost;
+    const catId = req.body.catId;
+    const postId = req.body.postId;
+    const orderBy = req.body.orderBy;
+
+    if(!catPost || !catId || !postId || !orderBy){
+        res.status(402).json({message:"fill the required fields"});
+    }else{
+        for(let i = 0 ; i<catPost.length ; i++){
+          try{
+            let update = await database.execute('update catpost set catId=?,postId=?,orderBy=? where catPost=?',
+            [catId[i],postId[i],orderBy[i],catPost[i]]
+            )
+        }catch(err){
+            if(!err.statusCode) err.statusCode =500;
+            next(err);
+        }
+    }
+    this.getcatPost(req,res,next);
+    }
+};
+
+exports.deletecatPost = (req, res, next) => {
+    const catPost = req.body.catPost;
+    if(!catPost) res.status(402).json({message:"fill the required fields"});
+    else{
+        database.execute('delete from catpost where catPost=?',[catPost])
+            .then(deleteRes=>{
+                this.getcatPost(req,res,next);
+            })
+            .catch(err=>{
+                if(!err.statusCode) err.statusCode =500;
+                next(err);
+            })
+    }
+
+
+};
+
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
  *                            Functions                                       *
  *                                                                            *
  *                                                                            *
@@ -392,3 +489,82 @@ exports.isInPost = async (actionId) => {
     throw err;
   }
 };
+
+// function που παιρνει το ιδ μιας κατηγοριας και βρισκει τα αντιστοιχα ποστα και αλλες πληροφοριες
+exports.getCatPostData = async (catId) => {
+  let finddata = await database.execute("select * from catpost where catId=?", [
+    catId,
+  ]);
+  console.log(catId);
+  console.log(finddata[0])
+  try {
+    let returnData = [];
+    //ελεγχος για την κατηγορια αν εχει καταχωρημενα ποστα
+    if (finddata[0].length > 0) {
+      for (let i = 0; i < finddata[0].length; i++) {
+        console.log(finddata[0][i])
+        returnData[i] = {
+          catPost: finddata[0][i].catPost,
+          post: finddata[0][i].postId,
+          username: await this.findPostName(finddata[0][i].postId),
+          orderBy: finddata[0][i].orderBy,
+          actions: await this.findPostActions(finddata[0][i].postId),
+        };
+      }
+    } else {
+        returnData[0] ={
+            post:"",
+            name:"",
+            orderBy:"",
+            actions:""
+        }
+    }
+    return returnData;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
+
+//function που παιρνει το ιδ ενος ποστου και βρισκει το ονομα
+exports.findPostName = async (postId) =>{
+    let name = await database.execute('select * from post where post=?',[postId]);
+    console.log(name[0]);
+    return name[0][0].username
+};
+
+// function που παιρνει το ιδ ενος ποστου και βρισκει τις ενεργειες που εχουν συσχετιστει με αυτο
+exports.findPostActions = async (postId) =>{
+    let actions =  await database.execute('select * from actionspost where post=?',[postId]);
+    try{
+        console.log(actions[0]);
+        let returnActions =[];
+        if(actions[0].length > 0 ){
+            for(let i = 0 ; i < actions[0].length;i++){
+                console.log(actions[0][i])
+                returnActions[i] = {
+                    actions: actions[0][i].action,
+                    name : await this.getActionName(actions[0][i].action)
+                }
+            }
+        }else{
+            returnActions[0] = {
+                actions :"",
+                name :""
+            }
+        }
+        return returnActions;
+    }catch(err){
+        if(!err.statusCode) 
+            err.statusCode =500;
+        throw(err);
+    }
+}
+
+//function που παιρνει το ιδ μιας ενεργειας και βρισκει το ονομα της 
+exports.getActionName = async (actionId) =>{
+    console.log(actionId);
+    let name = await database.execute('select * from actions where actions=?',[actionId]);
+    console.log(name[0]);
+    return name[0][0].name;
+}
