@@ -505,7 +505,7 @@ exports.isInPost = async (actionId) => {
 
 // function που παιρνει το ιδ μιας κατηγοριας και βρισκει τα αντιστοιχα ποστα και αλλες πληροφοριες
 exports.getCatPostData = async (catId) => {
-  let finddata = await database.execute("select * from catpost where catId=?", [
+  let finddata = await database.execute("select * from catpost where catId=? order by orderBy ASC", [
     catId,
   ]);
   console.log(catId);
