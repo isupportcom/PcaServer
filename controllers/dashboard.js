@@ -355,7 +355,7 @@ exports.addcatPost = (req, res, next) => {
 
             if(results[0].length > 0 ){
                 for(let i = 0 ; i < results[0].length ; i++){
-                    let update = await database.execute('update catpost set orderBy=? +1 where catPost=?',[results[0][i].orderBy,results[0][i].catPost])
+                    let update = await database.execute('update catpost set orderBy=? where catPost=?',[+results[0][i].orderBy+1,results[0][i].catPost])
                 }
             }
             database.execute('insert into catpost (catId,postId,orderBy) VALUES (?,?,?)',[catId,postId,orderBy])
