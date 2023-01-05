@@ -350,7 +350,15 @@ exports.addcatPost = (req, res, next) => {
     if(!catId || !postId || !orderBy){
         res.status(402).json({message:"fill the requried fields"});
     }else{
-        database.execute('insert into catpost (catId,postId,orderBy) VALUES (?,?,?)',[catId,postId,orderBy])
+        database.execute('select  * from catpost where catId=? and orderBy >= ?')
+        .then(async results=>{
+
+            if(results[0].length > 0 ){
+                for(let i = 0 ; i < results[0].length ; i++){
+                    let update = await database.execute('update catpost set orderBy=?+1 where catPost=?',[results[0][i].orderBy,results[0][i].catPost])
+                }
+            }
+            database.execute('insert into catpost (catId,postId,orderBy) VALUES (?,?,?)',[catId,postId,orderBy])
             .then(inserted=>{
                 this.getcatPost(req,res,next);
             })  
@@ -359,6 +367,11 @@ exports.addcatPost = (req, res, next) => {
                     err.statusCode = 500;
                 next(err);
             })
+        }).catch(err=>{
+            if(!err.statusCode) err.statusCode =500;
+            next(err);
+        })
+       
     }
 };
 
