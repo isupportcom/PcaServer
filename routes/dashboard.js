@@ -33,4 +33,10 @@ router.post('/getProduction',dashboardController.getProduction);
 // router.post('/updateProduction',dashboardController.updateProduction);
 // router.post('/deleteProduction',dashboardController.deleteProduction);
 
+// time 
+router.post('/getTime',dashboardController.getTime);
+
+//machinetime 
+router.post('/getMachineTime',dashboardController.getMachineTime);
+
 module.exports = router;
