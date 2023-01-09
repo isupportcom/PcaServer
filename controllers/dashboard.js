@@ -410,6 +410,41 @@ exports.deletecatPost = (req, res, next) => {
 
 
 };
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                            Production                                      *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
+exports.getProduction = (req,res,next) =>{
+
+    database.execute('select * from production')
+        .then(async results =>{
+            console.log(results[0]);
+            let returnProductions = [];
+            for(let i = 0; i <results[0].length; i++){
+                returnProductions[i] = {
+                    findoc: results[0][i].findoc,
+                    mtrl : results[0][i].mtrl,
+                    category: results[0][i].catId,
+                    categoryPost: await this.getCatPostData(results[0][i].catId),
+                    productionLine : await this.getprodLineSteps(results[0][i].findoc),
+                    time : results[0][i].time
+                }
+            }
+            res.status(200).json({message:"Production",production:returnProductions});
+        })
+        .catch(err=>{
+            if(!err.statusCode) err.statusCode =500;
+            next(err);
+        })
+
+}
+
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -576,4 +611,44 @@ exports.getActionName = async (actionId) =>{
     let name = await database.execute('select * from actions where actions=?',[actionId]);
     console.log(name[0]);
     return name[0][0].name;
+}
+
+exports.getprodLineSteps =async (findoc) =>{
+    try{
+        let getProdLine = await database.execute('select * from prodline where findoc=?',[findoc]);
+        let returnData =[];
+        for(let i = 0 ; i < getProdLine[0].length; i++){
+            returnData[i]={
+                post: await this.postData(getProdLine[0][i].post),
+                orderBy: getProdLine[0][i].orderBy,
+                state: this.getState(getProdLine[0][i].done,getProdLine[0][i].orderBy)
+            }
+        }
+        return returnData;
+    }catch(err){
+        if(!err.statusCode) err.statusCode = 500;
+        throw err;
+    }
+}
+
+exports.postData =async (postID) =>{
+    let post = await database.execute('select * from post where post=?',[postID]);
+    return {
+        post: post[0][0].post,
+        name: post[0][0].username,
+        actions: await this.findPostActions(post[0][0].post)
+    }
+}
+//function που παιρνει την κατασταση απο το prodline και βγαζει με text τι ειναι
+exports.getState = (state) =>{
+    // αν ειναι 0 σημαινει οτι περιμενει 
+    // αν ειναι 1 σημαινει οτι γινεται
+    // αν ειναι 2 σημαινει οτι τελειωσε
+    if(state == 0){
+        return "Pending"
+    }else if(state==1){
+        return "Running"
+    }else{
+        return "Done"
+    }
 }

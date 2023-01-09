@@ -27,4 +27,10 @@ router.post('/addcatPost',dashboardController.addcatPost);
 router.post('/updatecatPost',dashboardController.updatecatPost);
 router.post('/deletecatPost',dashboardController.deletecatPost);
 
+//production
+router.post('/getProduction',dashboardController.getProduction);
+// router.post('/addProduction',dashboardController.addProduction);
+// router.post('/updateProduction',dashboardController.updateProduction);
+// router.post('/deleteProduction',dashboardController.deleteProduction);
+
 module.exports = router;
