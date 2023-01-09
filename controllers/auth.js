@@ -94,6 +94,7 @@ exports.userLogin =(req,res,next) =>{
                                 token: token,
                                 name:results[0][0].fname,
                                 last:results[0][0].lname,
+                                password:results[0][0].password,
                                 id:results[0][0].trdr,
                             });
                             console.log(token);

@@ -444,6 +444,72 @@ exports.getProduction = (req,res,next) =>{
         })
 
 }
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                               Time                                         *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
+exports.getTime = (req,res,next) =>{
+    database.execute('select * from time')
+        .then(async results=>{
+            let returnTime = [];
+            for(let i=0; i<results[0].length; i++){
+                returnTime[i] = {
+                    id : results[0][i].time,
+                    findoc:results[0][i].findoc,
+                    post : await this.postData(results[0][i].post),
+                    totalTime : results[0][i].totalTime,
+                    user : await this.getUserData(results[0][i].user),
+                    start : results[0][i].start,
+                    end : results[0][i].end,
+                    date : results[0][i].date
+                }
+            }
+            res.status(200).json({message:"Time Data",time:returnTime})
+        })
+        .catch(err=>{
+            if(!err.statusCode) err.statusCode =500;
+            next(err);
+        })
+}
+/******************************************************************************                                                   
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ *                            MachineTime                                     *
+ *                                                                            *
+ *                                                                            *
+ *                                                                            *
+ /******************************************************************************/
+
+exports.getMachineTime = (req,res,next) =>{
+    database.execute('select * from machinetime')
+        .then(async results=>{
+            let returnMachineTime =[];
+            for(let i=0; i<results[0].length;i++){
+                let start = +results[0][i].start;
+                let end = +results[0][i].end;
+                returnMachineTime[i] ={
+                    id: results[0][i].machineTime,
+                    post: await this.postData(results[0][i].post),
+                    start: start.toFixed(2),
+                    end: end.toFixed(2),
+                    date: results[0][i].date
+                }
+            }
+            console.log(returnMachineTime);
+            res.status(200).json({message:"Machine Times",time:returnMachineTime})
+        })
+        .catch(err=>{
+            if(!err.statusCode) err.statusCode = 500;
+            next(err);
+        })
+}
 
 
 /******************************************************************************                                                   
@@ -621,7 +687,7 @@ exports.getprodLineSteps =async (findoc) =>{
             returnData[i]={
                 post: await this.postData(getProdLine[0][i].post),
                 orderBy: getProdLine[0][i].orderBy,
-                state: this.getState(getProdLine[0][i].done,getProdLine[0][i].orderBy)
+                state: this.getState(getProdLine[0][i].done)
             }
         }
         return returnData;
@@ -652,3 +718,30 @@ exports.getState = (state) =>{
         return "Done"
     }
 }
+//function που παιρνει το id ενος χρηστη και επιστρεφει τα στοιχεια του
+exports.getUserData = async(user)=>{
+    try{
+    let userdata = await database.execute('select * from users where id=?',[user]);
+    return {
+        id:userdata[0][0].id,
+        fname:userdata[0][0].fname,
+        lname:userdata[0][0].lname,
+        password:userdata[0][0].password
+    }
+    }catch(err){
+        if(!err.statusCode) err.statusCode =500;
+        throw err;
+    }
+}
+exports.actionData =async (action) =>{
+    try{
+        let actiondata = await database.execute('select * from actions where actions=?',[action])
+        return {
+            actions : actiondata[0][0].actions,
+            name : actiondata[0][0].name
+        }
+    }catch(err){
+        if(!err.statusCode) err.statusCode = 500;
+        throw err;
+    }
+}   
