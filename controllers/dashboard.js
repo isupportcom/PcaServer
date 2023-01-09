@@ -376,19 +376,15 @@ exports.addcatPost = (req, res, next) => {
 };
 
 exports.updatecatPost = async(req, res, next) => {
-    const catPost =req.body.catPost;
-    const catId = req.body.catId;
-    const postId = req.body.postId;
-    const orderBy = req.body.orderBy;
-
-    if(!catPost || !catId || !postId || !orderBy){
+   const category  = req.body.category;
+    if(!category){
         res.status(402).json({message:"fill the required fields"});
     }else{
-        for(let i = 0 ; i<catPost.length ; i++){
-          try{
-            let update = await database.execute('update catpost set catId=?,postId=?,orderBy=? where catPost=?',
-            [catId[i],postId[i],orderBy[i],catPost[i]]
-            )
+    for(let i=0; i<category.categoryPost.length; i++){
+        try{
+        let update = await database.execute('update catpost set orderBy=?, post=? where catPost=?'
+        ,[category.categoryPost[i].orderBy,category.categoryPost[i].post,category.categoryPost[i].catPost]
+        )
         }catch(err){
             if(!err.statusCode) err.statusCode =500;
             next(err);

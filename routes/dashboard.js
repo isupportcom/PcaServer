@@ -21,7 +21,7 @@ router.post('/addActions',dashboardController.addActions);
 router.post('/updateActions',dashboardController.updateActions);
 router.post('/deleteAction',dashboardController.deleteAction);
 
-//Παραγγελειες
+//Kατηγοριες
 router.post('/getCatPost',dashboardController.getcatPost);
 router.post('/addcatPost',dashboardController.addcatPost);
 router.post('/updatecatPost',dashboardController.updatecatPost);
