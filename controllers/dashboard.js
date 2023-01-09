@@ -382,7 +382,7 @@ exports.updatecatPost = async(req, res, next) => {
     }else{
     for(let i=0; i<category.categoryPost.length; i++){
         try{
-        let update = await database.execute('update catpost set orderBy=?, post=? where catPost=?'
+        let update = await database.execute('update catpost set orderBy=?, postId=? where catPost=?'
         ,[category.categoryPost[i].orderBy,category.categoryPost[i].post,category.categoryPost[i].catPost]
         )
         }catch(err){
