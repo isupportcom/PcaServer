@@ -1,7 +1,7 @@
 const { default: axios } = require("axios");
 const database = require("../database");
 const generator = require("generate-password");
-
+const decoder = new TextDecoder("ISO-8859-7");
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -343,72 +343,85 @@ exports.getcatPost = (req, res, next) => {
 };
 
 exports.addcatPost = (req, res, next) => {
-    const catId = req.body.catId;
-    const postId= req.body.postId;
-    const orderBy = req.body.orderBy;
+  const catId = req.body.catId;
+  const postId = req.body.postId;
+  const orderBy = req.body.orderBy;
 
-    if(!catId || !postId || !orderBy){
-        res.status(402).json({message:"fill the requried fields"});
-    }else{
-        database.execute('select  * from catpost where catId=? and orderBy >= ?',[catId,orderBy])
-        .then(async results=>{
-
-            if(results[0].length > 0 ){
-                for(let i = 0 ; i < results[0].length ; i++){
-                    let update = await database.execute('update catpost set orderBy=? where catPost=?',[+results[0][i].orderBy+1,results[0][i].catPost])
-                }
-            }
-            database.execute('insert into catpost (catId,postId,orderBy) VALUES (?,?,?)',[catId,postId,orderBy])
-            .then(inserted=>{
-                this.getcatPost(req,res,next);
-            })  
-            .catch(err=>{
-                if(!err.statusCode) 
-                    err.statusCode = 500;
-                next(err);
-            })
-        }).catch(err=>{
-            if(!err.statusCode) err.statusCode =500;
+  if (!catId || !postId || !orderBy) {
+    res.status(402).json({ message: "fill the requried fields" });
+  } else {
+    database
+      .execute("select  * from catpost where catId=? and orderBy >= ?", [
+        catId,
+        orderBy,
+      ])
+      .then(async (results) => {
+        if (results[0].length > 0) {
+          for (let i = 0; i < results[0].length; i++) {
+            let update = await database.execute(
+              "update catpost set orderBy=? where catPost=?",
+              [+results[0][i].orderBy + 1, results[0][i].catPost]
+            );
+          }
+        }
+        database
+          .execute(
+            "insert into catpost (catId,postId,orderBy) VALUES (?,?,?)",
+            [catId, postId, orderBy]
+          )
+          .then((inserted) => {
+            this.getcatPost(req, res, next);
+          })
+          .catch((err) => {
+            if (!err.statusCode) err.statusCode = 500;
             next(err);
-        })
-       
-    }
+          });
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
 };
 
-exports.updatecatPost = async(req, res, next) => {
-   const category  = req.body.category;
-    if(!category){
-        res.status(402).json({message:"fill the required fields"});
-    }else{
-    for(let i=0; i<category.categoryPost.length; i++){
-        try{
-        let update = await database.execute('update catpost set orderBy=?, postId=? where catPost=?'
-        ,[category.categoryPost[i].orderBy,category.categoryPost[i].post,category.categoryPost[i].catPost]
-        )
-        }catch(err){
-            if(!err.statusCode) err.statusCode =500;
-            next(err);
-        }
+exports.updatecatPost = async (req, res, next) => {
+  const category = req.body.category;
+  if (!category) {
+    res.status(402).json({ message: "fill the required fields" });
+  } else {
+    for (let i = 0; i < category.categoryPost.length; i++) {
+      try {
+        let update = await database.execute(
+          "update catpost set orderBy=?, postId=? where catPost=?",
+          [
+            category.categoryPost[i].orderBy,
+            category.categoryPost[i].post,
+            category.categoryPost[i].catPost,
+          ]
+        );
+      } catch (err) {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      }
     }
-    this.getcatPost(req,res,next);
-    }
+    this.getcatPost(req, res, next);
+  }
 };
 
 exports.deletecatPost = (req, res, next) => {
-    const catPost = req.body.catPost;
-    if(!catPost) res.status(402).json({message:"fill the required fields"});
-    else{
-        database.execute('delete from catpost where catPost=?',[catPost])
-            .then(deleteRes=>{
-                this.getcatPost(req,res,next);
-            })
-            .catch(err=>{
-                if(!err.statusCode) err.statusCode =500;
-                next(err);
-            })
-    }
-
-
+  const catPost = req.body.catPost;
+  if (!catPost) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("delete from catpost where catPost=?", [catPost])
+      .then((deleteRes) => {
+        this.getcatPost(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
 };
 /******************************************************************************                                                   
  *                                                                            *
@@ -420,30 +433,143 @@ exports.deletecatPost = (req, res, next) => {
  *                                                                            *
  /******************************************************************************/
 
-exports.getProduction = (req,res,next) =>{
+exports.addProduction = async (req, res, next) => {
+  let clientID = await this.login();
+  clientID = await this.authenticate(clientID);
+  let production = await this.production1(clientID);
+  console.log(production);
+  let findocData = [];
+  let finDocImportant = [];
 
-    database.execute('select * from production')
-        .then(async results =>{
-            console.log(results[0]);
-            let returnProductions = [];
-            for(let i = 0; i <results[0].length; i++){
-                returnProductions[i] = {
-                    findoc: results[0][i].findoc,
-                    mtrl : results[0][i].mtrl,
-                    category: results[0][i].catId,
-                    categoryPost: await this.getCatPostData(results[0][i].catId),
-                    productionLine : await this.getprodLineSteps(results[0][i].findoc),
-                    time : results[0][i].time
-                }
-            }
-            res.status(200).json({message:"Production",production:returnProductions});
-        })
-        .catch(err=>{
-            if(!err.statusCode) err.statusCode =500;
-            next(err);
-        })
+  let prod3 = [];
+  for (let i = 0; i < production.rows.length; i++) {
+    findocData[i] = await this.production2(clientID, production.rows[i].FINDOC);
+    console.log(findocData[i]);
+    let ingredients = await this.production3(
+      clientID,
+      findocData[i].rows[0].MTRL
+    );
+    console.log("INGREDIENTS");
+    console.log(ingredients.rows[1]);
+    for (let j = 0; j < ingredients.rows.length; j++) {
+      prod3[j] = {
+        mtrl: ingredients.rows[j].MTRL,
+        findoc: ingredients.rows[j].FINDOC,
+        code: ingredients.rows[j].CODE,
+        name: ingredients.rows[j].NAME,
+        warning: ingredients.rows[j].WARNING ? ingredients.rows[j].WARNING : "",
+        webname: ingredients.rows[j].WEBNAME ? ingredients.rows[j].WEBNAME : "",
+      };
+    }
+    finDocImportant[i] = {
+      findoc: findocData[i].rows[0].FINDOC,
+      mtrl: findocData[i].rows[0].MTRL,
+      category: findocData[i].rows[0].MTRGROUP,
+      ingredients: prod3,
+    };
+  }
+  for (let i = 0; i < finDocImportant.length; i++) {
+    if ((await this.findocExists(finDocImportant[i].findoc)) != true) {
+      let insert = await database.execute(
+        "insert into production (findoc,mtrl,catId) VALUES(?,?,?)",
+        [
+          finDocImportant[i].findoc,
+          finDocImportant[i].mtrl,
+          finDocImportant[i].category,
+        ]
+      );
+    } else {
+      let update = await database.execute(
+        "update production set mtrl=?,catId=? where findoc=?",
+        [
+          finDocImportant[i].mtrl,
+          finDocImportant[i].category,
+          finDocImportant[i].findoc,
+        ]
+      );
+    }
+    for (let j = 0; j < finDocImportant[i].ingredients.length; j++) {
+      if (
+        (await this.ingredientExists(finDocImportant[i].ingredients[j].mtrl)) !=
+        true
+      ) {
+        let insertIng = await database.execute(
+          "insert into ingredients (mtrl,ing_mtrl,code,warning,webname) VALUES (?,?,?,?,?)",
+          [
+            finDocImportant[i].mtrl,
+            finDocImportant[i].ingredients[j].mtrl,
+            finDocImportant[i].ingredients[j].code,
+            finDocImportant[i].ingredients[j].warning,
+            finDocImportant[i].ingredients[j].webname,
+          ]
+        );
+      } else {
+        let updateIng = await database.execute(
+          "update ingredients set mtrl=?,code=?,warning=?,webname=? where ing_mtrl=?",
+          [
+            finDocImportant[i].mtrl,
+            finDocImportant[i].ingredients[j].code,
+            finDocImportant[i].ingredients[j].warning,
+            finDocImportant[i].ingredients[j].webname,
+            finDocImportant[i].ingredients[j].mtrl,
+          ]
+        );
+      }
+    }
+  }
 
-}
+  this.addProdLine(req, res, next);
+};
+
+exports.addProdLine = (req,res,next) => {
+  database
+    .execute("select * from production")
+    .then(async (results) => {
+      for (let i = 0; i < results[0].length; i++) {
+        posts = await this.getCatPostData(results[0][i].catId);
+        for (let j = 0; j < posts.length; j++) {
+          let insert = await database.execute(
+            "insert into prodline (findoc,post,orderBy,done) VALUES(?,?,?,?)",
+            [results[0][i].findoc, posts[j].post, posts[j].orderBy, 0]
+          );
+        }
+      }
+
+      this.getProduction(req,res,next)
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
+
+exports.getProduction = (req, res, next) => {
+  database
+    .execute("select * from production")
+    .then(async (results) => {
+      console.log(results[0]);
+      let returnProductions = [];
+      for (let i = 0; i < results[0].length; i++) {
+        returnProductions[i] = {
+          findoc: results[0][i].findoc,
+          mtrl: results[0][i].mtrl,
+          ingredients: await this.getIngredients(results[0][i].mtrl),
+          category: results[0][i].catId,
+          categoryPost: await this.getCatPostData(results[0][i].catId),
+          productionLine: await this.getprodLineSteps(results[0][i].findoc),
+          time: results[0][i].time,
+        };
+      }
+      res
+        .status(200)
+        .json({ message: "Production", production: returnProductions });
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
+
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -454,29 +580,30 @@ exports.getProduction = (req,res,next) =>{
  *                                                                            *
  /******************************************************************************/
 
-exports.getTime = (req,res,next) =>{
-    database.execute('select * from time')
-        .then(async results=>{
-            let returnTime = [];
-            for(let i=0; i<results[0].length; i++){
-                returnTime[i] = {
-                    id : results[0][i].time,
-                    findoc:results[0][i].findoc,
-                    post : await this.postData(results[0][i].post),
-                    totalTime : results[0][i].totalTime,
-                    user : await this.getUserData(results[0][i].user),
-                    start : results[0][i].start,
-                    end : results[0][i].end,
-                    date : results[0][i].date
-                }
-            }
-            res.status(200).json({message:"Time Data",time:returnTime})
-        })
-        .catch(err=>{
-            if(!err.statusCode) err.statusCode =500;
-            next(err);
-        })
-}
+exports.getTime = (req, res, next) => {
+  database
+    .execute("select * from time")
+    .then(async (results) => {
+      let returnTime = [];
+      for (let i = 0; i < results[0].length; i++) {
+        returnTime[i] = {
+          id: results[0][i].time,
+          findoc: results[0][i].findoc,
+          post: await this.postData(results[0][i].post),
+          totalTime: results[0][i].totalTime,
+          user: await this.getUserData(results[0][i].user),
+          start: results[0][i].start,
+          end: results[0][i].end,
+          date: results[0][i].date,
+        };
+      }
+      res.status(200).json({ message: "Time Data", time: returnTime });
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -487,30 +614,32 @@ exports.getTime = (req,res,next) =>{
  *                                                                            *
  /******************************************************************************/
 
-exports.getMachineTime = (req,res,next) =>{
-    database.execute('select * from machinetime')
-        .then(async results=>{
-            let returnMachineTime =[];
-            for(let i=0; i<results[0].length;i++){
-                let start = +results[0][i].start;
-                let end = +results[0][i].end;
-                returnMachineTime[i] ={
-                    id: results[0][i].machineTime,
-                    post: await this.postData(results[0][i].post),
-                    start: start.toFixed(2),
-                    end: end.toFixed(2),
-                    date: results[0][i].date
-                }
-            }
-            console.log(returnMachineTime);
-            res.status(200).json({message:"Machine Times",time:returnMachineTime})
-        })
-        .catch(err=>{
-            if(!err.statusCode) err.statusCode = 500;
-            next(err);
-        })
-}
-
+exports.getMachineTime = (req, res, next) => {
+  database
+    .execute("select * from machinetime")
+    .then(async (results) => {
+      let returnMachineTime = [];
+      for (let i = 0; i < results[0].length; i++) {
+        let start = +results[0][i].start;
+        let end = +results[0][i].end;
+        returnMachineTime[i] = {
+          id: results[0][i].machineTime,
+          post: await this.postData(results[0][i].post),
+          start: start.toFixed(2),
+          end: end.toFixed(2),
+          date: results[0][i].date,
+        };
+      }
+      console.log(returnMachineTime);
+      res
+        .status(200)
+        .json({ message: "Machine Times", time: returnMachineTime });
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -602,17 +731,18 @@ exports.isInPost = async (actionId) => {
 
 // function που παιρνει το ιδ μιας κατηγοριας και βρισκει τα αντιστοιχα ποστα και αλλες πληροφοριες
 exports.getCatPostData = async (catId) => {
-  let finddata = await database.execute("select * from catpost where catId=? order by orderBy ASC", [
-    catId,
-  ]);
+  let finddata = await database.execute(
+    "select * from catpost where catId=? order by orderBy ASC",
+    [catId]
+  );
   console.log(catId);
-  console.log(finddata[0])
+  console.log(finddata[0]);
   try {
     let returnData = [];
     //ελεγχος για την κατηγορια αν εχει καταχωρημενα ποστα
     if (finddata[0].length > 0) {
       for (let i = 0; i < finddata[0].length; i++) {
-        console.log(finddata[0][i])
+        console.log(finddata[0][i]);
         returnData[i] = {
           catPost: finddata[0][i].catPost,
           post: finddata[0][i].postId,
@@ -622,12 +752,12 @@ exports.getCatPostData = async (catId) => {
         };
       }
     } else {
-        returnData[0] ={
-            post:"",
-            name:"",
-            orderBy:"",
-            actions:""
-        }
+      returnData[0] = {
+        post: "",
+        name: "",
+        orderBy: "",
+        actions: "",
+      };
     }
     return returnData;
   } catch (err) {
@@ -637,111 +767,284 @@ exports.getCatPostData = async (catId) => {
 };
 
 //function που παιρνει το ιδ ενος ποστου και βρισκει το ονομα
-exports.findPostName = async (postId) =>{
-    let name = await database.execute('select * from post where post=?',[postId]);
-    console.log(name[0]);
-    return name[0][0].username
+exports.findPostName = async (postId) => {
+  let name = await database.execute("select * from post where post=?", [
+    postId,
+  ]);
+  console.log(name[0]);
+  return name[0][0].username;
 };
 
 // function που παιρνει το ιδ ενος ποστου και βρισκει τις ενεργειες που εχουν συσχετιστει με αυτο
-exports.findPostActions = async (postId) =>{
-    let actions =  await database.execute('select * from actionspost where post=?',[postId]);
-    try{
-        console.log(actions[0]);
-        let returnActions =[];
-        if(actions[0].length > 0 ){
-            for(let i = 0 ; i < actions[0].length;i++){
-                console.log(actions[0][i])
-                returnActions[i] = {
-                    actions: actions[0][i].action,
-                    name : await this.getActionName(actions[0][i].action)
-                }
-            }
-        }else{
-            returnActions[0] = {
-                actions :"",
-                name :""
-            }
-        }
-        return returnActions;
-    }catch(err){
-        if(!err.statusCode) 
-            err.statusCode =500;
-        throw(err);
+exports.findPostActions = async (postId) => {
+  let actions = await database.execute(
+    "select * from actionspost where post=?",
+    [postId]
+  );
+  try {
+    console.log(actions[0]);
+    let returnActions = [];
+    if (actions[0].length > 0) {
+      for (let i = 0; i < actions[0].length; i++) {
+        console.log(actions[0][i]);
+        returnActions[i] = {
+          actions: actions[0][i].action,
+          name: await this.getActionName(actions[0][i].action),
+        };
+      }
+    } else {
+      returnActions[0] = {
+        actions: "",
+        name: "",
+      };
     }
-}
+    return returnActions;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
 
-//function που παιρνει το ιδ μιας ενεργειας και βρισκει το ονομα της 
-exports.getActionName = async (actionId) =>{
-    console.log(actionId);
-    let name = await database.execute('select * from actions where actions=?',[actionId]);
-    console.log(name[0]);
-    return name[0][0].name;
-}
+//function που παιρνει το ιδ μιας ενεργειας και βρισκει το ονομα της
+exports.getActionName = async (actionId) => {
+  console.log(actionId);
+  let name = await database.execute("select * from actions where actions=?", [
+    actionId,
+  ]);
+  console.log(name[0]);
+  return name[0][0].name;
+};
 
-exports.getprodLineSteps =async (findoc) =>{
-    try{
-        let getProdLine = await database.execute('select * from prodline where findoc=?',[findoc]);
-        let returnData =[];
-        for(let i = 0 ; i < getProdLine[0].length; i++){
-            returnData[i]={
-                post: await this.postData(getProdLine[0][i].post),
-                orderBy: getProdLine[0][i].orderBy,
-                state: this.getState(getProdLine[0][i].done)
-            }
-        }
-        return returnData;
-    }catch(err){
-        if(!err.statusCode) err.statusCode = 500;
-        throw err;
+exports.getprodLineSteps = async (findoc) => {
+  try {
+    let getProdLine = await database.execute(
+      "select * from prodline where findoc=?",
+      [findoc]
+    );
+    let returnData = [];
+    for (let i = 0; i < getProdLine[0].length; i++) {
+      returnData[i] = {
+        post: await this.postData(getProdLine[0][i].post),
+        orderBy: getProdLine[0][i].orderBy,
+        state: this.getState(getProdLine[0][i].done),
+      };
     }
-}
+    return returnData;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
 
-exports.postData =async (postID) =>{
-    let post = await database.execute('select * from post where post=?',[postID]);
-    return {
-        post: post[0][0].post,
-        name: post[0][0].username,
-        actions: await this.findPostActions(post[0][0].post)
-    }
-}
+exports.postData = async (postID) => {
+  let post = await database.execute("select * from post where post=?", [
+    postID,
+  ]);
+  return {
+    post: post[0][0].post,
+    name: post[0][0].username,
+    actions: await this.findPostActions(post[0][0].post),
+  };
+};
 //function που παιρνει την κατασταση απο το prodline και βγαζει με text τι ειναι
-exports.getState = (state) =>{
-    // αν ειναι 0 σημαινει οτι περιμενει 
-    // αν ειναι 1 σημαινει οτι γινεται
-    // αν ειναι 2 σημαινει οτι τελειωσε
-    if(state == 0){
-        return "Pending"
-    }else if(state==1){
-        return "Running"
-    }else{
-        return "Done"
-    }
-}
+exports.getState = (state) => {
+  // αν ειναι 0 σημαινει οτι περιμενει
+  // αν ειναι 1 σημαινει οτι γινεται
+  // αν ειναι 2 σημαινει οτι τελειωσε
+  if (state == 0) {
+    return "Pending";
+  } else if (state == 1) {
+    return "Running";
+  } else {
+    return "Done";
+  }
+};
 //function που παιρνει το id ενος χρηστη και επιστρεφει τα στοιχεια του
-exports.getUserData = async(user)=>{
-    try{
-    let userdata = await database.execute('select * from users where id=?',[user]);
+exports.getUserData = async (user) => {
+  try {
+    let userdata = await database.execute("select * from users where id=?", [
+      user,
+    ]);
     return {
-        id:userdata[0][0].id,
-        fname:userdata[0][0].fname,
-        lname:userdata[0][0].lname,
-        password:userdata[0][0].password
+      id: userdata[0][0].id,
+      fname: userdata[0][0].fname,
+      lname: userdata[0][0].lname,
+      password: userdata[0][0].password,
+    };
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
+exports.actionData = async (action) => {
+  try {
+    let actiondata = await database.execute(
+      "select * from actions where actions=?",
+      [action]
+    );
+    return {
+      actions: actiondata[0][0].actions,
+      name: actiondata[0][0].name,
+    };
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
+
+// softone functions
+
+exports.login = async () => {
+  var data = JSON.stringify({
+    service: "login",
+    username: "Sparke",
+    password: "1234",
+    appId: "3001",
+  });
+
+  let login = await axios(this.getConfig(data));
+  try {
+    let loginData = decoder.decode(login.data);
+    console.log(JSON.parse(loginData));
+    loginData = JSON.parse(loginData);
+    return loginData.clientID;
+  } catch (err) {
+    throw err;
+  }
+};
+exports.authenticate = async (clientID) => {
+  var data = JSON.stringify({
+    service: "authenticate",
+    clientID: clientID,
+    company: "1001",
+    branch: "1000",
+    module: "0",
+    refid: "1",
+  });
+
+  let authenticate = await axios(this.getConfig(data));
+  try {
+    let authenticatedata = decoder.decode(authenticate.data);
+    console.log(JSON.parse(authenticatedata));
+    authenticatedata = JSON.parse(authenticatedata);
+    return authenticatedata.clientID;
+  } catch (err) {
+    throw err;
+  }
+};
+
+exports.production1 = async (clientID) => {
+  var data = JSON.stringify({
+    service: "SqlData",
+    clientID: clientID,
+    appId: "3001",
+    SqlName: "1production",
+  });
+  let production = await axios(this.getConfig(data));
+  try {
+    let productionData = decoder.decode(production.data);
+    productionData = JSON.parse(productionData);
+    console.log(productionData);
+    return productionData;
+  } catch (err) {
+    throw err;
+  }
+};
+exports.production2 = async (clientID, findoc) => {
+  var data = JSON.stringify({
+    service: "SqlData",
+    clientID: clientID,
+    appId: "3001",
+    SqlName: "2production",
+    param1: findoc,
+  });
+  let production = await axios(this.getConfig(data));
+  try {
+    let productionData = decoder.decode(production.data);
+    productionData = JSON.parse(productionData);
+    console.log(productionData);
+    return productionData;
+  } catch (err) {
+    throw err;
+  }
+};
+exports.production3 = async (clientID, mtrl) => {
+  var data = JSON.stringify({
+    service: "SqlData",
+    clientID: clientID,
+    appId: "3001",
+    SqlName: "3production",
+    param1: mtrl,
+  });
+  let production3 = await axios(this.getConfig(data));
+  try {
+    let production = decoder.decode(production3.data);
+    production = JSON.parse(production);
+    console.log(production);
+    return production;
+  } catch (err) {
+    throw err;
+  }
+};
+exports.getConfig = (data) => {
+  return {
+    method: "post",
+    url: "https://pca.oncloud.gr/s1services",
+    headers: {
+      "Content-Type": "application/json;charset=windows-1253",
+      "X-APPSMITH-DATATYPE": "TEXT",
+    },
+    data,
+    responseType: "arraybuffer",
+    reponseEncoding: "binary",
+  };
+};
+
+exports.getIngredients = async (mtrl) => {
+  let ingredients = await database.execute(
+    "select * from ingredients where mtrl=?",
+    [mtrl]
+  );
+  try {
+    let returnIng = [];
+    for (let i = 0; i < ingredients[0].length; i++) {
+      returnIng[i] = {
+        ingredient: ingredients[0][i].ingredients,
+        mtrl: ingredients[0][i].mtrl,
+        ing_mtrl: ingredients[0][i].ing_mtrl,
+        code: ingredients[0][i].code,
+        warning: ingredients[0][i].warning,
+        webname: ingredients[0][i].webname,
+      };
+      console.log(returnIng[i]);
     }
-    }catch(err){
-        if(!err.statusCode) err.statusCode =500;
-        throw err;
-    }
-}
-exports.actionData =async (action) =>{
-    try{
-        let actiondata = await database.execute('select * from actions where actions=?',[action])
-        return {
-            actions : actiondata[0][0].actions,
-            name : actiondata[0][0].name
-        }
-    }catch(err){
-        if(!err.statusCode) err.statusCode = 500;
-        throw err;
-    }
-}   
+    return returnIng;
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    throw err;
+  }
+};
+// function που ελεγχει με βαση το findoc αν εχει καταχωρηθει
+
+exports.findocExists = async (findoc) => {
+  let find = await database.execute("select * from production where findoc=?", [
+    findoc,
+  ]);
+
+  if (find[0].length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+exports.ingredientExists = async (mtrl) => {
+  let find = await database.execute(
+    "select * from ingredients where ing_mtrl=?",
+    [mtrl]
+  );
+  if (find[0].length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};

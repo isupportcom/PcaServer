@@ -29,7 +29,7 @@ router.post('/deletecatPost',dashboardController.deletecatPost);
 
 //production
 router.post('/getProduction',dashboardController.getProduction);
-// router.post('/addProduction',dashboardController.addProduction);
+router.post('/addProduction',dashboardController.addProduction);
 // router.post('/updateProduction',dashboardController.updateProduction);
 // router.post('/deleteProduction',dashboardController.deleteProduction);
 
@@ -38,5 +38,7 @@ router.post('/getTime',dashboardController.getTime);
 
 //machinetime 
 router.post('/getMachineTime',dashboardController.getMachineTime);
+
+
 
 module.exports = router;
