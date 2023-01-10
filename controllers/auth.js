@@ -95,7 +95,7 @@ exports.userLogin =(req,res,next) =>{
                                 name:results[0][0].fname,
                                 last:results[0][0].lname,
                                 password:results[0][0].password,
-                                id:results[0][0].trdr,
+                                id:results[0][0].id,
                             });
                             console.log(token);
                             // CORRECT PASSWORD SO GIVE TOKEN
