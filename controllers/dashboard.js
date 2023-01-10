@@ -522,27 +522,35 @@ exports.addProduction = async (req, res, next) => {
   this.addProdLine(req, res, next);
 };
 
-exports.addProdLine = (req,res,next) => {
+exports.addProdLine = (req, res, next) => {
   database
     .execute("select * from production")
     .then(async (results) => {
-        let state;
+      let state;
       for (let i = 0; i < results[0].length; i++) {
         posts = await this.getCatPostData(results[0][i].catId);
         for (let j = 0; j < posts.length; j++) {
-            if(posts[j].orderBy == 1){
-                state=1;
-            }else{
-                state=0;
-            }
-          let insert = await database.execute(
-            "insert into prodline (findoc,post,orderBy,done) VALUES(?,?,?,?)",
-            [results[0][i].findoc, posts[j].post, posts[j].orderBy,state ]
-          );
+          if (posts[j].orderBy == 1) {
+            state = 1;
+          } else {
+            state = 0;
+          }
+          if (
+            (await this.prodLineExists(
+              results[0][i].findoc,
+              posts[j].post,
+              posts[j].orderBy
+            )) != true
+          ) {
+            let insert = await database.execute(
+              "insert into prodline (findoc,post,orderBy,done) VALUES(?,?,?,?)",
+              [results[0][i].findoc, posts[j].post, posts[j].orderBy, state]
+            );
+          }
         }
       }
 
-      this.getProduction(req,res,next)
+      this.getProduction(req, res, next);
     })
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
@@ -862,10 +870,9 @@ exports.getState = (state) => {
     return "Pending";
   } else if (state == 1) {
     return "Next Up";
-  }else if(state == 2){
-    return "Running"
-  }
-   else {
+  } else if (state == 2) {
+    return "Running";
+  } else {
     return "Done";
   }
 };
@@ -1058,3 +1065,12 @@ exports.ingredientExists = async (mtrl) => {
     return false;
   }
 };
+
+exports.prodLineExists =async (findoc,post,orderBy) =>{
+    let find = await database.execute('select * from prodline where findoc=? and post=? and orderBy=?',[findoc,post,orderBy]);
+    if(find[0].length > 0){
+        return true;
+    } else{
+        return false;
+    }
+}
