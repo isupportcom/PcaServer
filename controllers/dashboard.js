@@ -1,6 +1,7 @@
 const { default: axios } = require("axios");
 const database = require("../database");
 const generator = require("generate-password");
+const { post } = require("../routes/dashboard");
 const decoder = new TextDecoder("ISO-8859-7");
 /******************************************************************************                                                   
  *                                                                            *
@@ -525,12 +526,18 @@ exports.addProdLine = (req,res,next) => {
   database
     .execute("select * from production")
     .then(async (results) => {
+        let state;
       for (let i = 0; i < results[0].length; i++) {
         posts = await this.getCatPostData(results[0][i].catId);
         for (let j = 0; j < posts.length; j++) {
+            if(posts[j].orderBy == 1){
+                state=1;
+            }else{
+                state=0;
+            }
           let insert = await database.execute(
             "insert into prodline (findoc,post,orderBy,done) VALUES(?,?,?,?)",
-            [results[0][i].findoc, posts[j].post, posts[j].orderBy, 0]
+            [results[0][i].findoc, posts[j].post, posts[j].orderBy,state ]
           );
         }
       }
@@ -854,8 +861,11 @@ exports.getState = (state) => {
   if (state == 0) {
     return "Pending";
   } else if (state == 1) {
-    return "Running";
-  } else {
+    return "Next Up";
+  }else if(state == 2){
+    return "Running"
+  }
+   else {
     return "Done";
   }
 };
