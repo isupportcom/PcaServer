@@ -35,6 +35,7 @@ router.post('/addProduction',dashboardController.addProduction);
 
 // time 
 router.post('/getTime',dashboardController.getTime);
+router.post('/addTime',dashboardController.addTime);
 
 //machinetime 
 router.post('/getMachineTime',dashboardController.getMachineTime);
@@ -42,3 +43,6 @@ router.post('/getMachineTime',dashboardController.getMachineTime);
 
 
 module.exports = router;
+
+
+

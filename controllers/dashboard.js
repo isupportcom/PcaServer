@@ -1,7 +1,6 @@
 const { default: axios } = require("axios");
 const database = require("../database");
 const generator = require("generate-password");
-const { post } = require("../routes/dashboard");
 const decoder = new TextDecoder("ISO-8859-7");
 /******************************************************************************                                                   
  *                                                                            *
@@ -619,6 +618,54 @@ exports.getTime = (req, res, next) => {
       next(err);
     });
 };
+
+exports.addTime = (req, res, next) => {
+  const postsTime = req.body.postTime;
+  /*
+    postTime = {
+        findoc : ,
+        psot : ,
+        user :,
+        start : ,
+        end : ,
+        date : ,
+        totalTime :,
+    }
+  */
+  if (!postsTime) res.start(402).json({ message: "fill the requierd fields" });
+  else {
+    database
+      .execute(
+        "insert into time (findoc,post,totalTime,user,date,start,end) VALUES(?,?,?,?,?,?,?)",
+        [
+          postsTime.findoc,
+          postsTime.post,
+          postsTime.totalTime,
+          postsTime.user,
+          postsTime.date,
+          postsTime.start,
+          postsTime.end,
+        ]
+      )
+      .then(async (results) => {
+        if (
+          (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
+        ) {
+          await this.addMachineTime(
+            postsTime.post,
+            postsTime.date,
+            postsTime.start,
+            postsTime.end
+          );
+        }
+        this.getTime(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -655,7 +702,15 @@ exports.getMachineTime = (req, res, next) => {
       next(err);
     });
 };
-
+exports.addMachineTime =async (post, date, start, end) => {
+    let insert = await database.execute('insert into machineTime (post,start,end,date) VALUES (?,?,?,?)',[
+        post,start,end,date
+    ]).catch(err=>{
+        if(!err.statusCode) err.statusCode = 500;
+        throw(err);
+    })
+    console.log("Machine Time Inserted")
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -872,6 +927,8 @@ exports.getState = (state) => {
     return "Next Up";
   } else if (state == 2) {
     return "Running";
+  } else if (state == 3) {
+    return "Not Done/Paused";
   } else {
     return "Done";
   }
@@ -1066,11 +1123,28 @@ exports.ingredientExists = async (mtrl) => {
   }
 };
 
-exports.prodLineExists =async (findoc,post,orderBy) =>{
-    let find = await database.execute('select * from prodline where findoc=? and post=? and orderBy=?',[findoc,post,orderBy]);
-    if(find[0].length > 0){
+exports.prodLineExists = async (findoc, post, orderBy) => {
+  let find = await database.execute(
+    "select * from prodline where findoc=? and post=? and orderBy=?",
+    [findoc, post, orderBy]
+  );
+  if (find[0].length > 0) {
+    return true;
+  } else {
+    return false;
+  }
+};
+// function που ελεγχει αν ενα μηχανημα με βαση το ποστο εχει ξεκινησει
+exports.machineHasStarted = async (post, date) => {
+  let find = await database
+    .execute("select * from machineTime where post=? and date=?", [post, date])
+    .catch((err) => {
+        if(!err.statusCode) err.statusCode = 500;
+        throw err;
+    });
+    if(find[0].length > 0 ){
         return true;
-    } else{
+    }else{
         return false;
     }
-}
+};
