@@ -46,5 +46,5 @@ const server =app.listen(port, (req, res, next) => {
 const io = require('./socket').init(server);
 io.on('connection',socket =>{
   console.log("Client Connected");
-  socket.emit('response',{hello:"GEIA SOU NEKTARIE"});
+  console.log(socket)
 })
