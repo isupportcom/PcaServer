@@ -46,5 +46,5 @@ const server =app.listen(port, (req, res, next) => {
 const io = require('./socket').init(server);
 io.on('connection',socket =>{
   console.log("Client Connected");
-  console.log(socket)
+  socket.emit('response',{peos:"peos"})
 })
