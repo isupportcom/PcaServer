@@ -40,6 +40,10 @@ app.use((error, req, res, next) => {
 });
 
 // app listener
-app.listen(port, (req, res, next) => {
+const server =app.listen(port, (req, res, next) => {
   console.log("App Is Listening on http://localhost:" + port);
 });
+const io = require('./socket').init(server);
+io.on('connection',socket =>{
+  console.log("Client Connected");
+})
