@@ -556,6 +556,59 @@ exports.addProdLine = (req, res, next) => {
       next(err);
     });
 };
+exports.updateProdLine = (req, res, next) => {
+  const prodLine = req.body.prodLine;
+  /*
+    prodLine ={
+        findoc:
+        post:
+        state:
+        end : 
+        date :
+        totalTime :
+        user :
+    }
+  */
+  if (!prodLine) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("update prodline set done=? where findoc=? and post=?", [
+        prodLine.done,
+        prodLine.findoc,
+        prodLine.post,
+      ])
+      .then((results) => {
+        database
+          .execute(
+            "update time set end=?,totalTime=? where findoc=? and post=? and user=? and date=?",
+            [
+              prodLine.end,
+              prodLine.totalTime,
+              prodLine.findoc,
+              prodLine.post,
+              prodLine.user,
+              prodLine.date,
+            ]
+          )
+          .then((updateResults) => {
+            if(prodLine.done == 4 || prodLine.done == 3){
+                database.execute('update machineTime set end=? where post=? and date=?',[
+                    prodLine.end,prodLine.post,prodLine.date
+                ])
+            }
+            this.getProduction(req,res,next)
+          })
+          .catch((err) => {
+            if (!err.statusCode) err.statusCode = 500;
+            next(err);
+          });
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
 
 exports.getProduction = (req, res, next) => {
   database
@@ -632,7 +685,7 @@ exports.addTime = (req, res, next) => {
   */
   if (!postsTime) res.start(402).json({ message: "fill the requierd fields" });
   else {
-    console.log(postsTime)
+    console.log(postsTime);
     database
       .execute(
         "insert into time (findoc,post,user,date,start) VALUES(?,?,?,?,?)",
@@ -645,7 +698,7 @@ exports.addTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        console.log(results[0])
+        console.log(results[0]);
         if (
           (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
         ) {
@@ -691,8 +744,7 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-         this.updateMachineTime(endTimer.end,endTimer.post,endTimer.date);
-         this.getTime(req,res,next);
+        this.getTime(req, res, next);
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -749,17 +801,22 @@ exports.addMachineTime = async (post, date, start) => {
     });
   console.log("Machine Time Inserted");
 };
-exports.updateMachineTime = (end,post,date) =>{
-    database.execute('update machineTime set end=? where post=? and date=?',[end,post,date])
-    .then(results=>{
-        console.log('Machine Time Updated');
-        return;
+exports.updateMachineTime = (end, post, date) => {
+  database
+    .execute("update machineTime set end=? where post=? and date=?", [
+      end,
+      post,
+      date,
+    ])
+    .then((results) => {
+      console.log("Machine Time Updated");
+      return;
     })
-    .catch(err=>{
-        if(!err.statusCode ) err.statusCode =500;
-        throw err;
-    })
-}
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      throw err;
+    });
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
