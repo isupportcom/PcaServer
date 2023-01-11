@@ -578,19 +578,6 @@ exports.updateProdLine = (req, res, next) => {
         prodLine.post,
       ])
       .then((results) => {
-        database
-          .execute(
-            "update time set end=?,totalTime=? where findoc=? and post=? and user=? and date=?",
-            [
-              prodLine.end,
-              prodLine.totalTime,
-              prodLine.findoc,
-              prodLine.post,
-              prodLine.user,
-              prodLine.date,
-            ]
-          )
-          .then((updateResults) => {
             if(prodLine.done == 4 || prodLine.done == 3){
                 database.execute('update machineTime set end=? where post=? and date=?',[
                     prodLine.end,prodLine.post,prodLine.date
@@ -602,12 +589,9 @@ exports.updateProdLine = (req, res, next) => {
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
-      })
-      .catch((err) => {
-        if (!err.statusCode) err.statusCode = 500;
-        next(err);
-      });
-  }
+      }
+     
+  
 };
 
 exports.getProduction = (req, res, next) => {

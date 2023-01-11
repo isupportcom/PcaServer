@@ -36,7 +36,7 @@ exports.login = (req, res, next) => {
                                 message: "You Have Successfully Logged In",
                                 token: token,
                                 username:results[0][0].username,
-                                id:results[0][0].trdr,
+                                id:results[0][0].post,
                                 isAdmin:results[0][0].isAdmin
                             });
                             console.log(token);
