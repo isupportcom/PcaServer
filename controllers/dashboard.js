@@ -2,6 +2,7 @@ const { default: axios } = require("axios");
 const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
+const io = require('../socket');
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
