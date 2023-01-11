@@ -673,7 +673,7 @@ exports.getTime = (req, res, next) => {
 };
 
 exports.addTime = (req, res, next) => {
-  const postsTime = req.body.postTime;
+  const postsTime = req.body.userTime;
   /*
     postTime = {
         findoc : ,
