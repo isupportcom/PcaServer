@@ -627,38 +627,72 @@ exports.addTime = (req, res, next) => {
         psot : ,
         user :,
         start : ,
-        end : ,
         date : ,
-        totalTime :,
     }
   */
   if (!postsTime) res.start(402).json({ message: "fill the requierd fields" });
   else {
+    console.log(postsTime)
     database
       .execute(
-        "insert into time (findoc,post,totalTime,user,date,start,end) VALUES(?,?,?,?,?,?,?)",
+        "insert into time (findoc,post,user,date,start) VALUES(?,?,?,?,?)",
         [
           postsTime.findoc,
           postsTime.post,
-          postsTime.totalTime,
           postsTime.user,
           postsTime.date,
           postsTime.start,
-          postsTime.end,
         ]
       )
       .then(async (results) => {
+        console.log(results[0])
         if (
           (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
         ) {
           await this.addMachineTime(
             postsTime.post,
             postsTime.date,
-            postsTime.start,
-            postsTime.end
+            postsTime.start
           );
         }
         this.getTime(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
+exports.updateTime = (req, res, next) => {
+  const endTimer = req.body.endTimer;
+  /*
+        endTimer = {
+            findoc :
+            post :
+            end :
+            totalTime:
+            date :
+            user
+        }
+
+    */
+  if (!endTimer) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute(
+        "update time set end=?,totalTime=? where findoc=? and date=? and user=? and post=?",
+        [
+          endTimer.end,
+          endTimer.totalTime,
+          endTimer.findoc,
+          endTimer.date,
+          endTimer.user,
+          endTimer.post,
+        ]
+      )
+      .then(async (results) => {
+         this.updateMachineTime(endTimer.end,endTimer.post,endTimer.date);
+         this.getTime(req,res,next);
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -702,15 +736,30 @@ exports.getMachineTime = (req, res, next) => {
       next(err);
     });
 };
-exports.addMachineTime =async (post, date, start, end) => {
-    let insert = await database.execute('insert into machineTime (post,start,end,date) VALUES (?,?,?,?)',[
-        post,start,end,date
-    ]).catch(err=>{
-        if(!err.statusCode) err.statusCode = 500;
-        throw(err);
-    })
-    console.log("Machine Time Inserted")
+exports.addMachineTime = async (post, date, start) => {
+  let insert = await database
+    .execute("insert into machineTime (post,start,date) VALUES (?,?,?)", [
+      post,
+      start,
+      date,
+    ])
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      throw err;
+    });
+  console.log("Machine Time Inserted");
 };
+exports.updateMachineTime = (end,post,date) =>{
+    database.execute('update machineTime set end=? where post=? and date=?',[end,post,date])
+    .then(results=>{
+        console.log('Machine Time Updated');
+        return;
+    })
+    .catch(err=>{
+        if(!err.statusCode ) err.statusCode =500;
+        throw err;
+    })
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1139,12 +1188,12 @@ exports.machineHasStarted = async (post, date) => {
   let find = await database
     .execute("select * from machineTime where post=? and date=?", [post, date])
     .catch((err) => {
-        if(!err.statusCode) err.statusCode = 500;
-        throw err;
+      if (!err.statusCode) err.statusCode = 500;
+      throw err;
     });
-    if(find[0].length > 0 ){
-        return true;
-    }else{
-        return false;
-    }
+  if (find[0].length > 0) {
+    return true;
+  } else {
+    return false;
+  }
 };
