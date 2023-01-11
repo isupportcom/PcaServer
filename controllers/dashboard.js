@@ -580,7 +580,7 @@ exports.updateProdLine = (req, res, next) => {
       ])
       .then((results) => {
             if(prodLine.done == 4 || prodLine.done == 3){
-                database.execute('update machineTime set end=? where post=? and date=?',[
+                database.execute('update machinetime set end=? where post=? and date=?',[
                     prodLine.end,prodLine.post,prodLine.date
                 ])
             }
@@ -775,7 +775,7 @@ exports.getMachineTime = (req, res, next) => {
 };
 exports.addMachineTime = async (post, date, start) => {
   let insert = await database
-    .execute("insert into machineTime (post,start,date) VALUES (?,?,?)", [
+    .execute("insert into machinetime (post,start,date) VALUES (?,?,?)", [
       post,
       start,
       date,
@@ -788,7 +788,7 @@ exports.addMachineTime = async (post, date, start) => {
 };
 exports.updateMachineTime = (end, post, date) => {
   database
-    .execute("update machineTime set end=? where post=? and date=?", [
+    .execute("update machinetime set end=? where post=? and date=?", [
       end,
       post,
       date,
@@ -1228,7 +1228,7 @@ exports.prodLineExists = async (findoc, post, orderBy) => {
 // function που ελεγχει αν ενα μηχανημα με βαση το ποστο εχει ξεκινησει
 exports.machineHasStarted = async (post, date) => {
   let find = await database
-    .execute("select * from machineTime where post=? and date=?", [post, date])
+    .execute("select * from machinetime where post=? and date=?", [post, date])
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
       throw err;
