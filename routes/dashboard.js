@@ -32,7 +32,8 @@ router.post('/getProduction',dashboardController.getProduction);
 router.post('/addProduction',dashboardController.addProduction);
 // router.post('/updateProduction',dashboardController.updateProduction);
 // router.post('/deleteProduction',dashboardController.deleteProduction);
-
+// production Line 
+router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 
 router.post('/getTime',dashboardController.getTime);
 router.post('/addTime',dashboardController.addTime);
