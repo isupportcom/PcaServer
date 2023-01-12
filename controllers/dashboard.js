@@ -2,8 +2,7 @@ const { default: axios } = require("axios");
 const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
-const io = require('../socket');
-const e = require("express");
+const io = require("../socket");
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -434,45 +433,55 @@ exports.deletecatPost = (req, res, next) => {
  *                                                                            *
  *                                                                            *
  /******************************************************************************/
-  exports.sendProduction = (req,res,next) =>{
-    const production = req.body.production;
-    if(!production) res.status(402).json({message:"fill the required fields"});
-    else{
-      console.log(production);
-      try{
-      io.getIO().emit('production',{action:'Production',production:production});
-      res.status(200).json({message:"Production Has Been sent Successfully"})
-    }catch(err){
-      if(!err.statusCode) err.statusCode =500
+exports.sendProduction = (req, res, next) => {
+  const production = req.body.production;
+  if (!production)
+    res.status(402).json({ message: "fill the required fields" });
+  else {
+    console.log(production);
+    try {
+      io.getIO().emit("production", {
+        action: "Production",
+        production: production,
+      });
+      res
+        .status(200)
+        .json({ message: "Production Has Been sent Successfully" });
+    } catch (err) {
+      if (!err.statusCode) err.statusCode = 500;
       next(err);
     }
   }
-  }
-exports.getSingleProduction = (req,res,next) =>{
-  const findoc = req.body.findoc;
-  if(!findoc) res.status(402).json({message:"fill the required fields"});
-  else{
-    database.execute('select * from production where findoc=?',[findoc])
-    .then(async results=>{
-      res.status(200).json({
-        message:"Single Production",
-        production:{
-          findoc: results[0][0].findoc,
-          mtrl: results[0][0].mtrl,
-          ingredients: await this.getIngredients(results[0][0].mtrl),
-          category: results[0][0].catId,
-          categoryPost: await this.getCatPostData(results[0][0].catId),
-          productionLine: await this.getprodLineSteps(results[0][0].findoc),
-          time: results[0][0].time,
-        }
-      })
-    })
-    .catch(err=>{
-      if(!err.statusCode) err.statusCode =500;
-      next(err);
-    })
-  }
+};
+exports.postHasStarted =async (findoc,post) =>{
+  let update = await database.execute("update prodline set done=2 where findoc=? and post=?",[findoc,post])
 }
+exports.getSingleProduction = (req, res, next) => {
+  const findoc = req.body.findoc;
+  if (!findoc) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("select * from production where findoc=?", [findoc])
+      .then(async (results) => {
+        res.status(200).json({
+          message: "Single Production",
+          production: {
+            findoc: results[0][0].findoc,
+            mtrl: results[0][0].mtrl,
+            ingredients: await this.getIngredients(results[0][0].mtrl),
+            category: results[0][0].catId,
+            categoryPost: await this.getCatPostData(results[0][0].catId),
+            productionLine: await this.getprodLineSteps(results[0][0].findoc),
+            time: results[0][0].time,
+          },
+        });
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
 exports.addProduction = async (req, res, next) => {
   let clientID = await this.login();
   clientID = await this.authenticate(clientID);
@@ -568,6 +577,9 @@ exports.addProdLine = (req, res, next) => {
       let state;
       for (let i = 0; i < results[0].length; i++) {
         posts = await this.getCatPostData(results[0][i].catId);
+        console.log("FINDOC FOR ACTION LINES");
+        console.log(results[0][i].findoc);
+        await this.addActionLines(results[0][i].findoc);
         for (let j = 0; j < posts.length; j++) {
           if (posts[j].orderBy == 1) {
             state = 1;
@@ -596,6 +608,7 @@ exports.addProdLine = (req, res, next) => {
       next(err);
     });
 };
+
 exports.updateProdLine = (req, res, next) => {
   const prodLine = req.body.prodLine;
   /*
@@ -618,20 +631,22 @@ exports.updateProdLine = (req, res, next) => {
         prodLine.post,
       ])
       .then((results) => {
-            if(prodLine.done == 4 || prodLine.done == 3){
-                database.execute('update machinetime set end=? where post=? and date=?',[
-                    prodLine.end,prodLine.post,prodLine.date
-                ])
-            }
-            this.getProduction(req,res,next)
-          })
-          .catch((err) => {
-            if (!err.statusCode) err.statusCode = 500;
-            next(err);
-          });
-      }
-     
-  
+        if (prodLine.done == 4 || prodLine.done == 3) {
+          if(prodLine.done == 4){
+            this.updateActionLine(prodLine.findoc,prodLine.post);
+          }
+          database.execute(
+            "update machinetime set end=? where post=? and date=?",
+            [prodLine.end, prodLine.post, prodLine.date]
+          );
+        }
+        this.getProduction(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
 };
 
 exports.getProduction = (req, res, next) => {
@@ -707,7 +722,7 @@ exports.addTime = (req, res, next) => {
         date : ,
     }
   */
-  if (!postsTime) res.start(402).json({ message: "fill the requierd fields" });
+  if (!postsTime) res.status(402).json({ message: "fill the requierd fields" });
   else {
     console.log(postsTime);
     database
@@ -722,8 +737,9 @@ exports.addTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
+        this.postHasStarted(postsTime.findoc,postsTime.post)
         console.log(results[0]);
-        if (
+         if (
           (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
         ) {
           await this.addMachineTime(
@@ -740,6 +756,7 @@ exports.addTime = (req, res, next) => {
       });
   }
 };
+
 exports.updateTime = (req, res, next) => {
   const endTimer = req.body.endTimer;
   /*
@@ -768,6 +785,7 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
+
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1276,5 +1294,48 @@ exports.machineHasStarted = async (post, date) => {
     return true;
   } else {
     return false;
+  }
+};
+exports.addActionLines = async (findoc) => {
+  console.log("FINDOC IN ACTION LINE");
+  console.log(findoc);
+  let post = await database.execute(
+    "select post from prodline where findoc=?",
+    [findoc]
+  );
+  console.log("POST");
+  console.log(post[0]);
+  for (let i = 0; i < post[0].length; i++) {
+    let postData = await this.postData(post[0][i].post);
+    console.log("POST DATA");
+    console.log(postData);
+    for (let j = 0; j < postData.actions.length; j++) {
+      if ((await this.actionLineExists(findoc,post[0][i].post,postData.actions[j].actions)) != true) {
+        let insert = await database.execute(
+          "insert into actionlines(findoc,post,action) VALUES(?,?,?)",
+          [findoc, post[0][i].post, postData.actions[j].actions]
+        );
+      }
+    }
+  }
+};
+exports.updateActionLine =async (findoc,post) =>{
+  let update = await database.execute("update actionlines set state=4 where findoc=?,post=?",[
+    findoc,post
+  ])
+}
+exports.actionLineExists = async (findoc, action, post) => {
+  let find = await database.execute(
+    "select * from actionlines where findoc=? and post=? and action=?",
+    [findoc, action, post]
+  );
+  try {
+    if(find[0].length > 0 ){
+      return true;
+    }else{
+      return false;
+    }
+  } catch (err) {
+    throw err;
   }
 };

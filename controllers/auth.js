@@ -58,11 +58,12 @@ exports.login = (req, res, next) => {
     }
 };
 
-exports.userLogin =(req,res,next) =>{
+exports.userLogin =async (req,res,next) =>{
     if (!req.body.password) {
         res.status(422).json({ message: "Fill The Required Fields" });
     } else {
         let password = req.body.password;
+        if(await this.userIsAlreadyLoggedIn(password) != true){
         if (password.length < 1) {
             res
                 .status(422)
@@ -113,9 +114,20 @@ exports.userLogin =(req,res,next) =>{
                     next(err);
                 });
         }
+    }else{
+        res.status(406).json({message:"User Already Logged in"});
+    }
     }
 }
-
+exports.userIsAlreadyLoggedIn =async (password) =>{
+    let find = await database.execute('select id from users where password=?',[password]);
+    let userLoggedIn = await database.execute('select end from time where user=?',[find[0][0].id])
+    if(userLoggedIn[0][0].end == 0){
+        return true;
+    }else{
+        return false;
+    }
+}
 exports.adminLogin = (req,res,next) =>{
     if (!req.body.password || !req.body.name) {
         res.status(422).json({ message: "Fill The Required Fields" });
