@@ -448,7 +448,31 @@ exports.deletecatPost = (req, res, next) => {
     }
   }
   }
-
+exports.getSingleProduction = (req,res,next) =>{
+  const findoc = req.body.findoc;
+  if(!findoc) res.status(402).json({message:"fill the required fields"});
+  else{
+    database.execute('select * from production where findoc=?',[findoc])
+    .then(async results=>{
+      res.status(200).json({
+        message:"Single Production",
+        production:{
+          findoc: results[0][0].findoc,
+          mtrl: results[0][0].mtrl,
+          ingredients: await this.getIngredients(results[0][0].mtrl),
+          category: results[0][0].catId,
+          categoryPost: await this.getCatPostData(results[0][0].catId),
+          productionLine: await this.getprodLineSteps(results[0][0].findoc),
+          time: results[0][0].time,
+        }
+      })
+    })
+    .catch(err=>{
+      if(!err.statusCode) err.statusCode =500;
+      next(err);
+    })
+  }
+}
 exports.addProduction = async (req, res, next) => {
   let clientID = await this.login();
   clientID = await this.authenticate(clientID);
