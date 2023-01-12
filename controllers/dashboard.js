@@ -413,11 +413,21 @@ exports.deletecatPost = (req, res, next) => {
   const catPost = req.body.catPost;
   if (!catPost) res.status(402).json({ message: "fill the required fields" });
   else {
-    database
-      .execute("delete from catpost where catPost=?", [catPost])
-      .then((deleteRes) => {
-        this.getcatPost(req, res, next);
+    database.execute('select * from catpost where catPost=?',[catPost])
+    .then(results=>{
+      database.execute('select * from catpost where orderBy > ? and postId=?',[results[0][0].orderBy,results[0][0].postId])
+      .then(async orderBy =>{
+          for(let i=0; i<orderBy[0].length; i++){
+            let update = await database.execute('update catpost set orderBy=? where catPost=?',[orderBy[0][i].orderBy-1,orderBy[0][i].catPost]);
+          }
+          database
+          .execute("delete from catpost where catPost=?", [catPost])
+          .then((deleteRes) => {
+            this.getcatPost(req, res, next);
+          })
       })
+    })
+    
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);

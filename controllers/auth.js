@@ -100,7 +100,7 @@ exports.userLogin = (req,res,next) =>{
                             });
                             console.log(token);
                          }else{
-                            res.status(406).json({message:"User Already Loged In"});
+                            res.status(406).json({message:"User Already Logged In"});
                          }
                           // CORRECT PASSWORD SO GIVE TOKEN
                         } else {
@@ -124,7 +124,7 @@ exports.userIsAlreadyLoggedIn =async (password) =>{
     let find = await database.execute('select id from users where password=?',[password]);
     let userLoggedIn = await database.execute('select end from time where user=?',[find[0][0].id])
     if(userLoggedIn[0].length > 0){
-        if(userLoggedIn[0][0].end == 0){
+        if(userLoggedIn[0][0].end == "0"){
             return true;
         }else{
             return false;
