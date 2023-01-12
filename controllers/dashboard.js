@@ -3,6 +3,7 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require('../socket');
+const e = require("express");
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -433,6 +434,20 @@ exports.deletecatPost = (req, res, next) => {
  *                                                                            *
  *                                                                            *
  /******************************************************************************/
+  exports.sendProduction = (req,res,next) =>{
+    const production = req.body.production;
+    if(!production) res.status(402).json({message:"fill the required fields"});
+    else{
+      console.log(production);
+      try{
+      io.getIO().emit('production',{action:'Production',production:production});
+      res.status(200).json({message:"Production Has Been sent Successfully"})
+    }catch(err){
+      if(!err.statusCode) err.statusCode =500
+      next(err);
+    }
+  }
+  }
 
 exports.addProduction = async (req, res, next) => {
   let clientID = await this.login();

@@ -30,6 +30,7 @@ router.post('/deletecatPost',dashboardController.deletecatPost);
 //production
 router.post('/getProduction',dashboardController.getProduction);
 router.post('/addProduction',dashboardController.addProduction);
+router.post('/sendProduction',dashboardController.sendProduction);
 // router.post('/updateProduction',dashboardController.updateProduction);
 // router.post('/deleteProduction',dashboardController.deleteProduction);
 // production Line 
