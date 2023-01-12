@@ -58,12 +58,11 @@ exports.login = (req, res, next) => {
     }
 };
 
-exports.userLogin =async (req,res,next) =>{
+exports.userLogin = (req,res,next) =>{
     if (!req.body.password) {
         res.status(422).json({ message: "Fill The Required Fields" });
     } else {
         let password = req.body.password;
-        if(await this.userIsAlreadyLoggedIn(password) != true){
         if (password.length < 1) {
             res
                 .status(422)
@@ -72,10 +71,10 @@ exports.userLogin =async (req,res,next) =>{
             // the user is able to perform login action
             database
                 .execute('select * from users where password=?',[password])
-                .then((results) => {
+                .then(async(results) => {
                     let checkPassword = false;
                     if (results[0].length != 0) {
-                        if (results[0][0].password == password) {
+                        if (results[0][0].password == password && await this.userIsAlreadyLoggedIn(password != true)) {
                             checkPassword = true;
                         } else {
                             checkPassword = false;
@@ -114,11 +113,9 @@ exports.userLogin =async (req,res,next) =>{
                     next(err);
                 });
         }
-    }else{
-        res.status(406).json({message:"User Already Logged in"});
     }
     }
-}
+
 exports.userIsAlreadyLoggedIn =async (password) =>{
     let find = await database.execute('select id from users where password=?',[password]);
     let userLoggedIn = await database.execute('select end from time where user=?',[find[0][0].id])
