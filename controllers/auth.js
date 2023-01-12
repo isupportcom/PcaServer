@@ -74,7 +74,7 @@ exports.userLogin = (req,res,next) =>{
                 .then(async(results) => {
                     let checkPassword = false;
                     if (results[0].length != 0) {
-                        if (results[0][0].password == password && await this.userIsAlreadyLoggedIn(password != true)) {
+                        if (results[0][0].password == password && await this.userIsAlreadyLoggedIn(password  )!=true) {
                             checkPassword = true;
                         } else {
                             checkPassword = false;
