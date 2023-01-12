@@ -74,12 +74,13 @@ exports.userLogin = (req,res,next) =>{
                 .then(async(results) => {
                     let checkPassword = false;
                     if (results[0].length != 0) {
-                        if (results[0][0].password == password && await this.userIsAlreadyLoggedIn(password  )!=true) {
+                        if (results[0][0].password == password) {
                             checkPassword = true;
                         } else {
                             checkPassword = false;
                         }
                         if (checkPassword) {
+                            if(await this.userIsAlreadyLoggedIn(password)!=true){
                             const token = jwt.sign(
                                 {
                                     name: results[0][0].fname,
@@ -98,7 +99,10 @@ exports.userLogin = (req,res,next) =>{
                                 id:results[0][0].id,
                             });
                             console.log(token);
-                            // CORRECT PASSWORD SO GIVE TOKEN
+                         }else{
+                            res.status(406).json({message:"User Already Loged In"});
+                         }
+                          // CORRECT PASSWORD SO GIVE TOKEN
                         } else {
                             res.status(422).json({ message: "Wrong Password" });
                         }
