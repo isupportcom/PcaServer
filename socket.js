@@ -7,8 +7,9 @@ module.exports = {
         origin: "https://192.168.1.101:4200",
         methods: ["GET", "POST"],
       },
+      
     });
-    io.set('transport',['websocket']);
+   
     return io;
   },
   getIO: () => {
