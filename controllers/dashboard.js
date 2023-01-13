@@ -475,7 +475,6 @@ exports.getSingleProduction = (req, res, next) => {
       .execute("select * from production where findoc=?", [findoc])
       .then(async (results) => {
         console.log("POSTS");
-        console.log(posts);
         res.status(200).json({
           message: "Single Production",
           production: {
@@ -696,16 +695,18 @@ exports.updateActionLines = (req,res,next)=>{
       findoc:
       post:
       action:
+      state
     }
 
   */
   if(!actionLine)
     res.status(402).json({message:"fill the required fields"});
   else{
-    database.execute('update actionlines set state=1 where findoc=? and post=? and action=?',[
-      actionLine.findoc,actionLine.post,actionLine.action
+    database.execute('update actionlines set state=? where findoc=? and post=? and action=?',[
+      actionLine.state,actionLine.findoc,actionLine.post,actionLine.action
     ]).then(results=>{
       req.body.findoc = actionLine.findoc;
+      req.body.post = actionLine.post;
       console.log(req.body.findoc);
       this.getSingleProduction(req,res,next);
     }).catch(err=>{
