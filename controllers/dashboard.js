@@ -686,7 +686,7 @@ exports.updateProdLine = (req, res, next) => {
     prodLine ={
         findoc:
         post:
-        state:
+        done:
         end : 
         date :
         totalTime :
@@ -701,9 +701,11 @@ exports.updateProdLine = (req, res, next) => {
         prodLine.findoc,
         prodLine.post,
       ])
-      .then((results) => {
+      .then(async(results) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
           if (prodLine.done == 4) {
+            console.log("PROLINE.DONE == 4")
+            await this.setNextUp(prodLine.findoc,prodLine.post);
             this.updateActionLine(prodLine.findoc, prodLine.post);
           }
           database.execute(
@@ -719,7 +721,25 @@ exports.updateProdLine = (req, res, next) => {
       });
   }
 };
-
+exports.setNextUp =async(findoc,post)=>{
+  let currentOrder = await database.execute('select orderBy from prodline where findoc=? and post=?',[
+    findoc,post
+  ])
+  try{
+    let nextUp = await database.execute('select * from prodline where findoc=? and orderBy=?',[
+      findoc,+currentOrder[0][0].orderBy+1
+    ])
+    if(nextUp[0].length > 0){
+      console.log("NEXT UP");
+      console.log(nextUp[0][0]);
+      let update = await database.execute('update prodline set done=2 where findoc=? and post=?',[
+        findoc,nextUp[0][0].post
+      ])
+    }
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
 exports.getProduction = (req, res, next) => {
   database
     .execute("select * from production")
@@ -1460,7 +1480,7 @@ exports.addActionLines = async (findoc) => {
 };
 exports.updateActionLine = async (findoc, post) => {
   let update = await database.execute(
-    "update actionlines set state=4 where findoc=?,post=?",
+    "update actionlines set state=4 where findoc=? and post=?",
     [findoc, post]
   );
 };
