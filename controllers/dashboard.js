@@ -413,21 +413,29 @@ exports.deletecatPost = (req, res, next) => {
   const catPost = req.body.catPost;
   if (!catPost) res.status(402).json({ message: "fill the required fields" });
   else {
-    database.execute('select * from catpost where catPost=?',[catPost])
-    .then(results=>{
-      database.execute('select * from catpost where orderBy > ? and postId=?',[results[0][0].orderBy,results[0][0].postId])
-      .then(async orderBy =>{
-          for(let i=0; i<orderBy[0].length; i++){
-            let update = await database.execute('update catpost set orderBy=? where catPost=?',[orderBy[0][i].orderBy-1,orderBy[0][i].catPost]);
-          }
-          database
-          .execute("delete from catpost where catPost=?", [catPost])
-          .then((deleteRes) => {
-            this.getcatPost(req, res, next);
-          })
+    database
+      .execute("select * from catpost where catPost=?", [catPost])
+      .then((results) => {
+        database
+          .execute("select * from catpost where orderBy > ? and postId=?", [
+            results[0][0].orderBy,
+            results[0][0].postId,
+          ])
+          .then(async (orderBy) => {
+            for (let i = 0; i < orderBy[0].length; i++) {
+              let update = await database.execute(
+                "update catpost set orderBy=? where catPost=?",
+                [orderBy[0][i].orderBy - 1, orderBy[0][i].catPost]
+              );
+            }
+            database
+              .execute("delete from catpost where catPost=?", [catPost])
+              .then((deleteRes) => {
+                this.getcatPost(req, res, next);
+              });
+          });
       })
-    })
-    
+
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
@@ -463,13 +471,17 @@ exports.sendProduction = (req, res, next) => {
     }
   }
 };
-exports.postHasStarted =async (findoc,post) =>{
-  let update = await database.execute("update prodline set done=2 where findoc=? and post=?",[findoc,post])
-}
+exports.postHasStarted = async (findoc, post) => {
+  let update = await database.execute(
+    "update prodline set done=2 where findoc=? and post=?",
+    [findoc, post]
+  );
+};
 exports.getSingleProduction = (req, res, next) => {
   const findoc = req.body.findoc;
   const post = req.body.post;
-  if (!findoc || !post) res.status(402).json({ message: "fill the required fields" });
+  if (!findoc || !post)
+    {res.status(402).json({ message: "fill the required fields" });}
   else {
     database
       .execute("select * from production where findoc=?", [findoc])
@@ -483,9 +495,9 @@ exports.getSingleProduction = (req, res, next) => {
             ingredients: await this.getIngredients(results[0][0].mtrl),
             category: results[0][0].catId,
             categoryPost: await this.getCatPostData(results[0][0].catId),
-            productionLine:await this.getprodLineSteps(results[0][0].findoc),
+            productionLine: await this.getprodLineSteps(results[0][0].findoc),
             time: results[0][0].time,
-            actionLines : await this.getActionLines(results[0][0].findoc,post)
+            actionLines: await this.getActionLines(results[0][0].findoc, post),
           },
         });
       })
@@ -645,8 +657,8 @@ exports.updateProdLine = (req, res, next) => {
       ])
       .then((results) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
-          if(prodLine.done == 4){
-            this.updateActionLine(prodLine.findoc,prodLine.post);
+          if (prodLine.done == 4) {
+            this.updateActionLine(prodLine.findoc, prodLine.post);
           }
           database.execute(
             "update machinetime set end=? where post=? and date=?",
@@ -688,56 +700,69 @@ exports.getProduction = (req, res, next) => {
       next(err);
     });
 };
-exports.updateActionLines = (req,res,next)=>{
+exports.updateActionLines = async (req, res, next) => {
   const actionLine = req.body.actionLine;
   /*
-    actionLine ={
+    actionLine =[{
       findoc:
       post:
       action:
       state
-    }
+    }]
 
   */
-  if(!actionLine)
-    res.status(402).json({message:"fill the required fields"});
-  else{
-    database.execute('update actionlines set state=? where findoc=? and post=? and action=?',[
-      actionLine.state,actionLine.findoc,actionLine.post,actionLine.action
-    ]).then(results=>{
-      req.body.findoc = actionLine.findoc;
-      req.body.post = actionLine.post;
-      console.log(req.body.findoc);
-      this.getSingleProduction(req,res,next);
-    }).catch(err=>{
-      if(!err.statusCode) err.statusCode=500;
-      next(err);
-    })
+  if (!actionLine)
+    {res.status(402).json({ message: "fill the required fields" });}
+  else {
+    for (let i = 0; i < actionLine.length; i++) {
+      try {
+        let update = await database.execute(
+          "update actionlines set state=? where findoc=? and post=? and action=?",
+          [
+            actionLine[i].state,
+            actionLine[i].findoc,
+            actionLine[i].post,
+            actionLine[i].action,
+          ]
+        );
+        
+      } catch (err) {
+        if (!err.statusCode) err.statusCode = 500;
+        throw err;
+      }
+    }
+    req.body.findoc = actionLine[0].findoc;
+        req.body.post = actionLine[0].post;
+        console.log("HELLo")
+        console.log(req.body.findoc);
+        console.log(req.body.post);
+        this.getSingleProduction(req, res, next);
   }
-}
-exports.getActionLines =async (findoc,post) =>{
-
-  let actionLine = await database.execute('select * from actionlines where findoc=? and post=?',[findoc,post]);
-  let returnActionLine =[];
-  for(let i=0; i <actionLine[0].length; i++){
+};
+exports.getActionLines = async (findoc, post) => {
+  let actionLine = await database.execute(
+    "select * from actionlines where findoc=? and post=?",
+    [findoc, post]
+  );
+  let returnActionLine = [];
+  for (let i = 0; i < actionLine[0].length; i++) {
     returnActionLine[i] = {
       findoc: findoc,
       post: post,
-      name : await this.getActionName(actionLine[0][i].action),
-      action : actionLine[0][i].action,
-      state : this.getActionLineState(actionLine[0][i].state)
-    }
+      name: await this.getActionName(actionLine[0][i].action),
+      action: actionLine[0][i].action,
+      state: this.getActionLineState(actionLine[0][i].state),
+    };
   }
   return returnActionLine;
-
-}
-exports.getActionLineState = (state) =>{
-  if(state == "0" || state == 0){
-    return "PENDING"
-  }else{
-    return "RUNNING"
+};
+exports.getActionLineState = (state) => {
+  if (state == "0" || state == 0) {
+    return "PENDING";
+  } else {
+    return "RUNNING";
   }
-}
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -799,9 +824,9 @@ exports.addTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        this.postHasStarted(postsTime.findoc,postsTime.post)
+        this.postHasStarted(postsTime.findoc, postsTime.post);
         console.log(results[0]);
-         if (
+        if (
           (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
         ) {
           await this.addMachineTime(
@@ -848,7 +873,6 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1373,7 +1397,13 @@ exports.addActionLines = async (findoc) => {
     console.log("POST DATA");
     console.log(postData);
     for (let j = 0; j < postData.actions.length; j++) {
-      if ((await this.actionLineExists(findoc,post[0][i].post,postData.actions[j].actions)) != true) {
+      if (
+        (await this.actionLineExists(
+          findoc,
+          post[0][i].post,
+          postData.actions[j].actions
+        )) != true
+      ) {
         let insert = await database.execute(
           "insert into actionlines(findoc,post,action) VALUES(?,?,?)",
           [findoc, post[0][i].post, postData.actions[j].actions]
@@ -1382,20 +1412,21 @@ exports.addActionLines = async (findoc) => {
     }
   }
 };
-exports.updateActionLine =async (findoc,post) =>{
-  let update = await database.execute("update actionlines set state=4 where findoc=?,post=?",[
-    findoc,post
-  ])
-}
+exports.updateActionLine = async (findoc, post) => {
+  let update = await database.execute(
+    "update actionlines set state=4 where findoc=?,post=?",
+    [findoc, post]
+  );
+};
 exports.actionLineExists = async (findoc, action, post) => {
   let find = await database.execute(
     "select * from actionlines where findoc=? and post=? and action=?",
     [findoc, action, post]
   );
   try {
-    if(find[0].length > 0 ){
+    if (find[0].length > 0) {
       return true;
-    }else{
+    } else {
       return false;
     }
   } catch (err) {
