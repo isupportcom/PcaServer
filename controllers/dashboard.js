@@ -405,6 +405,7 @@ exports.updatecatPost = async (req, res, next) => {
         next(err);
       }
     }
+    this.orderByOnProdLine(category);
     this.getcatPost(req, res, next);
   }
 };
@@ -416,16 +417,20 @@ exports.deletecatPost = (req, res, next) => {
     database
       .execute("select * from catpost where catPost=?", [catPost])
       .then((results) => {
+        console.log("RESULTS");
+        console.log(results[0]);
         database
-          .execute("select * from catpost where orderBy > ? and postId=?", [
+          .execute("select * from catpost where orderBy > ? and catId=?", [
             results[0][0].orderBy,
-            results[0][0].postId,
+            results[0][0].catId
           ])
           .then(async (orderBy) => {
+            console.log("ORDERBY");
+            console.log(orderBy[0])
             for (let i = 0; i < orderBy[0].length; i++) {
               let update = await database.execute(
                 "update catpost set orderBy=? where catPost=?",
-                [orderBy[0][i].orderBy - 1, orderBy[0][i].catPost]
+                [+orderBy[0][i].orderBy - 1, orderBy[0][i].catPost]
               );
             }
             database
@@ -633,7 +638,41 @@ exports.addProdLine = (req, res, next) => {
       next(err);
     });
 };
-
+exports.getAndUpdateOrderby =async (data,category)=>{
+  console.log("DATA")
+  console.log(data);
+  console.log("CATEGORY")
+  console.log(category)
+  for(let i =0; i < category.categoryPost.length; i++){
+    console.log(category.categoryPost[i])
+    let update = await database
+      .execute(
+        'update prodline set orderBy=? where post=? and findoc=?',
+      [
+        category.categoryPost[i].orderBy,category.categoryPost[i].post,data
+      ]
+      )
+  }
+}
+exports.orderByOnProdLine =async (category) =>{
+  let catId = await database.execute('select catId from catpost where catPost=?',[category.categoryPost[0].catPost])
+  try{  
+    database.execute('select findoc from production where catId=?',[catId[0][0].catId])
+      .then(async results=>{
+          for(let i=0; i<results[0].length; i++){
+            console.log("RESULTS");
+            console.log(results[0][i]);
+            await this.getAndUpdateOrderby(results[0][i].findoc,category);
+          }
+          console.log("DONE");
+      }).catch(err=>{
+        if(!err.statusCode) err.statusCode =500;
+        throw new Error(err.message)
+      })
+  }catch(err){
+    throw err;
+  }
+}
 exports.updateProdLine = (req, res, next) => {
   const prodLine = req.body.prodLine;
   /*
