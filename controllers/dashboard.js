@@ -645,11 +645,18 @@ exports.getAndUpdateOrderby =async (data,category)=>{
   console.log(category)
   for(let i =0; i < category.categoryPost.length; i++){
     console.log(category.categoryPost[i])
+    let state; 
+    if(category.categoryPost[i].orderBy == 1){
+      state=2;
+    }else{
+      state=0;
+    }
+
     let update = await database
       .execute(
-        'update prodline set orderBy=? where post=? and findoc=?',
+        'update prodline set orderBy=?,state=? where post=? and findoc=?',
       [
-        category.categoryPost[i].orderBy,category.categoryPost[i].post,data
+        category.categoryPost[i].orderBy,state,category.categoryPost[i].post,data
       ]
       )
   }
