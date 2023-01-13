@@ -654,7 +654,7 @@ exports.getAndUpdateOrderby =async (data,category)=>{
 
     let update = await database
       .execute(
-        'update prodline set orderBy=?,state=? where post=? and findoc=?',
+        'update prodline set orderBy=?,done=? where post=? and findoc=?',
       [
         category.categoryPost[i].orderBy,state,category.categoryPost[i].post,data
       ]
