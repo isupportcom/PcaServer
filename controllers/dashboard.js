@@ -784,10 +784,11 @@ exports.updateTime = (req, res, next) => {
   else {
     database
       .execute(
-        "update time set end=?,totalTime=? where findoc=? and date=? and user=? and post=?",
+        "update time set end=?,totalTime=? where end=? and findoc=? and date=? and user=? and post=?",
         [
           endTimer.end,
           endTimer.totalTime,
+          0,
           endTimer.findoc,
           endTimer.date,
           endTimer.user,
