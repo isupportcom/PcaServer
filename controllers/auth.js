@@ -122,8 +122,11 @@ exports.userLogin = (req,res,next) =>{
 
 exports.userIsAlreadyLoggedIn =async (password) =>{
     let find = await database.execute('select id from users where password=?',[password]);
-    let userLoggedIn = await database.execute('select end from time where user=?',[find[0][0].id])
+    let userLoggedIn = await database.execute('select end from time where user=? and totalTime=?',[find[0][0].id,"0"])
     if(userLoggedIn[0].length > 0){
+        console.log(userLoggedIn[0].length)
+        console.log(userLoggedIn[0][0].end == "0");
+        console.log(userLoggedIn[0][0].end)
         if(userLoggedIn[0][0].end == "0"){
             return true;
         }else{
