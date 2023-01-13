@@ -40,7 +40,8 @@ router.post('/updateProductionLine',dashboardController.updateProdLine);
 router.post('/getTime',dashboardController.getTime);
 router.post('/addTime',dashboardController.addTime);
 router.post('/updateTime',dashboardController.updateTime);
-
+//action line
+router.post('/updateActionLines',dashboardController.updateActionLines)
 //machinetime 
 router.post('/getMachineTime',dashboardController.getMachineTime);
 

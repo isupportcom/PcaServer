@@ -473,6 +473,9 @@ exports.getSingleProduction = (req, res, next) => {
     database
       .execute("select * from production where findoc=?", [findoc])
       .then(async (results) => {
+        let posts = await this.getprodLineSteps(results[0][0].findoc)
+        console.log("POSTS");
+        console.log(posts);
         res.status(200).json({
           message: "Single Production",
           production: {
@@ -481,8 +484,9 @@ exports.getSingleProduction = (req, res, next) => {
             ingredients: await this.getIngredients(results[0][0].mtrl),
             category: results[0][0].catId,
             categoryPost: await this.getCatPostData(results[0][0].catId),
-            productionLine: await this.getprodLineSteps(results[0][0].findoc),
+            productionLine: posts,
             time: results[0][0].time,
+            actionLines : await this.getActionLines(results[0][0].findoc,posts[0].post.post)
           },
         });
       })
@@ -685,7 +689,54 @@ exports.getProduction = (req, res, next) => {
       next(err);
     });
 };
+exports.updateActionLines = (req,res,next)=>{
+  const actionLine = req.body.actionLine;
+  /*
+    actionLine ={
+      findoc:
+      post:
+      action:
+    }
 
+  */
+  if(!actionLine)
+    res.status(402).json({message:"fill the required fields"});
+  else{
+    database.execute('update actionlines set state=1 where findoc=? and post=? and action=?',[
+      actionLine.findoc,actionLine.post,actionLine.action
+    ]).then(results=>{
+      req.body.findoc = actionLine.findoc;
+      console.log(req.body.findoc);
+      this.getSingleProduction(req,res,next);
+    }).catch(err=>{
+      if(!err.statusCode) err.statusCode=500;
+      next(err);
+    })
+  }
+}
+exports.getActionLines =async (findoc,post) =>{
+
+  let actionLine = await database.execute('select * from actionlines where findoc=? and post=?',[findoc,post]);
+  let returnActionLine =[];
+  for(let i=0; i <actionLine[0].length; i++){
+    returnActionLine[i] = {
+      findoc: findoc,
+      post: post,
+      name : await this.getActionName(actionLine[0][i].action),
+      action : actionLine[0][i].action,
+      state : this.getActionLineState(actionLine[0][i].state)
+    }
+  }
+  return returnActionLine;
+
+}
+exports.getActionLineState = (state) =>{
+  if(state == "0" || state == 0){
+    return "PENDING"
+  }else{
+    return "RUNNING"
+  }
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
