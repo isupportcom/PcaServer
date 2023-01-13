@@ -760,7 +760,7 @@ exports.getActionLineState = (state) => {
   if (state == "0" || state == 0) {
     return "PENDING";
   } else {
-    return "RUNNING";
+    return "DONE";
   }
 };
 /******************************************************************************                                                   
