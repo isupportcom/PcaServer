@@ -468,12 +468,12 @@ exports.postHasStarted =async (findoc,post) =>{
 }
 exports.getSingleProduction = (req, res, next) => {
   const findoc = req.body.findoc;
-  if (!findoc) res.status(402).json({ message: "fill the required fields" });
+  const post = req.body.post;
+  if (!findoc || !post) res.status(402).json({ message: "fill the required fields" });
   else {
     database
       .execute("select * from production where findoc=?", [findoc])
       .then(async (results) => {
-        let posts = await this.getprodLineSteps(results[0][0].findoc)
         console.log("POSTS");
         console.log(posts);
         res.status(200).json({
@@ -484,9 +484,9 @@ exports.getSingleProduction = (req, res, next) => {
             ingredients: await this.getIngredients(results[0][0].mtrl),
             category: results[0][0].catId,
             categoryPost: await this.getCatPostData(results[0][0].catId),
-            productionLine: posts,
+            productionLine:await this.getprodLineSteps(results[0][0].findoc),
             time: results[0][0].time,
-            actionLines : await this.getActionLines(results[0][0].findoc,posts[0].post.post)
+            actionLines : await this.getActionLines(results[0][0].findoc,post)
           },
         });
       })
