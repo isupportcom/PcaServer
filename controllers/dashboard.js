@@ -788,7 +788,7 @@ exports.updateTime = (req, res, next) => {
         [
           endTimer.end,
           endTimer.totalTime,
-          0,
+          "0",
           endTimer.findoc,
           endTimer.date,
           endTimer.user,
