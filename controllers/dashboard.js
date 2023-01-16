@@ -3,6 +3,7 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
+
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -422,11 +423,11 @@ exports.deletecatPost = (req, res, next) => {
         database
           .execute("select * from catpost where orderBy > ? and catId=?", [
             results[0][0].orderBy,
-            results[0][0].catId
+            results[0][0].catId,
           ])
           .then(async (orderBy) => {
             console.log("ORDERBY");
-            console.log(orderBy[0])
+            console.log(orderBy[0]);
             for (let i = 0; i < orderBy[0].length; i++) {
               let update = await database.execute(
                 "update catpost set orderBy=? where catPost=?",
@@ -485,9 +486,9 @@ exports.postHasStarted = async (findoc, post) => {
 exports.getSingleProduction = (req, res, next) => {
   const findoc = req.body.findoc;
   const post = req.body.post;
-  if (!findoc || !post)
-    {res.status(402).json({ message: "fill the required fields" });}
-  else {
+  if (!findoc || !post) {
+    res.status(402).json({ message: "fill the required fields" });
+  } else {
     database
       .execute("select * from production where findoc=?", [findoc])
       .then(async (results) => {
@@ -638,48 +639,57 @@ exports.addProdLine = (req, res, next) => {
       next(err);
     });
 };
-exports.getAndUpdateOrderby =async (data,category)=>{
-  console.log("DATA")
+exports.getAndUpdateOrderby = async (data, category) => {
+  console.log("DATA");
   console.log(data);
-  console.log("CATEGORY")
-  console.log(category)
-  for(let i =0; i < category.categoryPost.length; i++){
-    console.log(category.categoryPost[i])
-    let state; 
-    if(category.categoryPost[i].orderBy == 1){
-      state=2;
-    }else{
-      state=0;
+  console.log("CATEGORY");
+  console.log(category);
+  for (let i = 0; i < category.categoryPost.length; i++) {
+    console.log(category.categoryPost[i]);
+    let state;
+    if (category.categoryPost[i].orderBy == 1) {
+      state = 2;
+    } else {
+      state = 0;
     }
 
-    let update = await database
-      .execute(
-        'update prodline set orderBy=?,done=? where post=? and findoc=?',
+    let update = await database.execute(
+      "update prodline set orderBy=?,done=? where post=? and findoc=?",
       [
-        category.categoryPost[i].orderBy,state,category.categoryPost[i].post,data
+        category.categoryPost[i].orderBy,
+        state,
+        category.categoryPost[i].post,
+        data,
       ]
-      )
+    );
   }
-}
-exports.orderByOnProdLine =async (category) =>{
-  let catId = await database.execute('select catId from catpost where catPost=?',[category.categoryPost[0].catPost])
-  try{  
-    database.execute('select findoc from production where catId=?',[catId[0][0].catId])
-      .then(async results=>{
-          for(let i=0; i<results[0].length; i++){
-            console.log("RESULTS");
-            console.log(results[0][i]);
-            await this.getAndUpdateOrderby(results[0][i].findoc,category);
-          }
-          console.log("DONE");
-      }).catch(err=>{
-        if(!err.statusCode) err.statusCode =500;
-        throw new Error(err.message)
+};
+exports.orderByOnProdLine = async (category) => {
+  let catId = await database.execute(
+    "select catId from catpost where catPost=?",
+    [category.categoryPost[0].catPost]
+  );
+  try {
+    database
+      .execute("select findoc from production where catId=?", [
+        catId[0][0].catId,
+      ])
+      .then(async (results) => {
+        for (let i = 0; i < results[0].length; i++) {
+          console.log("RESULTS");
+          console.log(results[0][i]);
+          await this.getAndUpdateOrderby(results[0][i].findoc, category);
+        }
+        console.log("DONE");
       })
-  }catch(err){
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        throw new Error(err.message);
+      });
+  } catch (err) {
     throw err;
   }
-}
+};
 exports.updateProdLine = (req, res, next) => {
   const prodLine = req.body.prodLine;
   /*
@@ -701,11 +711,11 @@ exports.updateProdLine = (req, res, next) => {
         prodLine.findoc,
         prodLine.post,
       ])
-      .then(async(results) => {
+      .then(async (results) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
           if (prodLine.done == 4) {
-            console.log("PROLINE.DONE == 4")
-            await this.setNextUp(prodLine.findoc,prodLine.post);
+            console.log("PROLINE.DONE == 4");
+            await this.setNextUp(prodLine.findoc, prodLine.post);
             this.updateActionLine(prodLine.findoc, prodLine.post);
           }
           database.execute(
@@ -721,25 +731,28 @@ exports.updateProdLine = (req, res, next) => {
       });
   }
 };
-exports.setNextUp =async(findoc,post)=>{
-  let currentOrder = await database.execute('select orderBy from prodline where findoc=? and post=?',[
-    findoc,post
-  ])
-  try{
-    let nextUp = await database.execute('select * from prodline where findoc=? and orderBy=?',[
-      findoc,+currentOrder[0][0].orderBy+1
-    ])
-    if(nextUp[0].length > 0){
+exports.setNextUp = async (findoc, post) => {
+  let currentOrder = await database.execute(
+    "select orderBy from prodline where findoc=? and post=?",
+    [findoc, post]
+  );
+  try {
+    let nextUp = await database.execute(
+      "select * from prodline where findoc=? and orderBy=?",
+      [findoc, +currentOrder[0][0].orderBy + 1]
+    );
+    if (nextUp[0].length > 0) {
       console.log("NEXT UP");
       console.log(nextUp[0][0]);
-      let update = await database.execute('update prodline set done=2 where findoc=? and post=?',[
-        findoc,nextUp[0][0].post
-      ])
+      let update = await database.execute(
+        "update prodline set done=2 where findoc=? and post=?",
+        [findoc, nextUp[0][0].post]
+      );
     }
-  }catch(err){
+  } catch (err) {
     throw new Error(err.message);
   }
-}
+};
 exports.getProduction = (req, res, next) => {
   database
     .execute("select * from production")
@@ -777,9 +790,9 @@ exports.updateActionLines = async (req, res, next) => {
     }]
 
   */
-  if (!actionLine)
-    {res.status(402).json({ message: "fill the required fields" });}
-  else {
+  if (!actionLine) {
+    res.status(402).json({ message: "fill the required fields" });
+  } else {
     for (let i = 0; i < actionLine.length; i++) {
       try {
         let update = await database.execute(
@@ -791,19 +804,61 @@ exports.updateActionLines = async (req, res, next) => {
             actionLine[i].action,
           ]
         );
-        
       } catch (err) {
         if (!err.statusCode) err.statusCode = 500;
         throw err;
       }
     }
+    if (
+      (await this.allActionsOnPostAreDone(
+        actionLine[0].findoc,
+        actionLine[0].post
+      )) == true
+    ) {
+      await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
+      let done = await database
+        .execute("update prodline set done=4 where findoc=? and post=?", [
+          actionLine[0].findoc,
+          actionLine[0].post,
+        ])
+        .catch((err) => {
+          if (!err.statusCode) err.statusCode = 500;
+          next(err);
+        });
+      io.getIO().emit("done", {
+        action: "Post " + await this.findPostName(actionLine[0].post) + " has been done",
+        production: await this.getSingleProd(),
+      });
+    }
     req.body.findoc = actionLine[0].findoc;
-        req.body.post = actionLine[0].post;
-        console.log("HELLo")
-        console.log(req.body.findoc);
-        console.log(req.body.post);
-        this.getSingleProduction(req, res, next);
+    req.body.post = actionLine[0].post;
+    console.log("HELLo");
+    console.log(req.body.findoc);
+    console.log(req.body.post);
+    this.getSingleProduction(req, res, next);
   }
+};
+exports.getSingleProd = async () => {
+  let prods = await database
+    .execute("select * from production")
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+
+  console.log(prods[0]);
+  let returnProductions = [];
+  for (let i = 0; i < prods[0].length; i++) {
+    returnProductions[i] = {
+      findoc: prods[0][i].findoc,
+      mtrl: prods[0][i].mtrl,
+      ingredients: await this.getIngredients(prods[0][i].mtrl),
+      category: prods[0][i].catId,
+      categoryPost: await this.getCatPostData(prods[0][i].catId),
+      productionLine: await this.getprodLineSteps(prods[0][i].findoc),
+      time: prods[0][i].time,
+    };
+  }
+  return returnProductions;
 };
 exports.getActionLines = async (findoc, post) => {
   let actionLine = await database.execute(
@@ -827,6 +882,33 @@ exports.getActionLineState = (state) => {
     return "PENDING";
   } else {
     return "DONE";
+  }
+};
+
+exports.allActionsOnPostAreDone = async (findoc, post) => {
+  let find = await database.execute(
+    "select * from actionlines where findoc=? and post=?",
+    [findoc, post]
+  );
+  try {
+    let doneActions = [];
+    let coutDoneActions = 0;
+    for (let i = 0; i < find[0].length; i++) {
+      if (find[0][i].state == 1) {
+        doneActions[coutDoneActions] = true;
+        coutDoneActions++;
+      }
+    }
+    console.log("IF STATEMENT");
+    console.log(find[0].length);
+    console.log(doneActions.length);
+    if (find[0].length == doneActions.length) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    throw new Error(err.message);
   }
 };
 /******************************************************************************                                                   
