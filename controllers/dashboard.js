@@ -506,7 +506,7 @@ exports.pausePost = async (req, res, next) => {
    */
   if (!proLine) res.status(402).json({ message: "fill the required fields" });
   else {
-    for (let i = 0; i < prodLine.user.length; i++) {
+    for (let i = 0; i < prodLine.uses.length; i++) {
       let update = await database.execute(
         "update time set totalTime=?,end=? where user=? and date=? and findoc=? and totalTime=?",
         [
@@ -528,9 +528,41 @@ exports.pausePost = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-      req.body.findoc = prodLine.findoc;
-      req.body.post = prodLine.post;
-      this.getSingleProduction(req,res,next);
+    req.body.findoc = prodLine.findoc;
+    req.body.post = prodLine.post;
+    this.getSingleProduction(req, res, next);
+  }
+};
+exports.startPostAfterPause =async (req, res, next) => {
+  const prodLine = req.body.prodLine;
+  /*
+    prodLine ={
+      findoc
+      date 
+      start
+      users[
+        {
+          id
+        }
+      ]
+    }
+
+  */
+  if (!prodLine) res.status(402).json({ message: "fill the required fields" });
+  else {
+    for(let i=0; i< prodLine.users.length; i++){
+      let insert = await database.execute('insert into time set findoc=?,post=?,user=?,date=?,start=?',[
+        prodLine.findoc,prodLine.post,prodLine.users[i].id,prodLine.date,prodLine.start
+      ]); 
+    }
+    database.execute('update prodline set done=2 where findoc=? and post=?',[prodLine.findoc,prodLine.post])
+    .catch(err=>{
+      if(!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+    req.body.findoc = prodLine.findoc,
+    req.body.post = prodLine.post;
+    this.getSingleProduction(req,res,next);
   }
 };
 exports.sendProduction = (req, res, next) => {
