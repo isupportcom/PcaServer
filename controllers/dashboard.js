@@ -358,8 +358,8 @@ exports.pauseUser =(req,res,next) =>{
  }else{
 
  
-  database.execute('update time set totalTime=? , end=? where findoc=? and post=? and user=? and date=? and end=0 and totalTime=0',[
-      time.totalTime,time.end,time.findoc,time.post,time.user,time.date
+  database.execute('update time set totalTime=? , end=? where findoc=? and post=? and user=? and date=? and end=? and totalTime=?',[
+      time.totalTime,time.end,time.findoc,time.post,time.user,time.date,"0","0"
   ]).then(results=>{
     req.body.post = time.post;
     req.body.findoc = time.findoc;
