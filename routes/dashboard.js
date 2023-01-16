@@ -35,7 +35,7 @@ router.post('/getProduction',dashboardController.getProduction);
 router.post('/addProduction',dashboardController.addProduction);
 router.post('/sendProduction',dashboardController.sendProduction);
 router.post('/getSingleProduction',dashboardController.getSingleProduction);
-
+router.post('/pausePost',dashboardController.pausePost);
 // router.post('/updateProduction',dashboardController.updateProduction);
 // router.post('/deleteProduction',dashboardController.deleteProduction);
 // production Line 
