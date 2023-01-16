@@ -126,6 +126,36 @@ exports.deletePost = (req, res, next) => {
   }
 };
 
+exports.usersInPost = (req, res, next) => {
+  database
+    .execute("select post from post")
+    .then(async (posts) => {
+      let returnPost = [];
+      console.log(posts[0]);
+      for(let i=0;i<posts[0].length; i++){
+        console.log(posts);
+        console.log((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false);
+        if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
+          console.log("IS TRUE");
+          returnPost[i]=await this.countOfUsers(posts[0][i].post);
+        } else {
+          returnPost[i]={
+            post: post.post,
+            count: 0,
+            users: [],
+          };
+           
+        }
+        console.log(returnPost);
+      }
+      res.status(200).json({message:"Active Users",users_data:returnPost});
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
+
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -697,10 +727,8 @@ exports.updateProdLine = (req, res, next) => {
         findoc:
         post:
         done:
-        end : 
-        date :
-        totalTime :
-        user :
+        end: 
+        date:
     }
   */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
@@ -826,7 +854,10 @@ exports.updateActionLines = async (req, res, next) => {
           next(err);
         });
       io.getIO().emit("done", {
-        action: "Post " + await this.findPostName(actionLine[0].post) + " has been done",
+        action:
+          "Post " +
+          (await this.findPostName(actionLine[0].post)) +
+          " has been done",
         production: await this.getSingleProd(),
       });
     }
@@ -1579,5 +1610,54 @@ exports.actionLineExists = async (findoc, action, post) => {
     }
   } catch (err) {
     throw err;
+  }
+};
+
+//function που ελεγχει με βαση τις ενεργες κατηγοριες αν ειναι καταχωρημενα στην παραγωγη
+exports.postIsSetInCurrentOrders = async (post) => {
+  console.log("post Is Set In Current Orders");
+  let categories = await database.execute(
+    "select DISTINCT catId from production"
+  );
+  let found = false;
+  for(let i=0; i< categories[0].length; i++){
+    let find = await database.execute(
+      "select DISTINCT postId from catpost where postId=?",
+      [post]
+    );
+    console.log(find[0]);
+    console.log(find[0].length);
+    console.log(find[0].length > 0);
+    console.log("INSIDE LOOP")
+    if (find[0].length > 0) {
+     return true;
+    }
+  }
+  console.log("AFTER LOOP");
+  console.log(found);
+  if (found) {
+    return found;
+  } else {
+    return found;
+  }
+};
+
+exports.countOfUsers = async (post) => {
+  console.log("COUNT");
+  let users = await database.execute(
+    "select DISTINCT user from time where post=? and end=? and totalTime=?",[post,"0","0"]
+  );
+  let count = 0;
+  let returnUsers =[];
+  console.log(users[0]);
+  for(let i=0; i<users[0].length; i++){
+    returnUsers[count]=await this.getUserData(users[0][i].user);
+    count++;
+  }
+  return {
+    post : post,
+    count : count,
+    users : returnUsers
+    
   }
 };

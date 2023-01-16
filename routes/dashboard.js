@@ -8,7 +8,8 @@ router.post('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
 router.post('/updatePosts',dashboardController.updatePosts);
 router.post('/deletePost',dashboardController.deletePost);
-
+// Ποστα join Χρηστες
+router.post('/getUsersInPosts',dashboardController.usersInPost);
 //Χρηστες
 router.post('/getUsers',dashboardController.getUsers);
 router.post('/addUsers',dashboardController.addUsers);
@@ -26,6 +27,8 @@ router.post('/getCatPost',dashboardController.getcatPost);
 router.post('/addcatPost',dashboardController.addcatPost);
 router.post('/updatecatPost',dashboardController.updatecatPost);
 router.post('/deletecatPost',dashboardController.deletecatPost);
+
+
 
 //production
 router.post('/getProduction',dashboardController.getProduction);
