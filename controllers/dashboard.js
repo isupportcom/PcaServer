@@ -504,7 +504,7 @@ exports.pausePost = async (req, res, next) => {
        ]
     }
    */
-  if (!proLine) res.status(402).json({ message: "fill the required fields" });
+  if (!prodLine) res.status(402).json({ message: "fill the required fields" });
   else {
     for (let i = 0; i < prodLine.uses.length; i++) {
       let update = await database.execute(
