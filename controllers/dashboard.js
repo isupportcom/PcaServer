@@ -340,6 +340,64 @@ exports.deleteUser = (req, res, next) => {
   }
 };
 
+exports.pauseUser =(req,res,next) =>{
+  const time = req.body.time;
+  /*
+    time={
+      findoc
+      post
+      user
+      date 
+      end
+      totalTime
+    }
+
+  */
+ if(!time){
+  res.status(402).json({message:"fill the requried fields"});
+ }else{
+
+ 
+  database.execute('update time set totalTime=?,end=? where findoc=? and post=? and user=? and date=? and end=0 and totalTime=0',[
+      time.totalTime,time.end,time.findoc,time.post,time.user,time.date
+  ]).then(results=>{
+    req.body.post = time.post;
+    req.body.findoc = time.findoc;
+    this.getSingleProduction(req,res,next);
+  }).catch(err=>{
+    if(!err.statusCode) err.statusCode = 500;
+    next(err);
+  })
+}
+};
+exports.startUser  =(req,res,next) =>{
+    const time = req.body.time;
+     /*
+    time={
+      findoc
+      post
+      user
+      date 
+      start
+    }
+
+  */
+    if(!time) res.status(402).json({message:"fill the requried fields"});
+    else{
+        database.execute('isnert into time (findoc,post,user,date,start) VALUES (?,?,?,?,?)',[
+          time.findoc,time.post,time.user,time.date,time.start
+        ])
+        .then(results=>{
+          req.body.findoc = time.findoc;
+          req.body.post = time.post
+          this.getSingleProduction(req,res,next);
+        })
+        .catch(err=>{
+          if(!err.statusCode) err.statusCode = 500;
+          next(err);
+        })
+    }
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
