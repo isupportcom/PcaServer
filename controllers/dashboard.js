@@ -745,7 +745,7 @@ exports.setNextUp = async (findoc, post) => {
       console.log("NEXT UP");
       console.log(nextUp[0][0]);
       let update = await database.execute(
-        "update prodline set done=2 where findoc=? and post=?",
+        "update prodline set done=1 where findoc=? and post=?",
         [findoc, nextUp[0][0].post]
       );
     }
