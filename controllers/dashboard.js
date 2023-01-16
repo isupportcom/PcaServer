@@ -132,23 +132,24 @@ exports.usersInPost = (req, res, next) => {
     .then(async (posts) => {
       let returnPost = [];
       console.log(posts[0]);
-      for(let i=0;i<posts[0].length; i++){
+      for (let i = 0; i < posts[0].length; i++) {
         console.log(posts);
-        console.log((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false);
+        console.log(
+          (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
+        );
         if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
           console.log("IS TRUE");
-          returnPost[i]=await this.countOfUsers(posts[0][i].post);
+          returnPost[i] = await this.countOfUsers(posts[0][i].post);
         } else {
-          returnPost[i]={
+          returnPost[i] = {
             post: post.post,
             count: 0,
             users: [],
           };
-           
         }
         console.log(returnPost);
       }
-      res.status(200).json({message:"Active Users",users_data:returnPost});
+      res.status(200).json({ message: "Active Users", users_data: returnPost });
     })
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
@@ -487,6 +488,51 @@ exports.deletecatPost = (req, res, next) => {
  *                                                                            *
  *                                                                            *
  /******************************************************************************/
+exports.pausePost = async (req, res, next) => {
+  const prodLine = req.body.prodLine;
+  /*
+    proline ={
+       findoc
+       post
+       end
+       date
+       user [
+        {
+          id
+          totalTime
+        }
+       ]
+    }
+   */
+  if (!proLine) res.status(402).json({ message: "fill the required fields" });
+  else {
+    for (let i = 0; i < prodLine.user.length; i++) {
+      let update = await database.execute(
+        "update time set totalTime=?,end=? where user=? and date=? and findoc=? and totalTime=?",
+        [
+          prodLine.user[i].totalTime,
+          prodLine.end,
+          prodLine.user[i].id,
+          prodLine.date,
+          prodLine.findoc,
+          "0",
+        ]
+      );
+    }
+    database
+      .execute("update prodline set done=3 where findoc=? and post=?", [
+        prodLine.findoc,
+        prodLine.post,
+      ])
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+      req.body.findoc = prodLine.findoc;
+      req.body.post = prodLine.post;
+      this.getSingleProduction(req,res,next);
+  }
+};
 exports.sendProduction = (req, res, next) => {
   const production = req.body.production;
   if (!production)
@@ -1620,7 +1666,7 @@ exports.postIsSetInCurrentOrders = async (post) => {
     "select DISTINCT catId from production"
   );
   let found = false;
-  for(let i=0; i< categories[0].length; i++){
+  for (let i = 0; i < categories[0].length; i++) {
     let find = await database.execute(
       "select DISTINCT postId from catpost where postId=?",
       [post]
@@ -1628,9 +1674,9 @@ exports.postIsSetInCurrentOrders = async (post) => {
     console.log(find[0]);
     console.log(find[0].length);
     console.log(find[0].length > 0);
-    console.log("INSIDE LOOP")
+    console.log("INSIDE LOOP");
     if (find[0].length > 0) {
-     return true;
+      return true;
     }
   }
   console.log("AFTER LOOP");
@@ -1645,19 +1691,19 @@ exports.postIsSetInCurrentOrders = async (post) => {
 exports.countOfUsers = async (post) => {
   console.log("COUNT");
   let users = await database.execute(
-    "select DISTINCT user from time where post=? and end=? and totalTime=?",[post,"0","0"]
+    "select DISTINCT user from time where post=? and end=? and totalTime=?",
+    [post, "0", "0"]
   );
   let count = 0;
-  let returnUsers =[];
+  let returnUsers = [];
   console.log(users[0]);
-  for(let i=0; i<users[0].length; i++){
-    returnUsers[count]=await this.getUserData(users[0][i].user);
+  for (let i = 0; i < users[0].length; i++) {
+    returnUsers[count] = await this.getUserData(users[0][i].user);
     count++;
   }
   return {
-    post : post,
-    count : count,
-    users : returnUsers
-    
-  }
+    post: post,
+    count: count,
+    users: returnUsers,
+  };
 };
