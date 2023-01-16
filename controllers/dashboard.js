@@ -496,7 +496,7 @@ exports.pausePost = async (req, res, next) => {
        post
        end
        date
-       user [
+       users [
         {
           id
           totalTime
@@ -510,9 +510,9 @@ exports.pausePost = async (req, res, next) => {
       let update = await database.execute(
         "update time set totalTime=?,end=? where user=? and date=? and findoc=? and totalTime=?",
         [
-          prodLine.user[i].totalTime,
+          prodLine.users[i].totalTime,
           prodLine.end,
-          prodLine.user[i].id,
+          prodLine.users[i].id,
           prodLine.date,
           prodLine.findoc,
           "0",
