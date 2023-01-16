@@ -506,7 +506,7 @@ exports.pausePost = async (req, res, next) => {
    */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
   else {
-    for (let i = 0; i < prodLine.uses.length; i++) {
+    for (let i = 0; i < prodLine.users.length; i++) {
       let update = await database.execute(
         "update time set totalTime=?,end=? where user=? and date=? and findoc=? and totalTime=?",
         [
