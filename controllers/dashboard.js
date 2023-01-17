@@ -93,6 +93,10 @@ exports.updatePosts = async (req, res, next) => {
               "insert into actionspost (post,action) VALUES (?,?)",
               [posts[i].post, posts[i].actions[j].actions]
             );
+            await this.updateChangesActionLines(
+              posts[i].post,
+              posts[i].actions
+            );
           }
         } catch (err) {
           if (!err.statusCode) err.statusCode = 500;
@@ -1033,27 +1037,26 @@ exports.updateActionLines = async (req, res, next) => {
   }
 };
 exports.getSingleProd = async (findoc, post) => {
-  let prod=await database
-    .execute("select * from production where findoc=?", [findoc]) .catch((err) => {
+  let prod = await database
+    .execute("select * from production where findoc=?", [findoc])
+    .catch((err) => {
       throw new Error(err.message);
     });
-    
-      console.log("POSTS");
-      return {
-        message: "Single Production",
-        production: {
-          findoc: prod[0][0].findoc,
-          mtrl: prod[0][0].mtrl,
-          ingredients: await this.getIngredients(prod[0][0].mtrl),
-          category: prod[0][0].catId,
-          categoryPost: await this.getCatPostData(prod[0][0].catId),
-          productionLine: await this.getprodLineSteps(prod[0][0].findoc),
-          time: prod[0][0].time,
-          actionLines: await this.getActionLines(prod[0][0].findoc, post),
-        },
-      };
-    
-   
+
+  console.log("POSTS");
+  return {
+    message: "Single Production",
+    production: {
+      findoc: prod[0][0].findoc,
+      mtrl: prod[0][0].mtrl,
+      ingredients: await this.getIngredients(prod[0][0].mtrl),
+      category: prod[0][0].catId,
+      categoryPost: await this.getCatPostData(prod[0][0].catId),
+      productionLine: await this.getprodLineSteps(prod[0][0].findoc),
+      time: prod[0][0].time,
+      actionLines: await this.getActionLines(prod[0][0].findoc, post),
+    },
+  };
 };
 exports.getActionLines = async (findoc, post) => {
   let actionLine = await database.execute(
@@ -1821,7 +1824,39 @@ exports.countOfUsers = async (post) => {
   }
   return {
     post: post,
+    name: await this.findPostName(post),
     count: count,
     users: returnUsers,
   };
+};
+exports.updateChangesActionLines = async (post, actions) => {
+  console.log("update Changes Action Lines");
+  console.log("POST");
+  console.log(post);
+  console.log("ACTIONS");
+  console.log(actions);
+  let count = await database.execute(
+    "select DISTINCT action from actionlines where post=?",
+    [post]
+  );
+  console.log("ACTIONS FROM ACTION LINES QUERY");
+  console.log(count[0]);
+
+  if (actions.length == count[0].length) {
+    console.log("NO CHANGES");
+  } else {
+    for (let i = 0; i < actions.length; i++) {
+      let found=false;
+      for (let j = 0; j < count[0].length; j++) {
+        if(actions[i].action == count[0][j].action){
+          found = true;
+        }
+      }
+      console.log("OUTSIDE THE LOOP");
+      console.log(found);
+      if(!found){
+
+      }
+    }
+  }
 };
