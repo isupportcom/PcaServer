@@ -7,8 +7,8 @@ const app = express();
 const port = 8080;
 
 // initialize routes
-const authRoute = require('./routes/auth');
-const adminDashboard = require('./routes/dashboard')
+const authRoute = require("./routes/auth");
+const adminDashboard = require("./routes/dashboard");
 //application/jason
 app.use(bodyParser.json());
 // headers
@@ -26,25 +26,26 @@ app.use((req, res, next) => {
 // soft1 updates
 
 // auth
-app.use('/auth',authRoute);
+app.use("/auth", authRoute);
 
 //dashboard
-app.use('/dashboard',adminDashboard);
+app.use("/dashboard", adminDashboard);
 
 // error
 app.use((error, req, res, next) => {
-    console.log(error);
-    const status = error.statusCode || 500;
-    const message = error.message;
-    const data = error.data;
-    res.status(status).json({ message: message ,data:data});
+  console.log(error);
+  const status = error.statusCode || 500;
+  const message = error.message;
+  const data = error.data;
+  res.status(status).json({ message: message, data: data });
 });
 
 // app listener
-const server =app.listen(port, (req, res, next) => {
+const server = app.listen(port, (req, res, next) => {
   console.log("App Is Listening on http://localhost:" + port);
 });
-const io = require('./socket').init(server);
-io.on('connection',socket =>{
+console.log(server.address());
+const io = require("./socket").init(server);
+io.on("connection", (socket) => {
   console.log("Client Connected");
-})
+});

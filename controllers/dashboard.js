@@ -415,12 +415,7 @@ exports.startUser = (req, res, next) => {
       });
   }
 };
-exports.onLogout = async(req,res,next)=>{
-  io.getIO().emit('logout',{
-    action:"User Logged Out",
-    users_data: await this.activeUsers()
-  })
-}
+
 exports.activeUsers =async()=>{
   let posts=await database
     .execute("select post from post").catch((err) => {
@@ -1255,6 +1250,10 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
+        io.getIO().emit('logout',{
+          action:"logout",
+          users_data : await this.activeUsers()
+        })
         this.getTime(req, res, next);
       })
       .catch((err) => {
