@@ -415,6 +415,42 @@ exports.startUser = (req, res, next) => {
       });
   }
 };
+exports.onLogout = async(req,res,next)=>{
+  io.getIO().emit('logout',{
+    action:"User Logged Out",
+    users_data: await this.activeUsers()
+  })
+}
+exports.activeUsers =async()=>{
+  let posts=await database
+    .execute("select post from post").catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      throw new Error(err.message);
+    });
+   
+      let returnPost = [];
+      console.log(posts[0]);
+      for (let i = 0; i < posts[0].length; i++) {
+        console.log(posts);
+        console.log(
+          (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
+        );
+        if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
+          console.log("IS TRUE");
+          returnPost[i] = await this.countOfUsers(posts[0][i].post);
+        } else {
+          returnPost[i] = {
+            post: post.post,
+            count: 0,
+            users: [],
+          };
+        }
+        console.log(returnPost);
+      }
+     return returnPost 
+    
+    
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *

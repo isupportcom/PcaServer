@@ -1,5 +1,7 @@
 const database = require("../database");
 const jwt = require("jsonwebtoken");
+const io =require('../socket');
+const dashboardController = require('./dashboard');
 exports.login = (req, res, next) => {
     if (!req.body.password || !req.body.name) {
         res.status(422).json({ message: "Fill The Required Fields" });
@@ -31,6 +33,7 @@ exports.login = (req, res, next) => {
                                 },
                                 "somesupersecretsecret"
                             );
+                            
                             res.status(200).json({
                                 success:1,
                                 message: "You Have Successfully Logged In",
@@ -89,6 +92,10 @@ exports.userLogin = (req,res,next) =>{
                                 },
                                 "somesupersecretsecret"
                             );
+                            io.getIO().emit('login',{
+                                action:"Login",
+                                user_data:await dashboardController.activeUsers()
+                            })
                             res.status(200).json({
                                 success:1,
                                 message: "You Have Successfully Logged In",
