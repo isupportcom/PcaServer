@@ -1033,27 +1033,27 @@ exports.updateActionLines = async (req, res, next) => {
   }
 };
 exports.getSingleProd = async (findoc, post) => {
-  database
-    .execute("select * from production where findoc=?", [findoc])
-    .then(async (results) => {
+  let prod=await database
+    .execute("select * from production where findoc=?", [findoc]) .catch((err) => {
+      throw new Error(err.message);
+    });
+    
       console.log("POSTS");
       return {
         message: "Single Production",
         production: {
-          findoc: results[0][0].findoc,
-          mtrl: results[0][0].mtrl,
-          ingredients: await this.getIngredients(results[0][0].mtrl),
-          category: results[0][0].catId,
-          categoryPost: await this.getCatPostData(results[0][0].catId),
-          productionLine: await this.getprodLineSteps(results[0][0].findoc),
-          time: results[0][0].time,
-          actionLines: await this.getActionLines(results[0][0].findoc, post),
+          findoc: prod[0][0].findoc,
+          mtrl: prod[0][0].mtrl,
+          ingredients: await this.getIngredients(prod[0][0].mtrl),
+          category: prod[0][0].catId,
+          categoryPost: await this.getCatPostData(prod[0][0].catId),
+          productionLine: await this.getprodLineSteps(prod[0][0].findoc),
+          time: prod[0][0].time,
+          actionLines: await this.getActionLines(prod[0][0].findoc, post),
         },
       };
-    })
-    .catch((err) => {
-      throw new Error(err.message);
-    });
+    
+   
 };
 exports.getActionLines = async (findoc, post) => {
   let actionLine = await database.execute(
