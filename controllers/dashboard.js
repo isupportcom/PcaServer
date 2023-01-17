@@ -384,7 +384,7 @@ exports.startUser  =(req,res,next) =>{
   */
     if(!time) res.status(402).json({message:"fill the requried fields"});
     else{
-        database.execute('isnert into time (findoc,post,user,date,start) VALUES (?,?,?,?,?)',[
+        database.execute('insert into time (findoc,post,user,date,start) VALUES (?,?,?,?,?)',[
           time.findoc,time.post,time.user,time.date,time.start
         ])
         .then(results=>{
