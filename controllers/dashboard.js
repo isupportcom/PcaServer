@@ -340,7 +340,7 @@ exports.deleteUser = (req, res, next) => {
   }
 };
 
-exports.pauseUser =(req,res,next) =>{
+exports.pauseUser = (req, res, next) => {
   const time = req.body.time;
   /*
     time={
@@ -353,26 +353,37 @@ exports.pauseUser =(req,res,next) =>{
     }
 
   */
- if(!time){
-  res.status(402).json({message:"fill the requried fields"});
- }else{
-
- 
-  database.execute('update time set totalTime=? , end=? where findoc=? and post=? and user=? and date=? and end=? and totalTime=?',[
-      time.totalTime,time.end,time.findoc,time.post,time.user,time.date,"0","0"
-  ]).then(results=>{
-    req.body.post = time.post;
-    req.body.findoc = time.findoc;
-    this.getSingleProduction(req,res,next);
-  }).catch(err=>{
-    if(!err.statusCode) err.statusCode = 500;
-    next(err);
-  })
-}
+  if (!time) {
+    res.status(402).json({ message: "fill the requried fields" });
+  } else {
+    database
+      .execute(
+        "update time set totalTime=? , end=? where findoc=? and post=? and user=? and date=? and end=? and totalTime=?",
+        [
+          time.totalTime,
+          time.end,
+          time.findoc,
+          time.post,
+          time.user,
+          time.date,
+          "0",
+          "0",
+        ]
+      )
+      .then((results) => {
+        req.body.post = time.post;
+        req.body.findoc = time.findoc;
+        this.getSingleProduction(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
 };
-exports.startUser  =(req,res,next) =>{
-    const time = req.body.time;
-     /*
+exports.startUser = (req, res, next) => {
+  const time = req.body.time;
+  /*
     time={
       findoc
       post
@@ -382,22 +393,24 @@ exports.startUser  =(req,res,next) =>{
     }
 
   */
-    if(!time) res.status(402).json({message:"fill the requried fields"});
-    else{
-        database.execute('insert into time (findoc,post,user,date,start) VALUES (?,?,?,?,?)',[
-          time.findoc,time.post,time.user,time.date,time.start
-        ])
-        .then(results=>{
-          req.body.findoc = time.findoc;
-          req.body.post = time.post
-          this.getSingleProduction(req,res,next);
-        })
-        .catch(err=>{
-          if(!err.statusCode) err.statusCode = 500;
-          next(err);
-        })
-    }
-}
+  if (!time) res.status(402).json({ message: "fill the requried fields" });
+  else {
+    database
+      .execute(
+        "insert into time (findoc,post,user,date,start) VALUES (?,?,?,?,?)",
+        [time.findoc, time.post, time.user, time.date, time.start]
+      )
+      .then((results) => {
+        req.body.findoc = time.findoc;
+        req.body.post = time.post;
+        this.getSingleProduction(req, res, next);
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+  }
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -591,7 +604,7 @@ exports.pausePost = async (req, res, next) => {
     this.getSingleProduction(req, res, next);
   }
 };
-exports.startPostAfterPause =async (req, res, next) => {
+exports.startPostAfterPause = async (req, res, next) => {
   const prodLine = req.body.prodLine;
   /*
     prodLine ={
@@ -608,19 +621,29 @@ exports.startPostAfterPause =async (req, res, next) => {
   */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
   else {
-    for(let i=0; i< prodLine.users.length; i++){
-      let insert = await database.execute('insert into time set findoc=?,post=?,user=?,date=?,start=?',[
-        prodLine.findoc,prodLine.post,prodLine.users[i].id,prodLine.date,prodLine.start
-      ]); 
+    for (let i = 0; i < prodLine.users.length; i++) {
+      let insert = await database.execute(
+        "insert into time set findoc=?,post=?,user=?,date=?,start=?",
+        [
+          prodLine.findoc,
+          prodLine.post,
+          prodLine.users[i].id,
+          prodLine.date,
+          prodLine.start,
+        ]
+      );
     }
-    database.execute('update prodline set done=2 where findoc=? and post=?',[prodLine.findoc,prodLine.post])
-    .catch(err=>{
-      if(!err.statusCode) err.statusCode = 500;
-      next(err);
-    });
-    req.body.findoc = prodLine.findoc,
-    req.body.post = prodLine.post;
-    this.getSingleProduction(req,res,next);
+    database
+      .execute("update prodline set done=2 where findoc=? and post=?", [
+        prodLine.findoc,
+        prodLine.post,
+      ])
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
+    (req.body.findoc = prodLine.findoc), (req.body.post = prodLine.post);
+    this.getSingleProduction(req, res, next);
   }
 };
 exports.sendProduction = (req, res, next) => {
@@ -634,6 +657,7 @@ exports.sendProduction = (req, res, next) => {
         action: "Production",
         production: production,
       });
+
       res
         .status(200)
         .json({ message: "Production Has Been sent Successfully" });
@@ -994,7 +1018,10 @@ exports.updateActionLines = async (req, res, next) => {
           "Post " +
           (await this.findPostName(actionLine[0].post)) +
           " has been done",
-        production: await this.getSingleProd(),
+        production: await this.getSingleProd(
+          actionLine[0].findoc,
+          actionLine[0].post
+        ),
       });
     }
     req.body.findoc = actionLine[0].findoc;
@@ -1005,27 +1032,28 @@ exports.updateActionLines = async (req, res, next) => {
     this.getSingleProduction(req, res, next);
   }
 };
-exports.getSingleProd = async () => {
-  let prods = await database
-    .execute("select * from production")
+exports.getSingleProd = async (findoc, post) => {
+  database
+    .execute("select * from production where findoc=?", [findoc])
+    .then(async (results) => {
+      console.log("POSTS");
+      return {
+        message: "Single Production",
+        production: {
+          findoc: results[0][0].findoc,
+          mtrl: results[0][0].mtrl,
+          ingredients: await this.getIngredients(results[0][0].mtrl),
+          category: results[0][0].catId,
+          categoryPost: await this.getCatPostData(results[0][0].catId),
+          productionLine: await this.getprodLineSteps(results[0][0].findoc),
+          time: results[0][0].time,
+          actionLines: await this.getActionLines(results[0][0].findoc, post),
+        },
+      };
+    })
     .catch((err) => {
       throw new Error(err.message);
     });
-
-  console.log(prods[0]);
-  let returnProductions = [];
-  for (let i = 0; i < prods[0].length; i++) {
-    returnProductions[i] = {
-      findoc: prods[0][i].findoc,
-      mtrl: prods[0][i].mtrl,
-      ingredients: await this.getIngredients(prods[0][i].mtrl),
-      category: prods[0][i].catId,
-      categoryPost: await this.getCatPostData(prods[0][i].catId),
-      productionLine: await this.getprodLineSteps(prods[0][i].findoc),
-      time: prods[0][i].time,
-    };
-  }
-  return returnProductions;
 };
 exports.getActionLines = async (findoc, post) => {
   let actionLine = await database.execute(
