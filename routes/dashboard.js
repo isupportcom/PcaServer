@@ -15,6 +15,7 @@ router.post('/getUsers',dashboardController.getUsers);
 router.post('/addUsers',dashboardController.addUsers);
 router.post('/updateUsers',dashboardController.updateUsers);
 router.post('/deleteUser',dashboardController.deleteUser);
+router.post('/onLogout',dashboardController.onLogout);
 //user join time
 router.post('/pauseUser',dashboardController.pauseUser);
 router.post('/startUser',dashboardController.startUser);
