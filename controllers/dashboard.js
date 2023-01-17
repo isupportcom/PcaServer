@@ -1839,24 +1839,18 @@ exports.updateChangesActionLines = async (post, actions) => {
     "select DISTINCT action from actionlines where post=?",
     [post]
   );
+  
   console.log("ACTIONS FROM ACTION LINES QUERY");
   console.log(count[0]);
 
   if (actions.length == count[0].length) {
     console.log("NO CHANGES");
   } else {
-    for (let i = 0; i < actions.length; i++) {
-      let found=false;
-      for (let j = 0; j < count[0].length; j++) {
-        if(actions[i].action == count[0][j].action){
-          found = true;
-        }
-      }
-      console.log("OUTSIDE THE LOOP");
-      console.log(found);
-      if(!found){
-
-      }
+    console.log("SOMETHING CHANGED");
+    let findocs = await database.execute('select DISTINCT findoc from actionlines');
+    let del = await database.execute('delete from actionlines where post=?',[post]);
+    for(let i=0;i<findocs[0].length;i++){
+      await this.addActionLines(findocs[0][i].findoc);
     }
   }
 };
