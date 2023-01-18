@@ -1189,7 +1189,6 @@ exports.addTime = async (req, res, next) => {
   */
   if (!postsTime) res.status(402).json({ message: "fill the requierd fields" });
   else {
-    if(await this.postInProductionIsPaused(postsTime.findoc,postsTime.post) != true){
     console.log(postsTime);
     database
       .execute(
@@ -1220,9 +1219,7 @@ exports.addTime = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-  }else{
-    this.getTime(req,res,next);
-  }
+
 }
 };
 
@@ -1896,19 +1893,4 @@ exports.updateChangesActionLines = async (post, actions) => {
   }
 };
 
-exports.postInProductionIsPaused = async(findoc,post) =>{
-  let orderState = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
-  try{
-      if(orderState[0].length > 0){
-        if(orderState[0][0].done == 3){
-          return true;
-        }else{
-          return false;
-        }
-      }else{
-        throw new Error("POST DOES NOT EXISTS");
-      }
-  }catch(err){
-    throw new Error(err.message);
-  }
-}
+
