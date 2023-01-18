@@ -10,6 +10,7 @@ router.post('/updatePosts',dashboardController.updatePosts);
 router.post('/deletePost',dashboardController.deletePost);
 // Ποστα join Χρηστες
 router.post('/getUsersInPosts',dashboardController.usersInPost);
+// router.post('/test',dashboardController.activeUsers)
 //Χρηστες
 router.post('/getUsers',dashboardController.getUsers);
 router.post('/addUsers',dashboardController.addUsers);
@@ -40,8 +41,6 @@ router.post('/sendProduction',dashboardController.sendProduction);
 router.post('/getSingleProduction',dashboardController.getSingleProduction);
 router.post('/pausePost',dashboardController.pausePost);
 router.post('/startPost',dashboardController.startPostAfterPause)
-// router.post('/updateProduction',dashboardController.updateProduction);
-// router.post('/deleteProduction',dashboardController.deleteProduction);
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 
