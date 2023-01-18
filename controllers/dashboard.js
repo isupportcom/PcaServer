@@ -1186,7 +1186,7 @@ exports.addTime = async (req, res, next) => {
       .then(async (results) => {
         io.getIO().emit("login",{
           action:"Login",
-          user_data : await this.activeUsers()
+          users_data : await this.activeUsers()
         })
         this.postHasStarted(postsTime.findoc, postsTime.post);
         console.log(results[0]);
