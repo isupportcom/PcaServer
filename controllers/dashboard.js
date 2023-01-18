@@ -1016,7 +1016,7 @@ exports.updateActionLines = async (req, res, next) => {
       }
     }
     if (
-      (await this.allActionsOnPostAreDone(actionLine[0].findoc,actionLine[0].post)) == true) {
+      (await this.allActionsOnPostAreDone(actionLine[0].findoc,actionLine[0].post)) === true) {
       await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
       let done = await database
         .execute("update prodline set done=4 where findoc=? and post=?", [
@@ -1028,7 +1028,7 @@ exports.updateActionLines = async (req, res, next) => {
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         });
-      await this.whoMakeItDone(prodLine.user,prodLine.findoc,prodLine.post);
+      await this.whoMakeItDone(actionLine[0].user,actionLine[0].findoc,actionLine[0].post);
       io.getIO().emit("done", {
         action:
           "Post " +
