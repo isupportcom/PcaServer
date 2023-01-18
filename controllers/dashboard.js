@@ -1189,7 +1189,7 @@ exports.addTime = async (req, res, next) => {
   */
   if (!postsTime) res.status(402).json({ message: "fill the requierd fields" });
   else {
-    if(await this.postInProductionIsPaused(postsTime.findoc,postsTime.post) == true){
+    if(await this.postInProductionIsPaused(postsTime.findoc,postsTime.post) != true){
     console.log(postsTime);
     database
       .execute(
