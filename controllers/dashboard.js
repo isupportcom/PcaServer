@@ -987,6 +987,7 @@ exports.getProduction = (req, res, next) => {
 };
 exports.updateActionLines = async (req, res, next) => {
   const actionLine = req.body.actionLine;
+  const user = req.body.user;
   /*
     actionLine =[{
       findoc:
@@ -1015,7 +1016,7 @@ exports.updateActionLines = async (req, res, next) => {
         throw err;
       }
     }
-    if(actionLine[0].user) {
+    if(user) {
       if ((await this.allActionsOnPostAreDone(actionLine[0].findoc, actionLine[0].post)) === true) {
         await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
         let done = await database
@@ -1028,7 +1029,7 @@ exports.updateActionLines = async (req, res, next) => {
               if (!err.statusCode) err.statusCode = 500;
               next(err);
             });
-        await this.whoMakeItDone(actionLine[0].user, actionLine[0].findoc, actionLine[0].post);
+        await this.whoMakeItDone(user, actionLine[0].findoc, actionLine[0].post);
         io.getIO().emit("done", {
           action:
               "Post " +
