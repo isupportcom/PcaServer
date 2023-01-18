@@ -3,7 +3,6 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
-const e = require("express");
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -417,36 +416,33 @@ exports.startUser = (req, res, next) => {
   }
 };
 
-exports.activeUsers =async()=>{
-  let posts=await database
-    .execute("select post from post").catch((err) => {
-      if (!err.statusCode) err.statusCode = 500;
-      throw new Error(err.message);
-    });
-   
-      let returnPost = [];
-      console.log(posts[0]);
-      for (let i = 0; i < posts[0].length; i++) {
-        console.log(posts);
-        console.log(
-          (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
-        );
-        if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
-          console.log("IS TRUE");
-          returnPost[i] = await this.countOfUsers(posts[0][i].post);
-        } else {
-          returnPost[i] = {
-            post: post.post,
-            count: 0,
-            users: [],
-          };
-        }
-        console.log(returnPost);
-      }
-     return returnPost 
-    
-    
-}
+exports.activeUsers = async (req,res,next) => {
+  let posts = await database.execute("select post from post").catch((err) => {
+    if (!err.statusCode) err.statusCode = 500;
+    throw new Error(err.message);
+  });
+
+  let returnPost = [];
+  console.log(posts[0]);
+  for (let i = 0; i < posts[0].length; i++) {
+    console.log(posts);
+    console.log(
+      (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
+    );
+    if (await this.postIsSetInCurrentOrders(posts[0][i].post) != false) {
+      console.log("IS TRUE");
+      returnPost[i] = await this.countOfUsers(posts[0][i].post);
+    } else {
+      returnPost[i] = {
+        post: post.post,
+        count: 0,
+        users: [],
+      };
+    }
+    console.log(returnPost);
+  }
+  return returnPost
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -609,7 +605,8 @@ exports.pausePost = async (req, res, next) => {
       .execute("update prodline set done=3 where findoc=? and post=?", [
         prodLine.findoc,
         prodLine.post,
-      ]).then(results=>{
+      ])
+      .then((results) => {
         req.body.findoc = prodLine.findoc;
         req.body.post = prodLine.post;
         this.getSingleProduction(req, res, next);
@@ -618,7 +615,6 @@ exports.pausePost = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-    
   }
 };
 exports.startPostAfterPause = async (req, res, next) => {
@@ -905,6 +901,7 @@ exports.updateProdLine = (req, res, next) => {
         done:
         end: 
         date:
+        user:
     }
   */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
@@ -919,6 +916,11 @@ exports.updateProdLine = (req, res, next) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
           if (prodLine.done == 4) {
             console.log("PROLINE.DONE == 4");
+            await this.whoMakeItDone(
+              prodLine.user,
+              prodLine.findoc,
+              prodLine.post
+            );
             await this.setNextUp(prodLine.findoc, prodLine.post);
             this.updateActionLine(prodLine.findoc, prodLine.post);
           }
@@ -1199,8 +1201,7 @@ exports.addTime = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-  
-}
+  }
 };
 
 exports.updateTime = (req, res, next) => {
@@ -1232,11 +1233,15 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        io.getIO().emit('logout',{
-          action:"logout",
-          users_data : await this.activeUsers()
-        })
-        await this.updateMachineTime(endTimer.end,endTimer.post,endTimer.date);
+        io.getIO().emit("logout", {
+          action: "logout",
+          users_data: await this.activeUsers(),
+        });
+        await this.updateMachineTime(
+          endTimer.end,
+          endTimer.post,
+          endTimer.date
+        );
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1857,7 +1862,7 @@ exports.updateChangesActionLines = async (post, actions) => {
     "select DISTINCT action from actionlines where post=?",
     [post]
   );
-  
+
   console.log("ACTIONS FROM ACTION LINES QUERY");
   console.log(count[0]);
 
@@ -1865,11 +1870,26 @@ exports.updateChangesActionLines = async (post, actions) => {
     console.log("NO CHANGES");
   } else {
     console.log("SOMETHING CHANGED");
-    let findocs = await database.execute('select DISTINCT findoc from actionlines');
-    let del = await database.execute('delete from actionlines where post=?',[post]);
-    for(let i=0;i<findocs[0].length;i++){
+    let findocs = await database.execute(
+      "select DISTINCT findoc from actionlines"
+    );
+    let del = await database.execute("delete from actionlines where post=?", [
+      post,
+    ]);
+    for (let i = 0; i < findocs[0].length; i++) {
       await this.addActionLines(findocs[0][i].findoc);
     }
   }
 };
 
+exports.whoMakeItDone = async (user, findoc, post) => {
+  let isnertByWho = await database
+    .execute("update prodline set byWho=? where findoc=? and post=? ", [
+      user,
+      findoc,
+      post,
+    ])
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+};
