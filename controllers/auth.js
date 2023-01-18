@@ -92,10 +92,7 @@ exports.userLogin = (req,res,next) =>{
                                 },
                                 "somesupersecretsecret"
                             );
-                            io.getIO().emit('login',{
-                                action:"Login",
-                                user_data:await dashboardController.activeUsers()
-                            })
+
                             res.status(200).json({
                                 success:1,
                                 message: "You Have Successfully Logged In",
