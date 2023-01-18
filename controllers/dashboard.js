@@ -600,44 +600,25 @@ exports.pausePost = async (req, res, next) => {
   /*
     proline ={
        findoc
-       post
-       end
-       date
-       users [
-        {
-          id
-          totalTime
-        }
-       ]
+       post      
     }
    */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
   else {
-    for (let i = 0; i < prodLine.users.length; i++) {
-      let update = await database.execute(
-        "update time set totalTime=?,end=? where user=? and date=? and findoc=? and totalTime=?",
-        [
-          prodLine.users[i].totalTime,
-          prodLine.end,
-          prodLine.users[i].id,
-          prodLine.date,
-          prodLine.findoc,
-          "0",
-        ]
-      );
-    }
     database
       .execute("update prodline set done=3 where findoc=? and post=?", [
         prodLine.findoc,
         prodLine.post,
-      ])
+      ]).then(results=>{
+        req.body.findoc = prodLine.findoc;
+        req.body.post = prodLine.post;
+        this.getSingleProduction(req, res, next);
+      })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-    req.body.findoc = prodLine.findoc;
-    req.body.post = prodLine.post;
-    this.getSingleProduction(req, res, next);
+    
   }
 };
 exports.startPostAfterPause = async (req, res, next) => {
@@ -653,7 +634,6 @@ exports.startPostAfterPause = async (req, res, next) => {
         }
       ]
     }
-
   */
   if (!prodLine) res.status(402).json({ message: "fill the required fields" });
   else {
@@ -1219,7 +1199,7 @@ exports.addTime = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
-
+  
 }
 };
 
@@ -1892,5 +1872,4 @@ exports.updateChangesActionLines = async (post, actions) => {
     }
   }
 };
-
 
