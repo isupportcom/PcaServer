@@ -416,7 +416,7 @@ exports.startUser = (req, res, next) => {
   }
 };
 
-exports.activeUsers = async (req,res,next) => {
+exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
     if (!err.statusCode) err.statusCode = 500;
     throw new Error(err.message);
@@ -1184,6 +1184,10 @@ exports.addTime = async (req, res, next) => {
         ]
       )
       .then(async (results) => {
+        io.getIO().emit("login",{
+          action:"Login",
+          user_data : await this.activeUsers()
+        })
         this.postHasStarted(postsTime.findoc, postsTime.post);
         console.log(results[0]);
         if (
@@ -1233,6 +1237,7 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
+        console.log(await this.activeUsers());
         io.getIO().emit("logout", {
           action: "logout",
           users_data: await this.activeUsers(),
