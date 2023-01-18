@@ -1015,30 +1015,31 @@ exports.updateActionLines = async (req, res, next) => {
         throw err;
       }
     }
-    if (
-      (await this.allActionsOnPostAreDone(actionLine[0].findoc,actionLine[0].post)) === true) {
-      await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
-      let done = await database
-        .execute("update prodline set done=4 where findoc=? and post=?", [
-          actionLine[0].findoc,
-          actionLine[0].post,
-        ])
+    if(actionLine[0].user) {
+      if ((await this.allActionsOnPostAreDone(actionLine[0].findoc, actionLine[0].post)) === true) {
+        await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
+        let done = await database
+            .execute("update prodline set done=4 where findoc=? and post=?", [
+              actionLine[0].findoc,
+              actionLine[0].post,
+            ])
 
-        .catch((err) => {
-          if (!err.statusCode) err.statusCode = 500;
-          next(err);
+            .catch((err) => {
+              if (!err.statusCode) err.statusCode = 500;
+              next(err);
+            });
+        await this.whoMakeItDone(actionLine[0].user, actionLine[0].findoc, actionLine[0].post);
+        io.getIO().emit("done", {
+          action:
+              "Post " +
+              (await this.findPostName(actionLine[0].post)) +
+              " has been done",
+          production: await this.getSingleProd(
+              actionLine[0].findoc,
+              actionLine[0].post
+          ),
         });
-      await this.whoMakeItDone(actionLine[0].user,actionLine[0].findoc,actionLine[0].post);
-      io.getIO().emit("done", {
-        action:
-          "Post " +
-          (await this.findPostName(actionLine[0].post)) +
-          " has been done",
-        production: await this.getSingleProd(
-          actionLine[0].findoc,
-          actionLine[0].post
-        ),
-      });
+      }
     }
     req.body.findoc = actionLine[0].findoc;
     req.body.post = actionLine[0].post;
