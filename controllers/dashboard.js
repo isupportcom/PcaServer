@@ -3,6 +3,7 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
+const e = require("express");
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -1175,7 +1176,7 @@ exports.getTime = (req, res, next) => {
     });
 };
 
-exports.addTime = (req, res, next) => {
+exports.addTime = async (req, res, next) => {
   const postsTime = req.body.userTime;
   /*
     postTime = {
@@ -1188,6 +1189,7 @@ exports.addTime = (req, res, next) => {
   */
   if (!postsTime) res.status(402).json({ message: "fill the requierd fields" });
   else {
+    if(await this.postInProductionIsPaused(postsTime.findoc,postsTime.post) == true){
     console.log(postsTime);
     database
       .execute(
@@ -1218,7 +1220,10 @@ exports.addTime = (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
+  }else{
+    this.getTime(req,res,next);
   }
+}
 };
 
 exports.updateTime = (req, res, next) => {
@@ -1254,6 +1259,7 @@ exports.updateTime = (req, res, next) => {
           action:"logout",
           users_data : await this.activeUsers()
         })
+        await this.updateMachineTime(endTimer.end,endTimer.post,endTimer.date);
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1889,3 +1895,20 @@ exports.updateChangesActionLines = async (post, actions) => {
     }
   }
 };
+
+exports.postInProductionIsPaused = async(findoc,post) =>{
+  let orderState = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
+  try{
+      if(orderState[0].length > 0){
+        if(orderState[0][0].done == 3){
+          return true;
+        }else{
+          return false;
+        }
+      }else{
+        throw new Error("POST DOES NOT EXISTS");
+      }
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
