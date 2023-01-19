@@ -41,6 +41,7 @@ router.post('/sendProduction',dashboardController.sendProduction);
 router.post('/getSingleProduction',dashboardController.getSingleProduction);
 router.post('/pausePost',dashboardController.pausePost);
 router.post('/startPost',dashboardController.startPostAfterPause)
+router.post('/getStateOfProductions',dashboardController.getStateOfProductions);
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 
