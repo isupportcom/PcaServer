@@ -50,7 +50,7 @@ exports.addPosts = (req, res, next) => {
       ])
       .then((inserted) => {
         database.execute("select max(post) from post").then(async (max) => {
-          console.log(max[0][0]["max(post)"]);
+          //console.log(max[0][0]["max(post)"]);
           let maxP = max[0][0]["max(post)"];
           for (let i = 0; i < actions.length; i++) {
             let insert = await database.execute(
@@ -135,14 +135,14 @@ exports.usersInPost = (req, res, next) => {
     .execute("select post from post")
     .then(async (posts) => {
       let returnPost = [];
-      console.log(posts[0]);
+      //console.log(posts[0]);
       for (let i = 0; i < posts[0].length; i++) {
-        console.log(posts);
-        console.log(
-          (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
-        );
+        //console.log(posts);
+        //console.log(
+        //   (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
+        // );
         if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
-          console.log("IS TRUE");
+          //console.log("IS TRUE");
           returnPost[i] = await this.countOfUsers(posts[0][i].post);
         } else {
           returnPost[i] = {
@@ -151,7 +151,7 @@ exports.usersInPost = (req, res, next) => {
             users: [],
           };
         }
-        console.log(returnPost);
+        //console.log(returnPost);
       }
       res.status(200).json({ message: "Active Users", users_data: returnPost });
     })
@@ -423,14 +423,14 @@ exports.activeUsers = async () => {
   });
 
   let returnPost = [];
-  console.log(posts[0]);
+  //console.log(posts[0]);
   for (let i = 0; i < posts[0].length; i++) {
-    console.log(posts);
-    console.log(
-      (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
-    );
+    //console.log(posts);
+    //console.log(
+    // (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
+    // );
     if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
-      console.log("IS TRUE");
+      //console.log("IS TRUE");
       returnPost[i] = await this.countOfUsers(posts[0][i].post);
     } else {
       returnPost[i] = {
@@ -439,7 +439,7 @@ exports.activeUsers = async () => {
         users: [],
       };
     }
-    console.log(returnPost);
+    //console.log(returnPost);
   }
   return returnPost;
 };
@@ -457,17 +457,17 @@ exports.getcatPost = (req, res, next) => {
   database
     .execute("select * from categories")
     .then(async (categories) => {
-      console.log(categories[0]);
+      //console.log(categories[0]);
       let returnCategory = [];
       for (let i = 0; i < categories[0].length; i++) {
-        console.log(categories[0][i]);
+        //console.log(categories[0][i]);
         returnCategory[i] = {
           name: categories[0][i].name,
           category: categories[0][i].category,
           categoryPost: await this.getCatPostData(categories[0][i].category),
         };
       }
-      console.log(returnCategory);
+      //console.log(returnCategory);
       res
         .status(200)
         .json({ message: "All Categories", categories: returnCategory });
@@ -505,8 +505,8 @@ exports.addcatPost = (req, res, next) => {
             "insert into catpost (catId,postId,orderBy) VALUES (?,?,?)",
             [catId, postId, orderBy]
           )
-          .then(async(inserted) => {
-            this.addProduction(req,res,next);
+          .then(async (inserted) => {
+            this.addProduction(req, res, next);
             this.getcatPost(req, res, next);
           })
           .catch((err) => {
@@ -553,16 +553,16 @@ exports.deletecatPost = (req, res, next) => {
     database
       .execute("select * from catpost where catPost=?", [catPost])
       .then((results) => {
-        console.log("RESULTS");
-        console.log(results[0]);
+        //console.log("RESULTS");
+        //console.log(results[0]);
         database
           .execute("select * from catpost where orderBy > ? and catId=?", [
             results[0][0].orderBy,
             results[0][0].catId,
           ])
           .then(async (orderBy) => {
-            console.log("ORDERBY");
-            console.log(orderBy[0]);
+            //console.log("ORDERBY");
+            //console.log(orderBy[0]);
             for (let i = 0; i < orderBy[0].length; i++) {
               let update = await database.execute(
                 "update catpost set orderBy=? where catPost=?",
@@ -664,7 +664,7 @@ exports.sendProduction = (req, res, next) => {
   if (!production)
     res.status(402).json({ message: "fill the required fields" });
   else {
-    console.log(production);
+    //console.log(production);
     try {
       io.getIO().emit("production", {
         action: "Production",
@@ -695,7 +695,7 @@ exports.getSingleProduction = (req, res, next) => {
     database
       .execute("select * from production where findoc=?", [findoc])
       .then(async (results) => {
-        console.log("POSTS");
+        //console.log("POSTS");
         res.status(200).json({
           message: "Single Production",
           production: {
@@ -720,20 +720,20 @@ exports.addProduction = async (req, res, next) => {
   let clientID = await this.login();
   clientID = await this.authenticate(clientID);
   let production = await this.production1(clientID);
-  console.log(production);
+  //console.log(production);
   let findocData = [];
   let finDocImportant = [];
 
   let prod3 = [];
   for (let i = 0; i < production.rows.length; i++) {
     findocData[i] = await this.production2(clientID, production.rows[i].FINDOC);
-    console.log(findocData[i]);
+    //console.log(findocData[i]);
     let ingredients = await this.production3(
       clientID,
       findocData[i].rows[0].MTRL
     );
-    console.log("INGREDIENTS");
-    console.log(ingredients.rows[1]);
+    //console.log("INGREDIENTS");
+    //console.log(ingredients.rows[1]);
     for (let j = 0; j < ingredients.rows.length; j++) {
       prod3[j] = {
         mtrl: ingredients.rows[j].MTRL,
@@ -812,8 +812,8 @@ exports.addProdLine = (req, res, next) => {
       let state;
       for (let i = 0; i < results[0].length; i++) {
         posts = await this.getCatPostData(results[0][i].catId);
-        console.log("FINDOC FOR ACTION LINES");
-        console.log(results[0][i].findoc);
+        //console.log("FINDOC FOR ACTION LINES");
+        //console.log(results[0][i].findoc);
         await this.addActionLines(results[0][i].findoc);
         for (let j = 0; j < posts.length; j++) {
           if (posts[j].orderBy == 1) {
@@ -844,12 +844,12 @@ exports.addProdLine = (req, res, next) => {
     });
 };
 exports.getAndUpdateOrderby = async (data, category) => {
-  console.log("DATA");
-  console.log(data);
-  console.log("CATEGORY");
-  console.log(category);
+  //console.log("DATA");
+  //console.log(data);
+  //console.log("CATEGORY");
+  //console.log(category);
   for (let i = 0; i < category.categoryPost.length; i++) {
-    console.log(category.categoryPost[i]);
+    //console.log(category.categoryPost[i]);
     let state;
     if (category.categoryPost[i].orderBy == 1) {
       state = 2;
@@ -880,11 +880,11 @@ exports.orderByOnProdLine = async (category) => {
       ])
       .then(async (results) => {
         for (let i = 0; i < results[0].length; i++) {
-          console.log("RESULTS");
-          console.log(results[0][i]);
+          //console.log("RESULTS");
+          //console.log(results[0][i]);
           await this.getAndUpdateOrderby(results[0][i].findoc, category);
         }
-        console.log("DONE");
+        //console.log("DONE");
       })
       .catch((err) => {
         if (!err.statusCode) err.statusCode = 500;
@@ -917,7 +917,7 @@ exports.updateProdLine = (req, res, next) => {
       .then(async (results) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
           if (prodLine.done == 4) {
-            console.log("PROLINE.DONE == 4");
+            //console.log("PROLINE.DONE == 4");
             await this.whoMakeItDone(
               prodLine.user,
               prodLine.findoc,
@@ -950,8 +950,8 @@ exports.setNextUp = async (findoc, post) => {
       [findoc, +currentOrder[0][0].orderBy + 1]
     );
     if (nextUp[0].length > 0) {
-      console.log("NEXT UP");
-      console.log(nextUp[0][0]);
+      //console.log("NEXT UP");
+      //console.log(nextUp[0][0]);
       let update = await database.execute(
         "update prodline set done=1 where findoc=? and post=?",
         [findoc, nextUp[0][0].post]
@@ -965,7 +965,7 @@ exports.getProduction = (req, res, next) => {
   database
     .execute("select * from production")
     .then(async (results) => {
-      console.log(results[0]);
+      //console.log(results[0]);
       let returnProductions = [];
       for (let i = 0; i < results[0].length; i++) {
         returnProductions[i] = {
@@ -1055,9 +1055,9 @@ exports.updateActionLines = async (req, res, next) => {
     }
     req.body.findoc = actionLine[0].findoc;
     req.body.post = actionLine[0].post;
-    console.log("HELLo");
-    console.log(req.body.findoc);
-    console.log(req.body.post);
+    //console.log("HELLo");
+    //console.log(req.body.findoc);
+    //console.log(req.body.post);
     this.getSingleProduction(req, res, next);
   }
 };
@@ -1068,7 +1068,7 @@ exports.getSingleProd = async (findoc, post) => {
       throw new Error(err.message);
     });
 
-  console.log("POSTS");
+  //console.log("POSTS");
   return {
     message: "Single Production",
     production: {
@@ -1122,9 +1122,9 @@ exports.allActionsOnPostAreDone = async (findoc, post) => {
         coutDoneActions++;
       }
     }
-    console.log("IF STATEMENT");
-    console.log(find[0].length);
-    console.log(doneActions.length);
+    //console.log("IF STATEMENT");
+    //console.log(find[0].length);
+    //console.log(doneActions.length);
     if (find[0].length == doneActions.length) {
       return true;
     } else {
@@ -1147,7 +1147,9 @@ exports.getStateOfProductions = (req, res, next) => {
           posts: await this.getprodLineSteps(production[0][i].findoc),
         };
       }
-      res.status(200).json({message:"All Productions",productions:returnProduction}); 
+      res
+        .status(200)
+        .json({ message: "All Productions", productions: returnProduction });
     })
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
@@ -1202,7 +1204,7 @@ exports.addTime = async (req, res, next) => {
   */
   if (!postsTime) res.status(402).json({ message: "fill the requierd fields" });
   else {
-    console.log(postsTime);
+    //console.log(postsTime);
     database
       .execute(
         "insert into time (findoc,post,user,date,start) VALUES(?,?,?,?,?)",
@@ -1220,7 +1222,7 @@ exports.addTime = async (req, res, next) => {
           users_data: await this.activeUsers(),
         });
         this.postHasStarted(postsTime.findoc, postsTime.post);
-        console.log(results[0]);
+        //console.log(results[0]);
         if (
           (await this.machineHasStarted(postsTime.post, postsTime.date)) != true
         ) {
@@ -1268,13 +1270,21 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        if(await this.postHasFinished(endTimer.findoc,endTimer.post) == true && await this.orderIsNotFinished(endTimer.findoc,endTimer.post) != true ){
-          let updateState = await database.execute('update prodline set done=3 where findoc=? and post=?',[
-            endTimer.findoc,endTimer.post
-          ]).catch(err=>{
-            if(!err.statusCode) err.statusCode = 500;
-            next(err);
-          })
+        if (
+          (await this.postHasFinished(endTimer.findoc, endTimer.post)) ==
+            true &&
+          (await this.orderIsNotFinished(endTimer.findoc, endTimer.post)) !=
+            true
+        ) {
+          let updateState = await database
+            .execute("update prodline set done=3 where findoc=? and post=?", [
+              endTimer.findoc,
+              endTimer.post,
+            ])
+            .catch((err) => {
+              if (!err.statusCode) err.statusCode = 500;
+              next(err);
+            });
           await this.updateMachineTime(
             endTimer.end,
             endTimer.post,
@@ -1285,7 +1295,7 @@ exports.updateTime = (req, res, next) => {
           action: "logout",
           users_data: await this.activeUsers(),
         });
-      
+
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1320,7 +1330,7 @@ exports.getMachineTime = (req, res, next) => {
           date: results[0][i].date,
         };
       }
-      console.log(returnMachineTime);
+      //console.log(returnMachineTime);
       res
         .status(200)
         .json({ message: "Machine Times", time: returnMachineTime });
@@ -1341,7 +1351,7 @@ exports.addMachineTime = async (post, date, start) => {
       if (!err.statusCode) err.statusCode = 500;
       throw err;
     });
-  console.log("Machine Time Inserted");
+  //console.log("Machine Time Inserted");
 };
 exports.updateMachineTime = (end, post, date) => {
   database
@@ -1351,7 +1361,7 @@ exports.updateMachineTime = (end, post, date) => {
       date,
     ])
     .then((results) => {
-      console.log("Machine Time Updated");
+      //console.log("Machine Time Updated");
       return;
     })
     .catch((err) => {
@@ -1379,7 +1389,7 @@ exports.getActions = async (action) => {
       "select * from actionspost where post=?",
       [action]
     );
-    console.log(actionsPost[0]);
+    //console.log(actionsPost[0]);
     if (actionsPost[0].length > 0) {
       for (let i = 0; i < actionsPost[0].length; i++) {
         let actions = await database.execute(
@@ -1428,7 +1438,7 @@ exports.passwordGenerator = () => {
     excludeSimilarCharacters: true,
     strict: true,
   });
-  console.log(password);
+  //console.log(password);
 
   return password;
 };
@@ -1453,14 +1463,14 @@ exports.getCatPostData = async (catId) => {
     "select * from catpost where catId=? order by orderBy ASC",
     [catId]
   );
-  console.log(catId);
-  console.log(finddata[0]);
+  //console.log(catId);
+  //console.log(finddata[0]);
   try {
     let returnData = [];
     //ελεγχος για την κατηγορια αν εχει καταχωρημενα ποστα
     if (finddata[0].length > 0) {
       for (let i = 0; i < finddata[0].length; i++) {
-        console.log(finddata[0][i]);
+        //console.log(finddata[0][i]);
         returnData[i] = {
           catPost: finddata[0][i].catPost,
           post: finddata[0][i].postId,
@@ -1489,7 +1499,7 @@ exports.findPostName = async (postId) => {
   let name = await database.execute("select * from post where post=?", [
     postId,
   ]);
-  console.log(name[0]);
+  //console.log(name[0]);
   return name[0][0].username;
 };
 
@@ -1500,11 +1510,11 @@ exports.findPostActions = async (postId) => {
     [postId]
   );
   try {
-    console.log(actions[0]);
+    //console.log(actions[0]);
     let returnActions = [];
     if (actions[0].length > 0) {
       for (let i = 0; i < actions[0].length; i++) {
-        console.log(actions[0][i]);
+        //console.log(actions[0][i]);
         returnActions[i] = {
           actions: actions[0][i].action,
           name: await this.getActionName(actions[0][i].action),
@@ -1525,11 +1535,11 @@ exports.findPostActions = async (postId) => {
 
 //function που παιρνει το ιδ μιας ενεργειας και βρισκει το ονομα της
 exports.getActionName = async (actionId) => {
-  console.log(actionId);
+  //console.log(actionId);
   let name = await database.execute("select * from actions where actions=?", [
     actionId,
   ]);
-  console.log(name[0]);
+  //console.log(name[0]);
   return name[0][0].name;
 };
 
@@ -1545,7 +1555,7 @@ exports.getprodLineSteps = async (findoc) => {
         post: await this.postData(getProdLine[0][i].post),
         orderBy: getProdLine[0][i].orderBy,
         state: this.getState(getProdLine[0][i].done),
-        time: await  this.calcTotalTimeOfPost(getProdLine[0][i].post, findoc),
+        time: await this.calcTotalTimeOfPost(getProdLine[0][i].post, findoc),
       };
     }
     return returnData;
@@ -1628,7 +1638,7 @@ exports.login = async () => {
   let login = await axios(this.getConfig(data));
   try {
     let loginData = decoder.decode(login.data);
-    console.log(JSON.parse(loginData));
+    //console.log(JSON.parse(loginData));
     loginData = JSON.parse(loginData);
     return loginData.clientID;
   } catch (err) {
@@ -1648,7 +1658,7 @@ exports.authenticate = async (clientID) => {
   let authenticate = await axios(this.getConfig(data));
   try {
     let authenticatedata = decoder.decode(authenticate.data);
-    console.log(JSON.parse(authenticatedata));
+    //console.log(JSON.parse(authenticatedata));
     authenticatedata = JSON.parse(authenticatedata);
     return authenticatedata.clientID;
   } catch (err) {
@@ -1667,7 +1677,7 @@ exports.production1 = async (clientID) => {
   try {
     let productionData = decoder.decode(production.data);
     productionData = JSON.parse(productionData);
-    console.log(productionData);
+    //console.log(productionData);
     return productionData;
   } catch (err) {
     throw err;
@@ -1685,7 +1695,7 @@ exports.production2 = async (clientID, findoc) => {
   try {
     let productionData = decoder.decode(production.data);
     productionData = JSON.parse(productionData);
-    console.log(productionData);
+    //console.log(productionData);
     return productionData;
   } catch (err) {
     throw err;
@@ -1703,7 +1713,7 @@ exports.production3 = async (clientID, mtrl) => {
   try {
     let production = decoder.decode(production3.data);
     production = JSON.parse(production);
-    console.log(production);
+    //console.log(production);
     return production;
   } catch (err) {
     throw err;
@@ -1739,7 +1749,7 @@ exports.getIngredients = async (mtrl) => {
         warning: ingredients[0][i].warning,
         webname: ingredients[0][i].webname,
       };
-      console.log(returnIng[i]);
+      //console.log(returnIng[i]);
     }
     return returnIng;
   } catch (err) {
@@ -1798,18 +1808,18 @@ exports.machineHasStarted = async (post, date) => {
   }
 };
 exports.addActionLines = async (findoc) => {
-  console.log("FINDOC IN ACTION LINE");
-  console.log(findoc);
+  //console.log("FINDOC IN ACTION LINE");
+  //console.log(findoc);
   let post = await database.execute(
     "select post from prodline where findoc=?",
     [findoc]
   );
-  console.log("POST");
-  console.log(post[0]);
+  //console.log("POST");
+  //console.log(post[0]);
   for (let i = 0; i < post[0].length; i++) {
     let postData = await this.postData(post[0][i].post);
-    console.log("POST DATA");
-    console.log(postData);
+    //console.log("POST DATA");
+    //console.log(postData);
     for (let j = 0; j < postData.actions.length; j++) {
       if (
         (await this.actionLineExists(
@@ -1850,7 +1860,7 @@ exports.actionLineExists = async (findoc, action, post) => {
 
 //function που ελεγχει με βαση τις ενεργες κατηγοριες αν ειναι καταχωρημενα στην παραγωγη
 exports.postIsSetInCurrentOrders = async (post) => {
-  console.log("post Is Set In Current Orders");
+  //console.log("post Is Set In Current Orders");
   let categories = await database.execute(
     "select DISTINCT catId from production"
   );
@@ -1860,16 +1870,16 @@ exports.postIsSetInCurrentOrders = async (post) => {
       "select DISTINCT postId from catpost where postId=?",
       [post]
     );
-    console.log(find[0]);
-    console.log(find[0].length);
-    console.log(find[0].length > 0);
-    console.log("INSIDE LOOP");
+    //console.log(find[0]);
+    //console.log(find[0].length);
+    //console.log(find[0].length > 0);
+    //console.log("INSIDE LOOP");
     if (find[0].length > 0) {
       return true;
     }
   }
-  console.log("AFTER LOOP");
-  console.log(found);
+  //console.log("AFTER LOOP");
+  //console.log(found);
   if (found) {
     return found;
   } else {
@@ -1878,14 +1888,14 @@ exports.postIsSetInCurrentOrders = async (post) => {
 };
 
 exports.countOfUsers = async (post) => {
-  console.log("COUNT");
+  //console.log("COUNT");
   let users = await database.execute(
     "select DISTINCT user from time where post=? and end=? and totalTime=?",
     [post, "0", "0"]
   );
   let count = 0;
   let returnUsers = [];
-  console.log(users[0]);
+  //console.log(users[0]);
   for (let i = 0; i < users[0].length; i++) {
     returnUsers[count] = await this.getUserData(users[0][i].user);
     count++;
@@ -1898,23 +1908,23 @@ exports.countOfUsers = async (post) => {
   };
 };
 exports.updateChangesActionLines = async (post, actions) => {
-  console.log("update Changes Action Lines");
-  console.log("POST");
-  console.log(post);
-  console.log("ACTIONS");
-  console.log(actions);
+  //console.log("update Changes Action Lines");
+  //console.log("POST");
+  //console.log(post);
+  //console.log("ACTIONS");
+  //console.log(actions);
   let count = await database.execute(
     "select DISTINCT action from actionlines where post=?",
     [post]
   );
 
-  console.log("ACTIONS FROM ACTION LINES QUERY");
-  console.log(count[0]);
+  //console.log("ACTIONS FROM ACTION LINES QUERY");
+  //console.log(count[0]);
 
   if (actions.length == count[0].length) {
-    console.log("NO CHANGES");
+    //console.log("NO CHANGES");
   } else {
-    console.log("SOMETHING CHANGED");
+    //console.log("SOMETHING CHANGED");
     let findocs = await database.execute(
       "select DISTINCT findoc from actionlines"
     );
@@ -1940,35 +1950,61 @@ exports.whoMakeItDone = async (user, findoc, post) => {
 };
 //function που παιρνει ενα ποστο και εναν κωδικο μιας παραγγελιας και υπολογιζει τον συνολικο χρονο
 exports.calcTotalTimeOfPost = async (post, findoc) => {
+  let dates = await database
+    .execute(
+      "select DISTINCT date from time where post=? and findoc=? and end != ? and totalTime!= ?",
+      [post, findoc, "0", "0"]
+    )
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+  let returnDates = [];
+  for (let i = 0; i < dates[0].length; i++) {
+    console.log("DATES");
+    console.log(dates[0][i].date)
+    returnDates[i] = {
+      date: dates[0][i].date,
+      totalTime: await this.totalTime(post,findoc,dates[0][i].date),
+    };
+  }
+  return returnDates;
+};
+exports.totalTime = async (post,findoc, date) => {
   let timeOfPost = await database.execute(
-    "select * from time where post=? and findoc=? and end != ? and totalTime != ?",
-    [post, findoc, "0", "0"]
+    "select * from time where post=? and findoc=? and end != ? and totalTime != ? and date=?",
+    [post, findoc, "0", "0", date]
   );
+  console.log("QUERY");
+  console.log( `select * from time where post=${post} and findoc=${findoc} and end != 0 and totalTime != 0 and date=${date}`)
+  console.log(timeOfPost[0]);
+  console.log(timeOfPost[0].length);
   let hours = 0;
   let minutes = 0;
   let seconds = 0;
   for (let i = 0; i < timeOfPost[0].length; i++) {
-    console.log(timeOfPost[0][i].totalTime)
-    console.log("TIME OF POST");
     hours += this.getHours(timeOfPost[0][i].totalTime);
     if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
       hours++;
       minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
-    }else{
+    } else {
       minutes += this.getMinutes(timeOfPost[0][i].totalTime);
     }
     if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
       minutes++;
       seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
-    }else{
+    } else {
       seconds += this.getSeconds(timeOfPost[0][i].totalTime);
     }
-    console.log(hours + ":" + minutes + ":" + seconds)
+    console.log(hours + ":" + minutes + ":" + seconds);
   }
   hours = hours < 10 ? "0" + hours : hours;
   minutes = minutes < 10 ? "0" + minutes : minutes;
   seconds = seconds < 10 ? "0" + seconds : seconds;
-  return hours + ":" + minutes + ":" + seconds;
+  return {
+    hr: hours,
+    min: minutes,
+    sec: seconds,
+  }
 };
 
 exports.getHours = (time) => {
@@ -1980,20 +2016,26 @@ exports.getMinutes = (time) => {
 exports.getSeconds = (time) => {
   return +time.split(":")[2];
 };
-exports.orderIsNotFinished = async (findoc,post) => {
-  let state = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
-  if(state[0][0].done == 4){
+exports.orderIsNotFinished = async (findoc, post) => {
+  let state = await database.execute(
+    "select done from prodline where post=? and findoc=?",
+    [post, findoc]
+  );
+  if (state[0][0].done == 4) {
     return true;
-  }else{
+  } else {
     return false;
   }
-}
+};
 
-exports.postHasFinished = async (post,findoc) =>{
-  let count = await database.execute("select * from time where post=? and findoc=? and end=? and totalTime=?", [post,findoc,"0","0"])
-  if(count[0].length == 0){
+exports.postHasFinished = async (post, findoc) => {
+  let count = await database.execute(
+    "select * from time where post=? and findoc=? and end=? and totalTime=?",
+    [post, findoc, "0", "0"]
+  );
+  if (count[0].length == 0) {
     return true;
-  }else{
+  } else {
     return false;
   }
-}
+};
