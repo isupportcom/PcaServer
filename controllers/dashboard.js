@@ -1981,7 +1981,7 @@ exports.getSeconds = (time) => {
   return +time.split(":")[2];
 };
 exports.orderIsNotFinished = async (findoc,post) => {
-  let state = await database.execute('select done from proline where post=? and findoc=?',[post,findoc]);
+  let state = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
   if(state[0][0].done == 4){
     return true;
   }else{
