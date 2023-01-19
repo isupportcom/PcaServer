@@ -1268,24 +1268,24 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        console.log(await this.activeUsers());
-        if(await this.postHasFinished(endTimer.findoc,endTimer.post) == true){
+        if(await this.postHasFinished(endTimer.findoc,endTimer.post) == true && await this.orderIsNotFinished(endTimer.findoc,endTimer.post) != true ){
           let updateState = await database.execute('update prodline set done=3 where findoc=? and post=?',[
             endTimer.findoc,endTimer.post
           ]).catch(err=>{
             if(!err.statusCode) err.statusCode = 500;
             next(err);
           })
+          await this.updateMachineTime(
+            endTimer.end,
+            endTimer.post,
+            endTimer.date
+          );
         }
         io.getIO().emit("logout", {
           action: "logout",
           users_data: await this.activeUsers(),
         });
-        await this.updateMachineTime(
-          endTimer.end,
-          endTimer.post,
-          endTimer.date
-        );
+      
         this.getTime(req, res, next);
       })
       .catch((err) => {
@@ -1980,6 +1980,14 @@ exports.getMinutes = (time) => {
 exports.getSeconds = (time) => {
   return +time.split(":")[2];
 };
+exports.orderIsNotFinished = async (findoc,post) => {
+  let state = await database.execute('select done from proline where post=? and findoc=?',[post,findoc]);
+  if(state[0][0].done == 4){
+    return true;
+  }else{
+    return false;
+  }
+}
 
 exports.postHasFinished = async (post,findoc) =>{
   let count = await database.execute("select * from time where post=? and findoc=? and end=? and totalTime=?", [post,findoc,"0","0"])
