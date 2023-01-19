@@ -429,7 +429,7 @@ exports.activeUsers = async () => {
     console.log(
       (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
     );
-    if (await this.postIsSetInCurrentOrders(posts[0][i].post) != false) {
+    if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
       console.log("IS TRUE");
       returnPost[i] = await this.countOfUsers(posts[0][i].post);
     } else {
@@ -441,7 +441,7 @@ exports.activeUsers = async () => {
     }
     console.log(returnPost);
   }
-  return returnPost
+  return returnPost;
 };
 /******************************************************************************                                                   
  *                                                                            *
@@ -505,7 +505,8 @@ exports.addcatPost = (req, res, next) => {
             "insert into catpost (catId,postId,orderBy) VALUES (?,?,?)",
             [catId, postId, orderBy]
           )
-          .then((inserted) => {
+          .then(async(inserted) => {
+            this.addProduction(req,res,next);
             this.getcatPost(req, res, next);
           })
           .catch((err) => {
@@ -807,6 +808,7 @@ exports.addProdLine = (req, res, next) => {
   database
     .execute("select * from production")
     .then(async (results) => {
+      let del = await database.execute("delete from prodLine");
       let state;
       for (let i = 0; i < results[0].length; i++) {
         posts = await this.getCatPostData(results[0][i].catId);
@@ -1016,28 +1018,37 @@ exports.updateActionLines = async (req, res, next) => {
         throw err;
       }
     }
-    if(user) {
-      if ((await this.allActionsOnPostAreDone(actionLine[0].findoc, actionLine[0].post)) === true) {
+    if (user) {
+      if (
+        (await this.allActionsOnPostAreDone(
+          actionLine[0].findoc,
+          actionLine[0].post
+        )) === true
+      ) {
         await this.setNextUp(actionLine[0].findoc, actionLine[0].post);
         let done = await database
-            .execute("update prodline set done=4 where findoc=? and post=?", [
-              actionLine[0].findoc,
-              actionLine[0].post,
-            ])
+          .execute("update prodline set done=4 where findoc=? and post=?", [
+            actionLine[0].findoc,
+            actionLine[0].post,
+          ])
 
-            .catch((err) => {
-              if (!err.statusCode) err.statusCode = 500;
-              next(err);
-            });
-        await this.whoMakeItDone(user, actionLine[0].findoc, actionLine[0].post);
+          .catch((err) => {
+            if (!err.statusCode) err.statusCode = 500;
+            next(err);
+          });
+        await this.whoMakeItDone(
+          user,
+          actionLine[0].findoc,
+          actionLine[0].post
+        );
         io.getIO().emit("done", {
           action:
-              "Post " +
-              (await this.findPostName(actionLine[0].post)) +
-              " has been done",
+            "Post " +
+            (await this.findPostName(actionLine[0].post)) +
+            " has been done",
           production: await this.getSingleProd(
-              actionLine[0].findoc,
-              actionLine[0].post
+            actionLine[0].findoc,
+            actionLine[0].post
           ),
         });
       }
@@ -1123,6 +1134,26 @@ exports.allActionsOnPostAreDone = async (findoc, post) => {
     throw new Error(err.message);
   }
 };
+exports.getStateOfProductions = (req, res, next) => {
+  database
+    .execute("select * from production")
+    .then(async (production) => {
+      let returnProduction = [];
+      for (let i = 0; i < production[0].length; i++) {
+        returnProduction[i] = {
+          findoc: production[0][i].findoc,
+          mtrl: production[0][i].mtrl,
+          category: production[0][i].catId,
+          posts: await this.getprodLineSteps(production[0][i].findoc),
+        };
+      }
+      res.status(200).json({message:"All Productions",productions:returnProduction}); 
+    })
+    .catch((err) => {
+      if (!err.statusCode) err.statusCode = 500;
+      next(err);
+    });
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1184,10 +1215,10 @@ exports.addTime = async (req, res, next) => {
         ]
       )
       .then(async (results) => {
-        io.getIO().emit("login",{
-          action:"Login",
-          users_data : await this.activeUsers()
-        })
+        io.getIO().emit("login", {
+          action: "Login",
+          users_data: await this.activeUsers(),
+        });
         this.postHasStarted(postsTime.findoc, postsTime.post);
         console.log(results[0]);
         if (
@@ -1506,6 +1537,7 @@ exports.getprodLineSteps = async (findoc) => {
         post: await this.postData(getProdLine[0][i].post),
         orderBy: getProdLine[0][i].orderBy,
         state: this.getState(getProdLine[0][i].done),
+        time: await  this.calcTotalTimeOfPost(getProdLine[0][i].post, findoc),
       };
     }
     return returnData;
@@ -1897,4 +1929,46 @@ exports.whoMakeItDone = async (user, findoc, post) => {
     .catch((err) => {
       throw new Error(err.message);
     });
+};
+//function που παιρνει ενα ποστο και εναν κωδικο μιας παραγγελιας και υπολογιζει τον συνολικο χρονο
+exports.calcTotalTimeOfPost = async (post, findoc) => {
+  let timeOfPost = await database.execute(
+    "select * from time where post=? and findoc=? and end != ? and totalTime != ?",
+    [post, findoc, "0", "0"]
+  );
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+  for (let i = 0; i < timeOfPost[0].length; i++) {
+    console.log(timeOfPost[0][i].totalTime)
+    console.log("TIME OF POST");
+    hours += this.getHours(timeOfPost[0][i].totalTime);
+    if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
+      hours++;
+      minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
+    }else{
+      minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+    }
+    if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
+      minutes++;
+      seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
+    }else{
+      seconds += this.getSeconds(timeOfPost[0][i].totalTime);
+    }
+    console.log(hours + ":" + minutes + ":" + seconds)
+  }
+  hours = hours < 10 ? "0" + hours : hours;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+  return hours + ":" + minutes + ":" + seconds;
+};
+
+exports.getHours = (time) => {
+  return +time.split(":")[0];
+};
+exports.getMinutes = (time) => {
+  return +time.split(":")[1];
+};
+exports.getSeconds = (time) => {
+  return +time.split(":")[2];
 };
