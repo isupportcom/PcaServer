@@ -443,6 +443,40 @@ exports.activeUsers = async () => {
   }
   return returnPost;
 };
+exports.getUserTime = (req, res, next) => {
+  database
+    .execute("select * from users")
+    .then(async (users) => {
+      let findocs = await database.execute("select  * from production");
+      
+      let returnUsers = [];
+      for (let i = 0; i < users[0].length; i++) {
+        let returnFindocs = [];
+        
+        for (let j = 0; j < findocs[0].length; j++) {
+         
+           returnFindocs[j]={ 
+            findoc: findocs[0][j].findoc,
+            category :findocs[0][j].catId,
+            time: await this.getUserTimeOnPosts(
+              users[0][i].id,
+              findocs[0][j].findoc
+            ),
+          };
+        }
+        returnUsers[i] = {
+          id: users[0][i].id,
+          fname: users[0][i].fname,
+          lname: users[0][i].lname,
+          times: returnFindocs,
+        }
+      }
+      res.status(200).json({ message: "Users Time", users: returnUsers });
+    })
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1961,21 +1995,23 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
   let returnDates = [];
   for (let i = 0; i < dates[0].length; i++) {
     console.log("DATES");
-    console.log(dates[0][i].date)
+    console.log(dates[0][i].date);
     returnDates[i] = {
       date: dates[0][i].date,
-      totalTime: await this.totalTime(post,findoc,dates[0][i].date),
+      totalTime: await this.totalTime(post, findoc, dates[0][i].date),
     };
   }
   return returnDates;
 };
-exports.totalTime = async (post,findoc, date) => {
+exports.totalTime = async (post, findoc, date) => {
   let timeOfPost = await database.execute(
     "select * from time where post=? and findoc=? and end != ? and totalTime != ? and date=?",
     [post, findoc, "0", "0", date]
   );
   console.log("QUERY");
-  console.log( `select * from time where post=${post} and findoc=${findoc} and end != 0 and totalTime != 0 and date=${date}`)
+  console.log(
+    `select * from time where post=${post} and findoc=${findoc} and end != 0 and totalTime != 0 and date=${date}`
+  );
   console.log(timeOfPost[0]);
   console.log(timeOfPost[0].length);
   let hours = 0;
@@ -2004,7 +2040,7 @@ exports.totalTime = async (post,findoc, date) => {
     hr: hours,
     min: minutes,
     sec: seconds,
-  }
+  };
 };
 
 exports.getHours = (time) => {
@@ -2037,5 +2073,91 @@ exports.postHasFinished = async (post, findoc) => {
     return true;
   } else {
     return false;
+  }
+};
+
+exports.getUserTimeOnPosts = async (user, findoc) => {
+  console.log("User Time on Posts");
+  console.log(findoc, user);
+  let dates = await database
+    .execute("select DISTINCT date from time where user=? and findoc=?", [
+      user,
+      findoc,
+    ])
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+  let posts = await database.execute(
+    "select DISTINCT post from time where user=? and findoc=?",
+    [user, findoc]
+  )
+  .catch(err=>{
+    throw new Error(err.message);
+  })
+  console.log("DATES");
+  console.log(dates[0]);
+  console.log("POSTS");
+  console.log(posts[0]);
+  let returnData = [];
+  for (let i=0; i < dates[0].length; i++) {
+    for (let j=0; j < posts[0].length; j++) {
+      console.log("HELLO");
+      returnData[i] = {
+        date: dates[0][i].date,
+        post: posts[0][j].post,
+        totalTime: await this.userTotalTime(
+          posts[0][j].post,
+          dates[0][i].date,
+          findoc,
+          user
+        ),
+      };
+    }
+  }
+  return returnData;
+};
+exports.userTotalTime = async (post, date, findoc, user) => {
+  console.log("USER TOTAL TIME");
+  let timeOfPost = await database.execute(
+    "select totalTime from time where post=? and date=? and user=? and findoc=?",
+    [post, date, user, findoc]
+  );
+  console.log("QUERY");
+  console.log(
+    `select totalTime from time where post=${user} and date=${user} and user=${user} and findoc=${findoc}`,
+    [post, date, user, findoc]
+  );
+  console.log("QUERY RESULT");
+  console.log(timeOfPost[0]);
+  try {
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    for (let i = 0; i < timeOfPost[0].length; i++) {
+      hours += this.getHours(timeOfPost[0][i].totalTime);
+      if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
+        hours++;
+        minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
+      } else {
+        minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+      }
+      if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
+        minutes++;
+        seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
+      } else {
+        seconds += this.getSeconds(timeOfPost[0][i].totalTime);
+      }
+      console.log(hours + ":" + minutes + ":" + seconds);
+    }
+    // hours = hours < 10 ? "0" + hours : hours;
+    // minutes = minutes < 10 ? "0" + minutes : minutes;
+    // seconds = seconds < 10 ? "0" + seconds : seconds;
+    return {
+      hr: hours,
+      min: minutes,
+      sec: seconds,
+    };
+  } catch (err) {
+    throw new Error(err.message);
   }
 };
