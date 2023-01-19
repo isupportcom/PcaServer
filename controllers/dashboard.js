@@ -448,16 +448,14 @@ exports.getUserTime = (req, res, next) => {
     .execute("select * from users")
     .then(async (users) => {
       let findocs = await database.execute("select  * from production");
-      
+
       let returnUsers = [];
       for (let i = 0; i < users[0].length; i++) {
         let returnFindocs = [];
-        
         for (let j = 0; j < findocs[0].length; j++) {
-         
-           returnFindocs[j]={ 
+          returnFindocs[j] = {
             findoc: findocs[0][j].findoc,
-            category :findocs[0][j].catId,
+            category: findocs[0][j].catId,
             time: await this.getUserTimeOnPosts(
               users[0][i].id,
               findocs[0][j].findoc
@@ -469,7 +467,7 @@ exports.getUserTime = (req, res, next) => {
           fname: users[0][i].fname,
           lname: users[0][i].lname,
           times: returnFindocs,
-        }
+        };
       }
       res.status(200).json({ message: "Users Time", users: returnUsers });
     })
@@ -1350,24 +1348,29 @@ exports.updateTime = (req, res, next) => {
 
 exports.getMachineTime = (req, res, next) => {
   database
-    .execute("select * from machinetime")
-    .then(async (results) => {
-      let returnMachineTime = [];
-      for (let i = 0; i < results[0].length; i++) {
-        let start = +results[0][i].start;
-        let end = +results[0][i].end;
-        returnMachineTime[i] = {
-          id: results[0][i].machineTime,
-          post: await this.postData(results[0][i].post),
-          start: start.toFixed(2),
-          end: end.toFixed(2),
-          date: results[0][i].date,
+    .execute("select DISTINCT post from machinetime")
+    .then(async (posts) => {
+      let dates = await database.execute(
+        "select DISTINCT date from machinetime"
+      );
+      let returnTime = [];
+      for (let i = 0; i < posts[0].length; i++) {
+        let returnDates = [];
+        for (let j = 0; j < dates[0].length; j++) {
+          returnDates[j] = {
+            date: dates[0][j].date,
+            time: await this.getMachineTimeByDate(
+              posts[0][i].post,
+              dates[0][j].date
+            ),
+          };
+        }
+        returnTime[i] = {
+          post: posts[0][i].post,
+          dates: returnDates,
         };
       }
-      //console.log(returnMachineTime);
-      res
-        .status(200)
-        .json({ message: "Machine Times", time: returnMachineTime });
+      res.status(200).json({ message: "Machine Times",times : returnTime });
     })
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
@@ -2087,20 +2090,21 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
     .catch((err) => {
       throw new Error(err.message);
     });
-  let posts = await database.execute(
-    "select DISTINCT post from time where user=? and findoc=?",
-    [user, findoc]
-  )
-  .catch(err=>{
-    throw new Error(err.message);
-  })
+  let posts = await database
+    .execute("select DISTINCT post from time where user=? and findoc=?", [
+      user,
+      findoc,
+    ])
+    .catch((err) => {
+      throw new Error(err.message);
+    });
   console.log("DATES");
   console.log(dates[0]);
   console.log("POSTS");
   console.log(posts[0]);
   let returnData = [];
-  for (let i=0; i < dates[0].length; i++) {
-    for (let j=0; j < posts[0].length; j++) {
+  for (let i = 0; i < dates[0].length; i++) {
+    for (let j = 0; j < posts[0].length; j++) {
       console.log("HELLO");
       returnData[i] = {
         date: dates[0][i].date,
@@ -2161,3 +2165,47 @@ exports.userTotalTime = async (post, date, findoc, user) => {
     throw new Error(err.message);
   }
 };
+exports.getMachineTimeByDate = async (post,date) =>{
+  let timeOfPost = await database.execute(
+    "select totalTime from time where post=? and date=?",
+    [post, date]
+  );
+  console.log("QUERY");
+  console.log(
+    `select totalTime from time where post=${post} and date=${date}`,
+    [post, date]
+  );
+  console.log("QUERY RESULT");
+  console.log(timeOfPost[0]);
+  try {
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    for (let i = 0; i < timeOfPost[0].length; i++) {
+      hours += this.getHours(timeOfPost[0][i].totalTime);
+      if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
+        hours++;
+        minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
+      } else {
+        minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+      }
+      if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
+        minutes++;
+        seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
+      } else {
+        seconds += this.getSeconds(timeOfPost[0][i].totalTime);
+      }
+      console.log(hours + ":" + minutes + ":" + seconds);
+    }
+    hours = hours < 10 ? "0" + hours : hours;
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+    return {
+      hr: hours,
+      min: minutes,
+      sec: seconds,
+    };
+  } catch (err) {
+    throw new Error(err.message);
+  }
+}
