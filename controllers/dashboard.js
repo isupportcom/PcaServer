@@ -1269,6 +1269,14 @@ exports.updateTime = (req, res, next) => {
       )
       .then(async (results) => {
         console.log(await this.activeUsers());
+        if(await this.postHasFinished(endTimer.findoc,endTimer.post) == true){
+          let updateState = await database.execute('update prodline set done=3 where findoc=? and post=?',[
+            endTimer.findoc,endTimer.post
+          ]).catch(err=>{
+            if(!err.statusCode) err.statusCode = 500;
+            next(err);
+          })
+        }
         io.getIO().emit("logout", {
           action: "logout",
           users_data: await this.activeUsers(),
@@ -1972,3 +1980,12 @@ exports.getMinutes = (time) => {
 exports.getSeconds = (time) => {
   return +time.split(":")[2];
 };
+
+exports.postHasFinished = async (post,findoc) =>{
+  let count = await database.execute("select * from time where post=? and findoc=? and end=? and totalTime=?", [post,findoc,"0","0"])
+  if(count[0].length == 0){
+    return true;
+  }else{
+    return false;
+  }
+}
