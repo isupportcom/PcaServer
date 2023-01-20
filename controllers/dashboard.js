@@ -418,7 +418,6 @@ exports.startUser = (req, res, next) => {
 
 exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
-    if (!err.statusCode) err.statusCode = 500;
     throw new Error(err.message);
   });
 
@@ -434,7 +433,7 @@ exports.activeUsers = async () => {
       returnPost[i] = await this.countOfUsers(posts[0][i].post);
     } else {
       returnPost[i] = {
-        post: post.post,
+        post: posts[0][i].post,
         count: 0,
         users: [],
       };
