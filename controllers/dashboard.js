@@ -2108,6 +2108,7 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
     for (let j = 0; j < posts[0].length; j++) {
       console.log("HELLO");
      returnPost[j]={
+        date: dates[0][i].date,
         post: posts[0][j].post,
         totalTime: await this.userTotalTime(
           posts[0][j].post,
@@ -2116,10 +2117,7 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
           user
         ),
       };
-      returnData[i] = {
-        date: dates[0][i].date,
-        returnPost
-      };
+      returnData[i] = returnPost;
     }
   }
   return returnData;
