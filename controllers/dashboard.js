@@ -1303,11 +1303,11 @@ exports.updateTime = (req, res, next) => {
       .then(async (results) => {
         if (
           (await this.postHasFinished(endTimer.findoc, endTimer.post)) ==
-            true &&
-          (await this.orderIsNotFinished(endTimer.findoc, endTimer.post)) !=
-            true
+            true 
+          
         ) {
-          let updateState = await database
+          if((await this.orderIsNotFinished(endTimer.findoc, endTimer.post)) != true){
+            let updateState = await database
             .execute("update prodline set done=3 where findoc=? and post=?", [
               endTimer.findoc,
               endTimer.post,
@@ -1316,6 +1316,8 @@ exports.updateTime = (req, res, next) => {
               if (!err.statusCode) err.statusCode = 500;
               next(err);
             });
+          }
+         
           await this.updateMachineTime(
             endTimer.end,
             endTimer.post,
@@ -1369,7 +1371,7 @@ exports.getMachineTime = (req, res, next) => {
           dates: returnDates,
         };
       }
-      res.status(200).json({ message: "Machine Times",times : returnTime });
+      res.status(200).json({ message: "Machine Times", times: returnTime });
     })
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
@@ -2090,10 +2092,7 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
       throw new Error(err.message);
     });
   let posts = await database
-    .execute("select  post from post", [
-      user,
-      findoc,
-    ])
+    .execute("select  post from post", [user, findoc])
     .catch((err) => {
       throw new Error(err.message);
     });
@@ -2103,10 +2102,10 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
   console.log(posts[0]);
   let returnData = [];
   for (let i = 0; i < dates[0].length; i++) {
-    let returnPost =[];
+    let returnPost = [];
     for (let j = 0; j < posts[0].length; j++) {
       console.log("HELLO");
-     returnPost[j]={
+      returnPost[j] = {
         date: dates[0][i].date,
         post: posts[0][j].post,
         totalTime: await this.userTotalTime(
@@ -2166,7 +2165,7 @@ exports.userTotalTime = async (post, date, findoc, user) => {
     throw new Error(err.message);
   }
 };
-exports.getMachineTimeByDate = async (post,date) =>{
+exports.getMachineTimeByDate = async (post, date) => {
   let timeOfPost = await database.execute(
     "select totalTime from time where post=? and date=?",
     [post, date]
@@ -2209,4 +2208,4 @@ exports.getMachineTimeByDate = async (post,date) =>{
   } catch (err) {
     throw new Error(err.message);
   }
-}
+};
