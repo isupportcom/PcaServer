@@ -17,6 +17,7 @@ router.post('/addUsers',dashboardController.addUsers);
 router.post('/updateUsers',dashboardController.updateUsers);
 router.post('/deleteUser',dashboardController.deleteUser);
 router.post('/getUsersTime',dashboardController.getUserTime);
+router.post('/getSigleUserTime',dashboardController.getSingleUserTime);
 //user join time
 router.post('/pauseUser',dashboardController.pauseUser);
 router.post('/startUser',dashboardController.startUser);
@@ -43,6 +44,7 @@ router.post('/getSingleProduction',dashboardController.getSingleProduction);
 router.post('/pausePost',dashboardController.pausePost);
 router.post('/startPost',dashboardController.startPostAfterPause)
 router.post('/getStateOfProductions',dashboardController.getStateOfProductions);
+router.post('/getSingleStateOfProduction',dashboardController.getSingleStateOfProduction);
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 

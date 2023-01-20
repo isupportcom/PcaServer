@@ -474,6 +474,38 @@ exports.getUserTime = (req, res, next) => {
       throw new Error(err.message);
     });
 };
+exports.getSingleUserTime = (req,res,next) =>{
+  const user = req.body.user;
+  if(!user) res.status(402).json({message:"fill the required fields"})
+  else{
+      database.execute("select * from users where id=?",[user])
+      .then(async userData=>{
+        let findocs = await database.execute("select * from production").catch(err=>{
+          if(!err.statusCode) err.statusCode =500;
+          next(err);
+        });
+        let returnFindocs = [];
+        for(let i=0;i<findocs[0].length;i++){
+          returnFindocs[i] ={
+            findoc:findocs[0][i].findoc,
+            category:findocs[0][i].catId,
+            time:await this.getUserTimeOnPosts(user,findocs[0][i].findoc)
+          }
+        }
+        res.status(200).json({
+          message:"Single User Time",
+          id:user,
+          fname:userData[0][0].fname,
+          lname:userData[0][0].lname,
+          times:returnFindocs
+        })
+      })
+      .catch(err=>{
+        if(!err.statusCode) err.statusCode =500;
+        next(err);
+      })
+  }
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1337,6 +1369,27 @@ exports.updateTime = (req, res, next) => {
       });
   }
 };
+
+exports.getSingleStateOfProduction = (req,res,next) =>{
+  const findoc = req.body.findoc;
+  if(!findoc) res.status(402).json({message:'fill the required fields'});
+  else{
+    database.execute('select * from production where findoc=?',[findoc])
+    .then(async(prodData)=>{
+
+      res.status(200).json({message:"Sigle State of Production",production:{
+        findoc:findoc,
+        mtrl:prodData[0][0].mtrl,
+        category : prodData[0][0].catId,
+        posts : await this.getprodLineSteps(findoc)  
+      }});
+    })
+    .catch(err=>{
+      if(!err.statusCode) err.statusCode = 500;
+      next(err);
+    })
+  }
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1990,7 +2043,7 @@ exports.whoMakeItDone = async (user, findoc, post) => {
 exports.calcTotalTimeOfPost = async (post, findoc) => {
    let stateOfPost = await this.getStateOfPost(post,findoc);
    let returnDates = [];
-  if(stateOfPost == 4){
+  if(stateOfPost == 4 || stateOfPost == 3){
     console.log("POST IS DONE");
     let min = await database.execute('select min(date) as min from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"]);
     let max = await database.execute('select max(date) as max from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"])
