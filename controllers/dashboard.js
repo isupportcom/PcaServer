@@ -2091,7 +2091,7 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
       throw new Error(err.message);
     });
   let posts = await database
-    .execute("select DISTINCT post from time where user=? and findoc=?", [
+    .execute("select  post from post", [
       user,
       findoc,
     ])
@@ -2104,10 +2104,10 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
   console.log(posts[0]);
   let returnData = [];
   for (let i = 0; i < dates[0].length; i++) {
+    let returnPost =[];
     for (let j = 0; j < posts[0].length; j++) {
       console.log("HELLO");
-      returnData[i] = {
-        date: dates[0][i].date,
+     returnPost[j]={
         post: posts[0][j].post,
         totalTime: await this.userTotalTime(
           posts[0][j].post,
@@ -2115,6 +2115,10 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
           findoc,
           user
         ),
+      };
+      returnData[i] = {
+        date: dates[0][i].date,
+        returnPost
       };
     }
   }
