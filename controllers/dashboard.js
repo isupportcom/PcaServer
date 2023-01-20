@@ -1834,7 +1834,7 @@ exports.prodLineExists = async (findoc, post, orderBy) => {
 // function που ελεγχει αν ενα μηχανημα με βαση το ποστο εχει ξεκινησει
 exports.machineHasStarted = async (post, date) => {
   let find = await database
-    .execute("select * from machinetime where post=? and date=?", [post, date])
+    .execute("select * from machinetime where post=? and date=? and end=?", [post, date,"0"])
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
       throw err;
@@ -1988,6 +1988,20 @@ exports.whoMakeItDone = async (user, findoc, post) => {
 };
 //function που παιρνει ενα ποστο και εναν κωδικο μιας παραγγελιας και υπολογιζει τον συνολικο χρονο
 exports.calcTotalTimeOfPost = async (post, findoc) => {
+   let stateOfPost = await this.getStateOfPost(post,findoc);
+   let returnDates = [];
+  if(stateOfPost == 4){
+    console.log("POST IS DONE");
+    let min = await database.execute('select min(date) as min from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"]);
+    let max = await database.execute('select max(date) as max from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"])
+    let minDate = min[0][0].min;
+    let maxDate = max[0][0].max;
+    console.log("MIN DATE");
+    console.log(minDate);
+    console.log("MAX DATE");
+    console.log(maxDate);
+    returnDates = await this.calculateTotalTime(post,findoc,minDate,maxDate);
+  }else{
   let dates = await database
     .execute(
       "select DISTINCT date from time where post=? and findoc=? and end != ? and totalTime!= ?",
@@ -1996,7 +2010,7 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
     .catch((err) => {
       throw new Error(err.message);
     });
-  let returnDates = [];
+ 
   for (let i = 0; i < dates[0].length; i++) {
     console.log("DATES");
     console.log(dates[0][i].date);
@@ -2005,8 +2019,55 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
       totalTime: await this.totalTime(post, findoc, dates[0][i].date),
     };
   }
-  return returnDates;
+}
+   return returnDates;
 };
+exports.calculateTotalTime = async (post,findoc,min,max) =>{  
+  let time = await database.execute('select * from time where post=? and findoc=? and date >=? and date <=? and totalTime !=?',[post,findoc,min,max,"0"]);
+  try{
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    for(let i=0; i<time[0].length; i++){
+       hours += this.getHours(time[0][i].totalTime);
+     if (minutes + this.getMinutes(time[0][i].totalTime) >= 60){
+        hours++;
+        minutes = (this.getMinutes(time[0][i].totalTime) + minutes) - 60;
+      }else{
+        minutes += this.getMinutes(time[0][i].totalTime);
+      }
+      if (seconds + this.getSeconds(time[0][i].totalTime) >= 60){
+        minutes++;
+        seconds = (this.getSeconds(time[0][i].totalTime) + seconds) - 60;
+      }else{
+        seconds += this.getSeconds(time[0][i].totalTime);
+      }
+      console.log("HOURS");
+      console.log(hours);
+      console.log("MINUTES");
+      console.log(minutes);
+      console.log("SECONDS");
+      console.log(seconds);
+    }
+    return {
+      hr: hours,
+      min: minutes,
+      sec: seconds,
+      start : min,
+      end : max
+    }
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
+exports.getStateOfPost = async (post,findoc) => {
+  let state = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
+  try{
+    return state[0][0].done;
+  }catch(err){
+    throw new Error(err.message);
+  }
+}
 exports.totalTime = async (post, findoc, date) => {
   let timeOfPost = await database.execute(
     "select * from time where post=? and findoc=? and end != ? and totalTime != ? and date=?",
