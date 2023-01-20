@@ -2073,7 +2073,8 @@ exports.postHasFinished = async (post, findoc) => {
     "select * from time where post=? and findoc=? and end=? and totalTime=?",
     [post, findoc, "0", "0"]
   );
-  if (count[0].length == 0) {
+  let state = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc])
+  if (count[0].length == 0 && state[0][0].done == 4) {
     return true;
   } else {
     return false;
