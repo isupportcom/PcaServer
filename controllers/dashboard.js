@@ -1245,27 +1245,28 @@ exports.allPostsAreDone = async (findoc) => {
     throw new Error(err.message);
   }
 };
-exports.getProductionState = (req,res,next) =>{
-  const findoc = req.body.findoc;
-  if(!findoc) res.status(402).json({message:'No findoc'});
-  else{
-    database.execute("select * from production where findoc=?",[findoc])
-    .then(async productionData=>{
-      // αν το ταιμ στο προνταξιον δεν ειναι 0 σημαινει οτι εχει τελειωσει οποτε δε χρειαζεται να ελεγχτουν τα ποστα της για να βγει συμπερασμα
-      // αν ομως ειναι 0 τοτε πρεπει να ελεγχτουν τα ποστα της για να δουμε σε τι κατασταση ειναι (και μπορει και σε τι σταδιο βρισκεται)
-      if(productionData[0].time != 0 || productionData[0].time != '0'){
-        res.status(200).json({message:"Order Has Been Finished"});
+exports.getProductionState = (req, res, next) => {
+  database.execute("select * from production")
+    .then(async productionData => {
+      let returnStates = [];
+      for (let i = 0; i < productionData[0].length; i++) {
+        // αν το ταιμ στο προνταξιον δεν ειναι 0 σημαινει οτι εχει τελειωσει οποτε δε χρειαζεται να ελεγχτουν τα ποστα της για να βγει συμπερασμα
+        // αν ομως ειναι 0 τοτε πρεπει να ελεγχτουν τα ποστα της για να δουμε σε τι κατασταση ειναι (και μπορει και σε τι σταδιο βρισκεται)
+        if (productionData[0].time != 0 || productionData[0].time != '0') {
+          returnStates.push({ findoc: productionData[0][i].findoc, message: "Order Has Been Finished" });
+        }
+        else {
+          returnStates.push({ findoc: productionData[0][i].findoc, message: await this.searchInPostsState(findoc) })
+        }
       }
-      else{
-        res.status(200).json({message: await this.searchInPostsState(findoc)})
-      }
+
     })
-    .catch(err=>{
-      if(!err.statusCode) err.statusCode = 500;
+    .catch(err => {
+      if (!err.statusCode) err.statusCode = 500;
       next(err);
     })
-  }
 }
+
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -2433,32 +2434,43 @@ exports.setProductionAsDone = async (findoc) => {
     });
 };
 
-exports.searchInPostsState = async (findoc) =>{
-  let posts = await database.execute('select * from prodline where findoc=?',[findoc])
-  .catch(err=>{
-    throw new Error(err.message);
-  })
-  for(let i=0; i<posts[0].length;i++){
-    if(posts[0][i].done == 2){
-      if(i==1){
-        return "ORDER IS STILL RUNNING ON " +i+ "ST POST";
-      }else if(i==2){
-        return "ORDER IS STILL RUNNING ON " +i+ "ND POST";
-      }else if(i==3){
-        return "ORDER IS STILL RUNNING ON " +i+ "RD POST";
-      }else{
-        return "ORDER IS STILL RUNNING ON " +i+ "TH POST";
+exports.searchInPostsState = async (findoc) => {
+  let posts = await database.execute('select * from prodline where findoc=?', [findoc])
+    .catch(err => {
+      throw new Error(err.message);
+    })
+  for (let i = 0; i < posts[0].length; i++) {
+    if (posts[0][i].done == 2) {
+      if (i == 1) {
+        return "ORDER IS STILL RUNNING ON " + i + "ST POST";
+      } else if (i == 2) {
+        return "ORDER IS STILL RUNNING ON " + i + "ND POST";
+      } else if (i == 3) {
+        return "ORDER IS STILL RUNNING ON " + i + "RD POST";
+      } else {
+        return "ORDER IS STILL RUNNING ON " + i + "TH POST";
       }
     }
-    if(posts[0][i].done == 3){
-      if(i==1){
-        return "ORDER IS PAUSED ON " +i+ "ST POST";
-      }else if(i==2){
-        return "ORDER IS PAUSED ON " +i+ "ND POST";
-      }else if(i==3){
-        return "ORDER IS PAUSED ON " +i+ "RD POST";
-      }else{
-        return "ORDER IS PAUSED ON " +i+ "TH POST"; 
+    if (posts[0][i].done == 3) {
+      if (i == 1) {
+        return "ORDER IS PAUSED ON " + i + "ST POST";
+      } else if (i == 2) {
+        return "ORDER IS PAUSED ON " + i + "ND POST";
+      } else if (i == 3) {
+        return "ORDER IS PAUSED ON " + i + "RD POST";
+      } else {
+        return "ORDER IS PAUSED ON " + i + "TH POST";
+      }
+    }
+    if (posts[0][i].done == 1) {
+      if (i == 1) {
+        return "ORDER IS Next Up  ON " + i + "ST POST";
+      } else if (i == 2) {
+        return "ORDER IS Next Up  ON " + i + "ND POST";
+      } else if (i == 3) {
+        return "ORDER IS Next Up  ON " + i + "RD POST";
+      } else {
+        return "ORDER IS Next Up  ON " + i + "TH POST";
       }
     }
   }
