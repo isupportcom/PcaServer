@@ -474,38 +474,41 @@ exports.getUserTime = (req, res, next) => {
       throw new Error(err.message);
     });
 };
-exports.getSingleUserTime = (req,res,next) =>{
+exports.getSingleUserTime = (req, res, next) => {
   const user = req.body.user;
-  if(!user) res.status(402).json({message:"fill the required fields"})
-  else{
-      database.execute("select * from users where id=?",[user])
-      .then(async userData=>{
-        let findocs = await database.execute("select * from production").catch(err=>{
-          if(!err.statusCode) err.statusCode =500;
-          next(err);
-        });
+  if (!user) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("select * from users where id=?", [user])
+      .then(async (userData) => {
+        let findocs = await database
+          .execute("select * from production")
+          .catch((err) => {
+            if (!err.statusCode) err.statusCode = 500;
+            next(err);
+          });
         let returnFindocs = [];
-        for(let i=0;i<findocs[0].length;i++){
-          returnFindocs[i] ={
-            findoc:findocs[0][i].findoc,
-            category:findocs[0][i].catId,
-            time:await this.getUserTimeOnPosts(user,findocs[0][i].findoc)
-          }
+        for (let i = 0; i < findocs[0].length; i++) {
+          returnFindocs[i] = {
+            findoc: findocs[0][i].findoc,
+            category: findocs[0][i].catId,
+            time: await this.getUserTimeOnPosts(user, findocs[0][i].findoc),
+          };
         }
         res.status(200).json({
-          message:"Single User Time",
-          id:user,
-          fname:userData[0][0].fname,
-          lname:userData[0][0].lname,
-          times:returnFindocs
-        })
+          message: "Single User Time",
+          id: user,
+          fname: userData[0][0].fname,
+          lname: userData[0][0].lname,
+          times: returnFindocs,
+        });
       })
-      .catch(err=>{
-        if(!err.statusCode) err.statusCode =500;
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
         next(err);
-      })
+      });
   }
-}
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1099,6 +1102,9 @@ exports.updateActionLines = async (req, res, next) => {
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
+        if ((await this.allPostsAreDone(actionLine[0].findoc)) === true) {
+          this.setProductionAsDone(actionLine[0].findoc);
+        }
         await this.whoMakeItDone(
           user,
           actionLine[0].findoc,
@@ -1219,6 +1225,47 @@ exports.getStateOfProductions = (req, res, next) => {
       next(err);
     });
 };
+exports.allPostsAreDone = async (findoc) => {
+  let posts = await database.execute("select * from prodline where findoc=?", [
+    findoc,
+  ]);
+  let donePosts = [];
+  try {
+    for (let i = 0; i < posts[0].length; i++) {
+      if (posts[0][i].done == 4) {
+        donePosts[i] = true;
+      }
+    }
+    if (posts[0].length == donePosts.length) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) {
+    throw new Error(err.message);
+  }
+};
+exports.getProductionState = (req,res,next) =>{
+  const findoc = req.body.findoc;
+  if(!findoc) res.status(402).json({message:'No findoc'});
+  else{
+    database.execute("select * from production where findoc=?",[findoc])
+    .then(async productionData=>{
+      // αν το ταιμ στο προνταξιον δεν ειναι 0 σημαινει οτι εχει τελειωσει οποτε δε χρειαζεται να ελεγχτουν τα ποστα της για να βγει συμπερασμα
+      // αν ομως ειναι 0 τοτε πρεπει να ελεγχτουν τα ποστα της για να δουμε σε τι κατασταση ειναι (και μπορει και σε τι σταδιο βρισκεται)
+      if(productionData[0].time != 0 || productionData[0].time != '0'){
+        res.status(200).json({message:"Order Has Been Finished"});
+      }
+      else{
+        res.status(200).json({message: await this.searchInPostsState(findoc)})
+      }
+    })
+    .catch(err=>{
+      if(!err.statusCode) err.statusCode = 500;
+      next(err);
+    })
+  }
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1334,22 +1381,23 @@ exports.updateTime = (req, res, next) => {
       )
       .then(async (results) => {
         if (
-          (await this.postHasFinished(endTimer.findoc, endTimer.post)) ==
-            true 
-          
+          (await this.postHasFinished(endTimer.findoc, endTimer.post)) == true
         ) {
-          if((await this.orderIsNotFinished(endTimer.findoc, endTimer.post)) != true){
+          if (
+            (await this.orderIsNotFinished(endTimer.findoc, endTimer.post)) !=
+            true
+          ) {
             let updateState = await database
-            .execute("update prodline set done=3 where findoc=? and post=?", [
-              endTimer.findoc,
-              endTimer.post,
-            ])
-            .catch((err) => {
-              if (!err.statusCode) err.statusCode = 500;
-              next(err);
-            });
+              .execute("update prodline set done=3 where findoc=? and post=?", [
+                endTimer.findoc,
+                endTimer.post,
+              ])
+              .catch((err) => {
+                if (!err.statusCode) err.statusCode = 500;
+                next(err);
+              });
           }
-         
+
           await this.updateMachineTime(
             endTimer.end,
             endTimer.post,
@@ -1370,26 +1418,29 @@ exports.updateTime = (req, res, next) => {
   }
 };
 
-exports.getSingleStateOfProduction = (req,res,next) =>{
+exports.getSingleStateOfProduction = (req, res, next) => {
   const findoc = req.body.findoc;
-  if(!findoc) res.status(402).json({message:'fill the required fields'});
-  else{
-    database.execute('select * from production where findoc=?',[findoc])
-    .then(async(prodData)=>{
-
-      res.status(200).json({message:"Sigle State of Production",production:{
-        findoc:findoc,
-        mtrl:prodData[0][0].mtrl,
-        category : prodData[0][0].catId,
-        posts : await this.getprodLineSteps(findoc)  
-      }});
-    })
-    .catch(err=>{
-      if(!err.statusCode) err.statusCode = 500;
-      next(err);
-    })
+  if (!findoc) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database
+      .execute("select * from production where findoc=?", [findoc])
+      .then(async (prodData) => {
+        res.status(200).json({
+          message: "Sigle State of Production",
+          production: {
+            findoc: findoc,
+            mtrl: prodData[0][0].mtrl,
+            category: prodData[0][0].catId,
+            posts: await this.getprodLineSteps(findoc),
+          },
+        });
+      })
+      .catch((err) => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      });
   }
-}
+};
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1887,7 +1938,11 @@ exports.prodLineExists = async (findoc, post, orderBy) => {
 // function που ελεγχει αν ενα μηχανημα με βαση το ποστο εχει ξεκινησει
 exports.machineHasStarted = async (post, date) => {
   let find = await database
-    .execute("select * from machinetime where post=? and date=? and end=?", [post, date,"0"])
+    .execute("select * from machinetime where post=? and date=? and end=?", [
+      post,
+      date,
+      "0",
+    ])
     .catch((err) => {
       if (!err.statusCode) err.statusCode = 500;
       throw err;
@@ -2041,58 +2096,67 @@ exports.whoMakeItDone = async (user, findoc, post) => {
 };
 //function που παιρνει ενα ποστο και εναν κωδικο μιας παραγγελιας και υπολογιζει τον συνολικο χρονο
 exports.calcTotalTimeOfPost = async (post, findoc) => {
-   let stateOfPost = await this.getStateOfPost(post,findoc);
-   let returnDates = [];
-  if(stateOfPost == 4 || stateOfPost == 3){
+  let stateOfPost = await this.getStateOfPost(post, findoc);
+  let returnDates = [];
+  if (stateOfPost == 4 || stateOfPost == 3) {
     console.log("POST IS DONE");
-    let min = await database.execute('select min(date) as min from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"]);
-    let max = await database.execute('select max(date) as max from time where post=? and findoc=?  and end != ? and totalTime!= ?',[post,findoc,"0","0"])
+    let min = await database.execute(
+      "select min(date) as min from time where post=? and findoc=?  and end != ? and totalTime!= ?",
+      [post, findoc, "0", "0"]
+    );
+    let max = await database.execute(
+      "select max(date) as max from time where post=? and findoc=?  and end != ? and totalTime!= ?",
+      [post, findoc, "0", "0"]
+    );
     let minDate = min[0][0].min;
     let maxDate = max[0][0].max;
     console.log("MIN DATE");
     console.log(minDate);
     console.log("MAX DATE");
     console.log(maxDate);
-    returnDates = await this.calculateTotalTime(post,findoc,minDate,maxDate);
-  }else{
-  let dates = await database
-    .execute(
-      "select DISTINCT date from time where post=? and findoc=? and end != ? and totalTime!= ?",
-      [post, findoc, "0", "0"]
-    )
-    .catch((err) => {
-      throw new Error(err.message);
-    });
- 
-  for (let i = 0; i < dates[0].length; i++) {
-    console.log("DATES");
-    console.log(dates[0][i].date);
-    returnDates[i] = {
-      date: dates[0][i].date,
-      totalTime: await this.totalTime(post, findoc, dates[0][i].date),
-    };
+    returnDates = await this.calculateTotalTime(post, findoc, minDate, maxDate);
+  } else {
+    let dates = await database
+      .execute(
+        "select DISTINCT date from time where post=? and findoc=? and end != ? and totalTime!= ?",
+        [post, findoc, "0", "0"]
+      )
+      .catch((err) => {
+        throw new Error(err.message);
+      });
+
+    for (let i = 0; i < dates[0].length; i++) {
+      console.log("DATES");
+      console.log(dates[0][i].date);
+      returnDates[i] = {
+        date: dates[0][i].date,
+        totalTime: await this.totalTime(post, findoc, dates[0][i].date),
+      };
+    }
   }
-}
-   return returnDates;
+  return returnDates;
 };
-exports.calculateTotalTime = async (post,findoc,min,max) =>{  
-  let time = await database.execute('select * from time where post=? and findoc=? and date >=? and date <=? and totalTime !=?',[post,findoc,min,max,"0"]);
-  try{
+exports.calculateTotalTime = async (post, findoc, min, max) => {
+  let time = await database.execute(
+    "select * from time where post=? and findoc=? and date >=? and date <=? and totalTime !=?",
+    [post, findoc, min, max, "0"]
+  );
+  try {
     let hours = 0;
     let minutes = 0;
     let seconds = 0;
-    for(let i=0; i<time[0].length; i++){
-       hours += this.getHours(time[0][i].totalTime);
-     if (minutes + this.getMinutes(time[0][i].totalTime) >= 60){
+    for (let i = 0; i < time[0].length; i++) {
+      hours += this.getHours(time[0][i].totalTime);
+      if (minutes + this.getMinutes(time[0][i].totalTime) >= 60) {
         hours++;
-        minutes = (this.getMinutes(time[0][i].totalTime) + minutes) - 60;
-      }else{
+        minutes = this.getMinutes(time[0][i].totalTime) + minutes - 60;
+      } else {
         minutes += this.getMinutes(time[0][i].totalTime);
       }
-      if (seconds + this.getSeconds(time[0][i].totalTime) >= 60){
+      if (seconds + this.getSeconds(time[0][i].totalTime) >= 60) {
         minutes++;
-        seconds = (this.getSeconds(time[0][i].totalTime) + seconds) - 60;
-      }else{
+        seconds = this.getSeconds(time[0][i].totalTime) + seconds - 60;
+      } else {
         seconds += this.getSeconds(time[0][i].totalTime);
       }
       console.log("HOURS");
@@ -2106,21 +2170,24 @@ exports.calculateTotalTime = async (post,findoc,min,max) =>{
       hr: hours,
       min: minutes,
       sec: seconds,
-      start : min,
-      end : max
-    }
-  }catch(err){
+      start: min,
+      end: max,
+    };
+  } catch (err) {
     throw new Error(err.message);
   }
-}
-exports.getStateOfPost = async (post,findoc) => {
-  let state = await database.execute('select done from prodline where post=? and findoc=?',[post,findoc]);
-  try{
+};
+exports.getStateOfPost = async (post, findoc) => {
+  let state = await database.execute(
+    "select done from prodline where post=? and findoc=?",
+    [post, findoc]
+  );
+  try {
     return state[0][0].done;
-  }catch(err){
+  } catch (err) {
     throw new Error(err.message);
   }
-}
+};
 exports.totalTime = async (post, findoc, date) => {
   let timeOfPost = await database.execute(
     "select * from time where post=? and findoc=? and end != ? and totalTime != ? and date=?",
@@ -2323,3 +2390,76 @@ exports.getMachineTimeByDate = async (post, date) => {
     throw new Error(err.message);
   }
 };
+
+exports.setProductionAsDone = async (findoc) => {
+  let totalTime = await database
+    .execute("select totalTime from time where findoc=?", [findoc])
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+  for (let i = 0; i < totalTime[0].length; i++) {
+    hours += this.getHours(totalTime[0][i].totalTime);
+    if (minutes + this.getMinutes(totalTime[0][i].totalTime) >= 60) {
+      hours++;
+      minutes = minutes + this.getMinutes(totalTime[0][i].totalTime) - 60;
+    } else {
+      minutes += this.getMinutes(totalTime[0][i].totalTime);
+    }
+    if (seconds + this.getSeconds(totalTime[0][i].totalTime) >= 60) {
+      minutes++;
+      seconds = seconds + this.getSeconds(totalTime[0][i].totalTime) - 60;
+    } else {
+      seconds += this.getSeconds(totalTime[0][i].totalTime);
+    }
+  }
+  hours = hours < 10 ? "0" + hours : hours;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+  let totalProductionTime = hours + ":" + minutes + ":" + seconds;
+
+  database
+    .execute("update production set time=? where findoc=?", [
+      totalProductionTime,
+      findoc,
+    ])
+    .then((results) => {
+      console.log(results);
+    })
+    .catch((err) => {
+      throw new Error(err.message);
+    });
+};
+
+exports.searchInPostsState = async (findoc) =>{
+  let posts = await database.execute('select * from prodline where findoc=?',[findoc])
+  .catch(err=>{
+    throw new Error(err.message);
+  })
+  for(let i=0; i<posts[0].length;i++){
+    if(posts[0][i].done == 2){
+      if(i==1){
+        return "ORDER IS STILL RUNNING ON " +i+ "ST POST";
+      }else if(i==2){
+        return "ORDER IS STILL RUNNING ON " +i+ "ND POST";
+      }else if(i==3){
+        return "ORDER IS STILL RUNNING ON " +i+ "RD POST";
+      }else{
+        return "ORDER IS STILL RUNNING ON " +i+ "TH POST";
+      }
+    }
+    if(posts[0][i].done == 3){
+      if(i==1){
+        return "ORDER IS PAUSED ON " +i+ "ST POST";
+      }else if(i==2){
+        return "ORDER IS PAUSED ON " +i+ "ND POST";
+      }else if(i==3){
+        return "ORDER IS PAUSED ON " +i+ "RD POST";
+      }else{
+        return "ORDER IS PAUSED ON " +i+ "TH POST"; 
+      }
+    }
+  }
+}
