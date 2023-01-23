@@ -132,7 +132,7 @@ exports.deletePost = (req, res, next) => {
 
 exports.usersInPost = (req, res, next) => {
   database
-    .execute("select post from post")
+    .execute("select DISTINCT post from prodline")
     .then(async (posts) => {
       let returnPost = [];
       //console.log(posts[0]);
@@ -1259,7 +1259,7 @@ exports.getProductionState = (req, res, next) => {
           returnStates.push({ findoc: productionData[0][i].findoc, message: await this.searchInPostsState(findoc) })
         }
       }
-
+      res.status(200).json({ message: "All Productions States", states: returnStates })
     })
     .catch(err => {
       if (!err.statusCode) err.statusCode = 500;
