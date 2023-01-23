@@ -132,7 +132,7 @@ exports.deletePost = (req, res, next) => {
 
 exports.usersInPost = (req, res, next) => {
   database
-    .execute("select post from post")
+    .execute("select DISTINCT post from prodline")
     .then(async (posts) => {
       let returnPost = [];
       //console.log(posts[0]);
