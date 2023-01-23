@@ -1259,7 +1259,7 @@ exports.getProductionState = (req, res, next) => {
           returnStates.push({ findoc: productionData[0][i].findoc, message: await this.searchInPostsState(findoc) })
         }
       }
-      res.staust(200).json({ message: "All Productions States", states: returnStates })
+      res.status(200).json({ message: "All Productions States", states: returnStates })
     })
     .catch(err => {
       if (!err.statusCode) err.statusCode = 500;
