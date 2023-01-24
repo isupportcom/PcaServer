@@ -1289,7 +1289,18 @@ exports.getProductionState = (req, res, next) => {
     })
 }
 exports.totalTimeOfProduction = (req,res,next) =>{
-
+    database.execute("select * from production where time !=?",[0])
+    .then(productiondata=>{
+       let returnProductionData =[];
+       for(let i=0; i<productiondata[0].length;i++){
+           returnProductionData.push({findoc:productiondata[0][i].findoc,time:productiondata[0][i].time})
+       }
+       if(returnProductionData.length==0){
+           res.status(200).json({message:"No Production Has Been Finished",data:returnProductionData})
+       }else{
+            res.status(200).json({message:"All Productions",data:returnProductionData})
+       }
+    })
 }
 /******************************************************************************                                                   
  *                                                                            *
@@ -2465,33 +2476,33 @@ exports.searchInPostsState = async (findoc) => {
     })
   for (let i = 0; i < posts[0].length; i++) {
     if (posts[0][i].done == 2) {
-      if (i == 1) {
+      if ((i+1) == 1) {
         return "ORDER IS STILL RUNNING ON " +( i+1) + "ST POST";
-      } else if (i == 2) {
+      } else if ((i+1) == 2) {
         return "ORDER IS STILL RUNNING ON " +( i+1) + "ND POST";
-      } else if (i == 3) {
+      } else if ((i+1) == 3) {
         return "ORDER IS STILL RUNNING ON " +( i+1) + "RD POST";
       } else {
         return "ORDER IS STILL RUNNING ON " +( i+1) + "TH POST";
       }
     }
     if (posts[0][i].done == 3) {
-      if (i == 1) {
+      if ((i+1) == 1) {
         return "ORDER IS PAUSED ON " +( i+1) + "ST POST";
-      } else if (i == 2) {
+      } else if ((i+1) == 2) {
         return "ORDER IS PAUSED ON " +( i+1) + "ND POST";
-      } else if (i == 3) {
+      } else if ((i+1) == 3) {
         return "ORDER IS PAUSED ON " +( i+1) + "RD POST";
       } else {
         return "ORDER IS PAUSED ON " +( i+1) + "TH POST";
       }
     }
     if (posts[0][i].done == 1) {
-      if (i == 1) {
+      if ((i+1) == 1) {
         return "ORDER IS Next Up  ON " +( i+1) + "ST POST";
-      } else if (i == 2) {
+      } else if ((i+1) == 2) {
         return "ORDER IS Next Up  ON " +( i+1) + "ND POST";
-      } else if (i == 3) {
+      } else if ((i+1) == 3) {
         return "ORDER IS Next Up  ON " +( i+1) + "RD POST";
       } else {
         return "ORDER IS Next Up  ON " +( i+1) + "TH POST";
