@@ -1271,13 +1271,14 @@ exports.getProductionState = (req, res, next) => {
     .then(async productionData => {
       let returnStates = [];
       for (let i = 0; i < productionData[0].length; i++) {
+        console.log(productionData[0][i].time);
         // αν το ταιμ στο προνταξιον δεν ειναι 0 σημαινει οτι εχει τελειωσει οποτε δε χρειαζεται να ελεγχτουν τα ποστα της για να βγει συμπερασμα
         // αν ομως ειναι 0 τοτε πρεπει να ελεγχτουν τα ποστα της για να δουμε σε τι κατασταση ειναι (και μπορει και σε τι σταδιο βρισκεται)
-        if (productionData[0].time != 0 || productionData[0].time != '0') {
+        if (productionData[0][i].time != 0 || productionData[0][i].time != '0') {
           returnStates.push({ findoc: productionData[0][i].findoc, message: "Order Has Been Finished" });
         }
         else {
-          returnStates.push({ findoc: productionData[0][i].findoc, message: await this.searchInPostsState(findoc) })
+          returnStates.push({ findoc: productionData[0][i].findoc, message: await this.searchInPostsState(productionData[0][i].findoc) })
         }
       }
       res.status(200).json({ message: "All Productions States", states: returnStates })
@@ -1287,7 +1288,9 @@ exports.getProductionState = (req, res, next) => {
       next(err);
     })
 }
+exports.totalTimeOfProduction = (req,res,next) =>{
 
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -2463,35 +2466,35 @@ exports.searchInPostsState = async (findoc) => {
   for (let i = 0; i < posts[0].length; i++) {
     if (posts[0][i].done == 2) {
       if (i == 1) {
-        return "ORDER IS STILL RUNNING ON " + i + "ST POST";
+        return "ORDER IS STILL RUNNING ON " +( i+1) + "ST POST";
       } else if (i == 2) {
-        return "ORDER IS STILL RUNNING ON " + i + "ND POST";
+        return "ORDER IS STILL RUNNING ON " +( i+1) + "ND POST";
       } else if (i == 3) {
-        return "ORDER IS STILL RUNNING ON " + i + "RD POST";
+        return "ORDER IS STILL RUNNING ON " +( i+1) + "RD POST";
       } else {
-        return "ORDER IS STILL RUNNING ON " + i + "TH POST";
+        return "ORDER IS STILL RUNNING ON " +( i+1) + "TH POST";
       }
     }
     if (posts[0][i].done == 3) {
       if (i == 1) {
-        return "ORDER IS PAUSED ON " + i + "ST POST";
+        return "ORDER IS PAUSED ON " +( i+1) + "ST POST";
       } else if (i == 2) {
-        return "ORDER IS PAUSED ON " + i + "ND POST";
+        return "ORDER IS PAUSED ON " +( i+1) + "ND POST";
       } else if (i == 3) {
-        return "ORDER IS PAUSED ON " + i + "RD POST";
+        return "ORDER IS PAUSED ON " +( i+1) + "RD POST";
       } else {
-        return "ORDER IS PAUSED ON " + i + "TH POST";
+        return "ORDER IS PAUSED ON " +( i+1) + "TH POST";
       }
     }
     if (posts[0][i].done == 1) {
       if (i == 1) {
-        return "ORDER IS Next Up  ON " + i + "ST POST";
+        return "ORDER IS Next Up  ON " +( i+1) + "ST POST";
       } else if (i == 2) {
-        return "ORDER IS Next Up  ON " + i + "ND POST";
+        return "ORDER IS Next Up  ON " +( i+1) + "ND POST";
       } else if (i == 3) {
-        return "ORDER IS Next Up  ON " + i + "RD POST";
+        return "ORDER IS Next Up  ON " +( i+1) + "RD POST";
       } else {
-        return "ORDER IS Next Up  ON " + i + "TH POST";
+        return "ORDER IS Next Up  ON " +( i+1) + "TH POST";
       }
     }
   }
