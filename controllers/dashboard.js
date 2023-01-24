@@ -415,7 +415,28 @@ exports.startUser = (req, res, next) => {
       });
   }
 };
-
+exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
+  const fromDate = req.body.fromDate;
+  const toDate = req.body.toDate;
+  const user = req.body.user;
+  if (!fromDate || !toDate || !user) res.status(402).json({ message: "fill the required fields" });
+  else {
+    database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+      user, fromDate, toDate
+    ])
+      .then(totalTime => {
+        let time = this.calculateTotalUserTime(totalTime[0]);
+        res.status(200).json({
+          message: "Total Time of "+ user
+          , time: time
+        });
+      })
+      .catch(err => {
+        if (!err.statusCode) err.statusCode = 500;
+        next(err);
+      })
+  }
+}
 exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
     throw new Error(err.message);
@@ -2305,8 +2326,8 @@ exports.getUserTimeOnPosts = async (user, findoc) => {
 exports.userTotalTime = async (post, date, findoc, user) => {
   console.log("USER TOTAL TIME");
   let timeOfPost = await database.execute(
-    "select totalTime from time where post=? and date=? and user=? and findoc=?",
-    [post, date, user, findoc]
+    "select totalTime from time where post=? and date=? and user=? and findoc=? and end!=?",
+    [post, date, user, findoc, "0"]
   );
   console.log("QUERY");
   console.log(
@@ -2474,4 +2495,31 @@ exports.searchInPostsState = async (findoc) => {
       }
     }
   }
+}
+exports.calculateTotalUserTime = (arrayOfTimes) => {
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+  console.log(arrayOfTimes);
+  for (let i = 0; i < arrayOfTimes.length; i++) {
+    hours += this.getHours(arrayOfTimes[i].totalTime);
+    if (minutes + this.getMinutes(arrayOfTimes[i].totalTime) >= 60) {
+      hours++;
+      minutes = minutes + this.getMinutes(arrayOfTimes[i].totalTime) - 60;
+    } else {
+      minutes += this.getMinutes(arrayOfTimes[i].totalTime);
+    }
+    if (seconds + this.getSeconds(arrayOfTimes[i].totalTime) >= 60) {
+      minutes++;
+      seconds = seconds + this.getSeconds(arrayOfTimes[i].totalTime) - 60;
+    } else {
+      seconds += this.getSeconds(arrayOfTimes[i].totalTime);
+    }
+  }
+
+  return {
+    hr: hours,
+    min: minutes,
+    sec: seconds,
+  };
 }
