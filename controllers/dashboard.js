@@ -525,7 +525,7 @@ exports.getUserTime = (req, res, next) => {
       database
         .execute("select * from users where id=?", [user])
         .then(async (userData) => {
-          res.status(200).json({ message: "User Time", user: { id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname,totalTime:await this.userTime(user,fromDate,toDate) ,times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) } });
+          res.status(200).json({ message: "User Time", user: [{ id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname,totalTime:await this.userTime(user,fromDate,toDate) ,times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) }] });
         })
     }
   }
@@ -2396,6 +2396,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         nextMonth = 0;
       }
       let month = this.getMonth(dates[0][i].date);
+      console.log("MONTH: " + this.getMonthName(month));
       let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [
         dates[0][i].date, user, "0"
       ])
@@ -2432,7 +2433,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
           }
           console.log(hours + ":" + minutes + ":" + seconds);
         }
-        if (prevMonth) {
+        if (nextMonth || prevMonth) {
           if (month != nextMonth || month != prevMonth) {
             console.log("PREV MONTH IS NOT EQUAL TO MONTH")
             returnTime.push({
