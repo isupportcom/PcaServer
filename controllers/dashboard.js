@@ -506,6 +506,7 @@ exports.getUserTime = (req, res, next) => {
               id: users[0][i].id,
               fname: users[0][i].fname,
               lname: users[0][i].lname,
+              totalTime : await this.userTime(users[0][i].id,fromDate,toDate),
               time: await this.userTotalTime(
                 users[0][i].id,
                 fromDate,
@@ -523,8 +524,8 @@ exports.getUserTime = (req, res, next) => {
     } else {
       database
         .execute("select * from users where id=?", [user])
-        .then(async (user) => {
-          res.status(200).json({ message: "User Time", user: { id: user[0][0].id, fname: user[0][0].fname, lname: user[0][0].lname, times: await this.userTotalTime(user[0][0].id, fromDate, toDate, formatType) } });
+        .then(async (userData) => {
+          res.status(200).json({ message: "User Time", user: { id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname,totalTime:await this.userTime(user,fromDate,toDate) ,times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) } });
         })
     }
   }
@@ -2351,6 +2352,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         let hours = 0;
         let minutes = 0;
         let seconds = 0;
+        let totalTimeOfUser =0;
         for (let j = 0; j < timeOfPost[0].length; j++) {
           hours += this.getHours(timeOfPost[0][j].totalTime);
           if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
@@ -2371,26 +2373,26 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
           date: this.formatDate(dates[0][i].date),
           hr: hours,
           min: minutes,
-          sec: seconds,
+          sec: seconds
         })
       } catch (err) {
         throw new Error(err.message);
       }
     }
   } else {
-    let prevMonth=0;
-    let hours=0
-    let minutes=0
-    let seconds=0
+    let prevMonth = 0;
+    let hours = 0
+    let minutes = 0
+    let seconds = 0
     let nextMonth = 0;
     // formatType == 2 means that the total time goes by month
     for (let i = 0; i < dates[0].length; i++) {
       if (i != 0) {
         prevMonth = this.getMonth(dates[0][i - 1].date);
       }
-      if(i!=dates[0].length-1){
+      if (i != dates[0].length - 1) {
         nextMonth = this.getMonth(dates[0][i + 1].date);
-      }else{
+      } else {
         nextMonth = 0;
       }
       let month = this.getMonth(dates[0][i].date);
@@ -2401,9 +2403,9 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         if (prevMonth) {
           if (prevMonth != month) {
             console.log("MONTH CHANGED");
-          hours     = 0;
-          minutes   = 0;
-          seconds   = 0;
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
           }
         }
         //TIME
@@ -2430,8 +2432,8 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
           }
           console.log(hours + ":" + minutes + ":" + seconds);
         }
-        if(prevMonth){
-          if(month !=nextMonth || month != prevMonth){
+        if (prevMonth) {
+          if (month != nextMonth || month != prevMonth) {
             console.log("PREV MONTH IS NOT EQUAL TO MONTH")
             returnTime.push({
               month: this.getMonthName(month),
@@ -2439,9 +2441,9 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
               min: minutes,
               sec: seconds,
             })
-            hours   = 0;
-            minutes   = 0;
-            seconds   = 0;
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
           }
         }
       } catch (err) {
@@ -2624,4 +2626,16 @@ exports.calculateTotalUserTime = (arrayOfTimes) => {
     min: minutes,
     sec: seconds,
   };
+}
+exports.userTime = async (user,fromDate,toDate) =>{
+ let totalTime = await  database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+    user, fromDate, toDate
+  ]) .catch(err => {
+    if (!err.statusCode) err.statusCode = 500;
+    throw new Error(err);
+  })
+      let time = this.calculateTotalUserTime(totalTime[0]);
+     return time
+   
+   
 }
