@@ -418,18 +418,18 @@ exports.startUser = (req, res, next) => {
 exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
   const fromDate = req.body.fromDate;
   const toDate = req.body.toDate;
-  const user =req.body.user;
+  const user = req.body.user;
   if (!fromDate || !toDate) res.status(402).json({ message: "fill the required fields" });
   else {
-    if(user){
+    if (user) {
       database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
         user, fromDate, toDate
       ])
         .then(async totalTime => {
-          let name = await database.execute('select fname from users where id=?', [user]); 
+          let name = await database.execute('select fname from users where id=?', [user]);
           let time = this.calculateTotalUserTime(totalTime[0]);
           res.status(200).json({
-            message: "Total Time of "+ name[0][0].fname
+            message: "Total Time of " + name[0][0].fname
             , time: time
           });
         })
@@ -437,31 +437,31 @@ exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         })
-    }else{
+    } else {
       database.execute('select * from users')
-      .then(async users=>{
-        let returnUsers =[];
-        for(let i=0; i<users[0].length; i++){
-          let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)',[
-            users[0][i].id,fromDate,toDate
-          ]).catch(err=>{
-            if (!err.statusCode) err.statusCode = 500;
-            next(err);
-          })
-          returnUsers[i] = {
-            message:"Total Time of "+users[0][i].fname,
-            time:this.calculateTotalUserTime(totalTime[0])
+        .then(async users => {
+          let returnUsers = [];
+          for (let i = 0; i < users[0].length; i++) {
+            let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+              users[0][i].id, fromDate, toDate
+            ]).catch(err => {
+              if (!err.statusCode) err.statusCode = 500;
+              next(err);
+            })
+            returnUsers[i] = {
+              message: "Total Time of " + users[0][i].fname,
+              time: this.calculateTotalUserTime(totalTime[0])
+            }
           }
-        }
-        res.status(200).json(returnUsers);
-      })
-      .catch(err=>{
-        if (!err.statusCode) err.statusCode = 500;
-        next(err);
-      })
+          res.status(200).json(returnUsers);
+        })
+        .catch(err => {
+          if (!err.statusCode) err.statusCode = 500;
+          next(err);
+        })
     }
-    }
-  
+  }
+
 }
 exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
@@ -490,36 +490,45 @@ exports.activeUsers = async () => {
   return returnPost;
 };
 exports.getUserTime = (req, res, next) => {
-  database
-    .execute("select * from users")
-    .then(async (users) => {
-      let findocs = await database.execute("select  * from production");
+  const user = req.body.user;
+  const fromDate = req.body.fromDate;
+  const toDate = req.body.toDate;
+  const formatType = req.body.formatType;
+  if (!fromDate || !toDate || !formatType) res.status(402).json({ message: "fill the required fields" });
+  else {
+    if (!user) {
+      database
+        .execute("select * from users")
+        .then(async (users) => {
+          let returnUsers = [];
+          for (let i = 0; i < users[0].length; i++) {
+            returnUsers[i] = {
+              id: users[0][i].id,
+              fname: users[0][i].fname,
+              lname: users[0][i].lname,
+              time: await this.userTotalTime(
+                users[0][i].id,
+                fromDate,
+                toDate,
+                formatType
+              )
+            }
+          }
+          res.status(200).json({ message: "Users Time", users: returnUsers });
+        })
+        .catch((err) => {
+          if (!err.statusCode) err.statusCode = 500;
+          next(err);
+        });
+    } else {
+      database
+        .execute("select * from users where id=?", [user])
+        .then(async (user) => {
+          res.status(200).json({ message: "User Time", user: { id: user[0][0].id, fname: user[0][0].fname, lname: user[0][0].lname, times: await this.userTotalTime(user[0][0].id, fromDate, toDate, formatType) } });
+        })
+    }
+  }
 
-      let returnUsers = [];
-      for (let i = 0; i < users[0].length; i++) {
-        let returnFindocs = [];
-        for (let j = 0; j < findocs[0].length; j++) {
-          returnFindocs[j] = {
-            findoc: findocs[0][j].findoc,
-            category: findocs[0][j].catId,
-            time: await this.getUserTimeOnPosts(
-              users[0][i].id,
-              findocs[0][j].findoc
-            ),
-          };
-        }
-        returnUsers[i] = {
-          id: users[0][i].id,
-          fname: users[0][i].fname,
-          lname: users[0][i].lname,
-          times: returnFindocs,
-        };
-      }
-      res.status(200).json({ message: "Users Time", users: returnUsers });
-    })
-    .catch((err) => {
-      throw new Error(err.message);
-    });
 };
 exports.getSingleUserTime = (req, res, next) => {
   const user = req.body.user;
@@ -1314,18 +1323,18 @@ exports.getProductionState = (req, res, next) => {
       next(err);
     })
 }
-exports.totalTimeOfProduction = (req,res,next) =>{
-    database.execute("select * from production where time !=?",[0])
-    .then(productiondata=>{
-       let returnProductionData =[];
-       for(let i=0; i<productiondata[0].length;i++){
-           returnProductionData.push({findoc:productiondata[0][i].findoc,time:productiondata[0][i].time})
-       }
-       if(returnProductionData.length==0){
-           res.status(200).json({message:"No Production Has Been Finished",data:returnProductionData})
-       }else{
-            res.status(200).json({message:"All Productions",data:returnProductionData})
-       }
+exports.totalTimeOfProduction = (req, res, next) => {
+  database.execute("select * from production where time !=?", [0])
+    .then(productiondata => {
+      let returnProductionData = [];
+      for (let i = 0; i < productiondata[0].length; i++) {
+        returnProductionData.push({ findoc: productiondata[0][i].findoc, time: productiondata[0][i].time })
+      }
+      if (returnProductionData.length == 0) {
+        res.status(200).json({ message: "No Production Has Been Finished", data: returnProductionData })
+      } else {
+        res.status(200).json({ message: "All Productions", data: returnProductionData })
+      }
     })
 }
 /******************************************************************************                                                   
@@ -2323,91 +2332,144 @@ exports.postHasFinished = async (post, findoc) => {
   }
 };
 
-exports.getUserTimeOnPosts = async (user, findoc) => {
-  console.log("User Time on Posts");
-  console.log(findoc, user);
-  let dates = await database
-    .execute("select DISTINCT date from time where user=? and findoc=?", [
-      user,
-      findoc,
-    ])
-    .catch((err) => {
-      throw new Error(err.message);
-    });
-  let posts = await database
-    .execute("select  post from post", [user, findoc])
-    .catch((err) => {
-      throw new Error(err.message);
-    });
-  console.log("DATES");
-  console.log(dates[0]);
-  console.log("POSTS");
-  console.log(posts[0]);
-  let returnData = [];
-  for (let i = 0; i < dates[0].length; i++) {
-    let returnPost = [];
-    for (let j = 0; j < posts[0].length; j++) {
-      console.log("HELLO");
-      returnPost[j] = {
-        date: dates[0][i].date,
-        post: posts[0][j].post,
-        totalTime: await this.userTotalTime(
-          posts[0][j].post,
-          dates[0][i].date,
-          findoc,
-          user
-        ),
-      };
-      returnData[i] = returnPost;
-    }
-  }
-  return returnData;
-};
-exports.userTotalTime = async (post, date, findoc, user) => {
+
+exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
   console.log("USER TOTAL TIME");
-  let timeOfPost = await database.execute(
-    "select totalTime from time where post=? and date=? and user=? and findoc=? and end!=?",
-    [post, date, user, findoc, "0"]
+  let dates = await database.execute(
+    "select DISTINCT date  from time where (date >= ? and date <= ?) and user=?  and end!=?",
+    [fromDate, toDate, user, "0"]
   );
-  console.log("QUERY");
-  console.log(
-    `select totalTime from time where post=${user} and date=${user} and user=${user} and findoc=${findoc}`,
-    [post, date, user, findoc]
-  );
-  console.log("QUERY RESULT");
-  console.log(timeOfPost[0]);
-  try {
-    let hours = 0;
-    let minutes = 0;
-    let seconds = 0;
-    for (let i = 0; i < timeOfPost[0].length; i++) {
-      hours += this.getHours(timeOfPost[0][i].totalTime);
-      if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
-        hours++;
-        minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
-      } else {
-        minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+  let returnTime = [];
+  if (formatType == 1 || formatType == "1") {
+    for (let i = 0; i < dates[0].length; i++) {
+      console.log("QUERY RESULT");
+      console.log(dates[0]);
+      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [
+        dates[0][i].date, user, "0"
+      ])
+      try {
+        let hours = 0;
+        let minutes = 0;
+        let seconds = 0;
+        for (let j = 0; j < timeOfPost[0].length; j++) {
+          hours += this.getHours(timeOfPost[0][j].totalTime);
+          if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+            hours++;
+            minutes = minutes + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            minutes += this.getMinutes(timeOfPost[0][j].totalTime);
+          }
+          if (seconds + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+            minutes++;
+            seconds = seconds + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            seconds += this.getSeconds(timeOfPost[0][j].totalTime);
+          }
+          console.log(hours + ":" + minutes + ":" + seconds);
+        }
+        returnTime.push({
+          date: this.formatDate(dates[0][i].date),
+          hr: hours,
+          min: minutes,
+          sec: seconds,
+        })
+      } catch (err) {
+        throw new Error(err.message);
       }
-      if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
-        minutes++;
-        seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
-      } else {
-        seconds += this.getSeconds(timeOfPost[0][i].totalTime);
-      }
-      console.log(hours + ":" + minutes + ":" + seconds);
     }
-    // hours = hours < 10 ? "0" + hours : hours;
-    // minutes = minutes < 10 ? "0" + minutes : minutes;
-    // seconds = seconds < 10 ? "0" + seconds : seconds;
-    return {
-      hr: hours,
-      min: minutes,
-      sec: seconds,
-    };
-  } catch (err) {
-    throw new Error(err.message);
+  } else {
+    let prevMonth=0;
+    let hours=0
+    let minutes=0
+    let seconds=0
+    let nextMonth = 0;
+    // formatType == 2 means that the total time goes by month
+    for (let i = 0; i < dates[0].length; i++) {
+      if (i != 0) {
+        prevMonth = this.getMonth(dates[0][i - 1].date);
+      }
+      if(i!=dates[0].length-1){
+        nextMonth = this.getMonth(dates[0][i + 1].date);
+      }else{
+        nextMonth = 0;
+      }
+      let month = this.getMonth(dates[0][i].date);
+      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [
+        dates[0][i].date, user, "0"
+      ])
+      try {
+        if (prevMonth) {
+          if (prevMonth != month) {
+            console.log("MONTH CHANGED");
+          hours     = 0;
+          minutes   = 0;
+          seconds   = 0;
+          }
+        }
+        //TIME
+        console.log("Hours:   " + hours);
+        console.log("Minutes: " + minutes);
+        console.log("Seconds: " + seconds);
+        // MONTHS
+        console.log("Month: " + month);
+        console.log("PrevMonth: " + prevMonth);
+        console.log("NextMonth: " + nextMonth);
+        for (let j = 0; j < timeOfPost[0].length; j++) {
+          hours += this.getHours(timeOfPost[0][j].totalTime);
+          if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+            hours++;
+            minutes = minutes + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            minutes += this.getMinutes(timeOfPost[0][j].totalTime);
+          }
+          if (seconds + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+            minutes++;
+            seconds = seconds + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            seconds += this.getSeconds(timeOfPost[0][j].totalTime);
+          }
+          console.log(hours + ":" + minutes + ":" + seconds);
+        }
+        if(prevMonth){
+          if(month !=nextMonth || month != prevMonth){
+            console.log("PREV MONTH IS NOT EQUAL TO MONTH")
+            returnTime.push({
+              month: this.getMonthName(month),
+              hr: hours,
+              min: minutes,
+              sec: seconds,
+            })
+            hours   = 0;
+            minutes   = 0;
+            seconds   = 0;
+          }
+        }
+      } catch (err) {
+        throw new Error(err.message);
+      }
+    }
   }
+
+
+  return returnTime;
+
 };
+exports.getMonthName = (month) => {
+  let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return months[month - 1];
+}
+exports.formatDate = (date) => {
+  date = date.toString();
+  // expected format 20230101 to 2023-01-01
+  let year = date.slice(0, 4);
+  let month = date.slice(4, 6);
+  let day = date.slice(6, 8);
+  return day + "/" + month + "/" + year;
+}
+exports.getMonth = (date) => {
+  date = date.toString();
+  return +date.slice(4, 6);
+}
 exports.getMachineTimeByDate = async (post, date) => {
   let timeOfPost = await database.execute(
     "select totalTime from time where post=? and date=?",
@@ -2502,36 +2564,36 @@ exports.searchInPostsState = async (findoc) => {
     })
   for (let i = 0; i < posts[0].length; i++) {
     if (posts[0][i].done == 2) {
-      if ((i+1) == 1) {
-        return "ORDER IS STILL RUNNING ON " +( i+1) + "ST POST";
-      } else if ((i+1) == 2) {
-        return "ORDER IS STILL RUNNING ON " +( i+1) + "ND POST";
-      } else if ((i+1) == 3) {
-        return "ORDER IS STILL RUNNING ON " +( i+1) + "RD POST";
+      if ((i + 1) == 1) {
+        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ST POST";
+      } else if ((i + 1) == 2) {
+        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ND POST";
+      } else if ((i + 1) == 3) {
+        return "ORDER IS STILL RUNNING ON " + (i + 1) + "RD POST";
       } else {
-        return "ORDER IS STILL RUNNING ON " +( i+1) + "TH POST";
+        return "ORDER IS STILL RUNNING ON " + (i + 1) + "TH POST";
       }
     }
     if (posts[0][i].done == 3) {
-      if ((i+1) == 1) {
-        return "ORDER IS PAUSED ON " +( i+1) + "ST POST";
-      } else if ((i+1) == 2) {
-        return "ORDER IS PAUSED ON " +( i+1) + "ND POST";
-      } else if ((i+1) == 3) {
-        return "ORDER IS PAUSED ON " +( i+1) + "RD POST";
+      if ((i + 1) == 1) {
+        return "ORDER IS PAUSED ON " + (i + 1) + "ST POST";
+      } else if ((i + 1) == 2) {
+        return "ORDER IS PAUSED ON " + (i + 1) + "ND POST";
+      } else if ((i + 1) == 3) {
+        return "ORDER IS PAUSED ON " + (i + 1) + "RD POST";
       } else {
-        return "ORDER IS PAUSED ON " +( i+1) + "TH POST";
+        return "ORDER IS PAUSED ON " + (i + 1) + "TH POST";
       }
     }
     if (posts[0][i].done == 1) {
-      if ((i+1) == 1) {
-        return "ORDER IS Next Up  ON " +( i+1) + "ST POST";
-      } else if ((i+1) == 2) {
-        return "ORDER IS Next Up  ON " +( i+1) + "ND POST";
-      } else if ((i+1) == 3) {
-        return "ORDER IS Next Up  ON " +( i+1) + "RD POST";
+      if ((i + 1) == 1) {
+        return "ORDER IS Next Up  ON " + (i + 1) + "ST POST";
+      } else if ((i + 1) == 2) {
+        return "ORDER IS Next Up  ON " + (i + 1) + "ND POST";
+      } else if ((i + 1) == 3) {
+        return "ORDER IS Next Up  ON " + (i + 1) + "RD POST";
       } else {
-        return "ORDER IS Next Up  ON " +( i+1) + "TH POST";
+        return "ORDER IS Next Up  ON " + (i + 1) + "TH POST";
       }
     }
   }
