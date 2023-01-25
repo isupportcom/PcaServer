@@ -418,24 +418,50 @@ exports.startUser = (req, res, next) => {
 exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
   const fromDate = req.body.fromDate;
   const toDate = req.body.toDate;
-  const user = req.body.user;
-  if (!fromDate || !toDate || !user) res.status(402).json({ message: "fill the required fields" });
+  const user =req.body.user;
+  if (!fromDate || !toDate) res.status(402).json({ message: "fill the required fields" });
   else {
-    database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
-      user, fromDate, toDate
-    ])
-      .then(totalTime => {
-        let time = this.calculateTotalUserTime(totalTime[0]);
-        res.status(200).json({
-          message: "Total Time of "+ user
-          , time: time
-        });
+    if(user){
+      database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+        user, fromDate, toDate
+      ])
+        .then(async totalTime => {
+          let name = await database.execute('select fname from users where id=?', [user]); 
+          let time = this.calculateTotalUserTime(totalTime[0]);
+          res.status(200).json({
+            message: "Total Time of "+ name[0][0].fname
+            , time: time
+          });
+        })
+        .catch(err => {
+          if (!err.statusCode) err.statusCode = 500;
+          next(err);
+        })
+    }else{
+      database.execute('select * from users')
+      .then(async users=>{
+        let returnUsers =[];
+        for(let i=0; i<users[0].length; i++){
+          let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)',[
+            users[0][i].id,fromDate,toDate
+          ]).catch(err=>{
+            if (!err.statusCode) err.statusCode = 500;
+            next(err);
+          })
+          returnUsers[i] = {
+            message:"Total Time of "+users[0][i].fname,
+            time:this.calculateTotalUserTime(totalTime[0])
+          }
+        }
+        res.status(200).json(returnUsers);
       })
-      .catch(err => {
+      .catch(err=>{
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       })
-  }
+    }
+    }
+  
 }
 exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
