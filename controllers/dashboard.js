@@ -2340,8 +2340,11 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
     "select DISTINCT date  from time where (date >= ? and date <= ?) and user=?  and end!=?",
     [fromDate, toDate, user, "0"]
   );
+
+
   let returnTime = [];
   if (formatType == 1 || formatType == "1") {
+    let allDates = this.getDates(new Date(this.formatDate2(fromDate)), new Date(this.formatDate2(toDate)));
     for (let i = 0; i < dates[0].length; i++) {
       console.log("QUERY RESULT");
       console.log(dates[0]);
@@ -2349,66 +2352,57 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         dates[0][i].date, user, "0"
       ])
       try {
-        let hours = 0;
-        let minutes = 0;
-        let seconds = 0;
-        let totalTimeOfUser = 0;
         for (let j = 0; j < timeOfPost[0].length; j++) {
-          hours += this.getHours(timeOfPost[0][j].totalTime);
-          if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
-            hours++;
-            minutes = minutes + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+         allDates[this.findIndex(allDates,dates[0][i].date)].hr += this.getHours(timeOfPost[0][j].totalTime);
+          if (allDates[this.findIndex(allDates,dates[0][i].date)].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+            allDates[this.findIndex(allDates,dates[0][i].date)].hr++;
+            allDates[this.findIndex(allDates,dates[0][i].date)].min +=  this.getMinutes(timeOfPost[0][j].totalTime) - 60;
           } else {
-            minutes += this.getMinutes(timeOfPost[0][j].totalTime);
+            allDates[this.findIndex(allDates,dates[0][i].date)].min += this.getMinutes(timeOfPost[0][j].totalTime);
           }
-          if (seconds + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
-            minutes++;
-            seconds = seconds + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          if (allDates[this.findIndex(allDates,dates[0][i].date)].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+            allDates[this.findIndex(allDates,dates[0][i].date)].min++;
+            allDates[this.findIndex(allDates,dates[0][i].date)].sec+= this.getSeconds(timeOfPost[0][j].totalTime) - 60;
           } else {
-            seconds += this.getSeconds(timeOfPost[0][j].totalTime);
+            allDates[this.findIndex(allDates,dates[0][i].date)].sec += this.getSeconds(timeOfPost[0][j].totalTime);
           }
-          console.log(hours + ":" + minutes + ":" + seconds);
         }
-        returnTime.push({
-          date: this.formatDate(dates[0][i].date),
-          hr: hours,
-          min: minutes,
-          sec: seconds
-        })
+       
       } catch (err) {
         throw new Error(err.message);
       }
+      returnTime = allDates;
     }
   } else {
     // expected date format 20230101 i need the month to calculate the total time of each month
-    let months = Array(this.getMonth(toDate)-1);
-    for(let k=0; k<months.length; k++){
-      months[k] = {month:this.getMonthName(k+1),hr:0, min:0, sec:0}
+    let months = Array(this.getMonth(toDate) - 1);
+    for (let k = 0; k < months.length; k++) {
+      months[k] = { month: this.getMonthName(k + 1), hr: 0, min: 0, sec: 0 }
     }
     let currentMonth;
     console.log(months);
-      console.log(months);
-      for(let i=0; i<dates[0].length; i++){
-        currentMonth = this.getMonth(dates[0][i].date);
-        let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
-        for(let j=0; j<timeOfPost[0].length; j++){
-          months[currentMonth-1].hr += this.getHours(timeOfPost[0][j].totalTime);
-          if(months[currentMonth-1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60){
-            months[currentMonth-1].hr++;
-            months[currentMonth-1].min = months[currentMonth-1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
-          }else{
-            months[currentMonth-1].min += this.getMinutes(timeOfPost[0][j].totalTime);
-          }
-          if(months[currentMonth-1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60){
-            months[currentMonth-1].min++;
-            months[currentMonth-1].sec = months[currentMonth-1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
-          }else{
-            months[currentMonth-1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
-          }
+    console.log(months);
+    for (let i = 0; i < dates[0].length; i++) {
+      currentMonth = this.getMonth(dates[0][i].date);
+      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
+      for (let j = 0; j < timeOfPost[0].length; j++) {
+        months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
+        if (months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+          months[currentMonth - 1].hr++;
+          months[currentMonth - 1].min = months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+        } else {
+          months[currentMonth - 1].min += this.getMinutes(timeOfPost[0][j].totalTime);
         }
-
+        if (months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+          months[currentMonth - 1].min++;
+          months[currentMonth - 1].sec = months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+        } else {
+          months[currentMonth - 1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
+        }
       }
-      returnTime = months;
+
+    }
+    returnTime = months;
   }
 
 
@@ -2417,6 +2411,38 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
   return returnTime;
 
 };
+exports.findIndex = (array, value) => {
+  for (let i = 0; i < array.length; i++) {
+    if (array[i].date == value) {
+      return i;
+    }
+  }
+}
+exports.getDates = (startDate, endDate) => {
+  console.log(startDate);
+  console.log(endDate);
+  const date = new Date(startDate.getTime());
+
+  const dates = [];
+
+  while (date <= endDate) {
+    let day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+    let month = date.getMonth() < 10 ? "0" + (date.getMonth() + 1) : date.getMonth();
+    let year = date.getFullYear();
+    dates.push({
+      date: year + month + day,
+      hr: 0,
+      min: 0,
+      sec: 0
+    });
+    date.setDate(date.getDate() + 1);
+  }
+
+  return dates;
+
+
+
+}
 exports.getMonthName = (month) => {
   console.log(month);
   let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -2429,6 +2455,14 @@ exports.formatDate = (date) => {
   let month = date.slice(4, 6);
   let day = date.slice(6, 8);
   return day + "/" + month + "/" + year;
+}
+exports.formatDate2 = (date) => {
+  date = date.toString();
+  // expected format 20230101 to 2023-01-01
+  let year = date.slice(0, 4);
+  let month = date.slice(4, 6);
+  let day = date.slice(6, 8);
+  return year + "-" + month + "-" + day;
 }
 exports.getMonth = (date) => {
   date = date.toString();
