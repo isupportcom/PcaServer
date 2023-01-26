@@ -506,7 +506,7 @@ exports.getUserTime = (req, res, next) => {
               id: users[0][i].id,
               fname: users[0][i].fname,
               lname: users[0][i].lname,
-              totalTime : await this.userTime(users[0][i].id,fromDate,toDate),
+              totalTime: await this.userTime(users[0][i].id, fromDate, toDate),
               time: await this.userTotalTime(
                 users[0][i].id,
                 fromDate,
@@ -525,7 +525,7 @@ exports.getUserTime = (req, res, next) => {
       database
         .execute("select * from users where id=?", [user])
         .then(async (userData) => {
-          res.status(200).json({ message: "User Time", user: [{ id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname,totalTime:await this.userTime(user,fromDate,toDate) ,times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) }] });
+          res.status(200).json({ message: "User Time", user: [{ id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname, totalTime: await this.userTime(user, fromDate, toDate), times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) }] });
         })
     }
   }
@@ -2352,7 +2352,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         let hours = 0;
         let minutes = 0;
         let seconds = 0;
-        let totalTimeOfUser =0;
+        let totalTimeOfUser = 0;
         for (let j = 0; j < timeOfPost[0].length; j++) {
           hours += this.getHours(timeOfPost[0][j].totalTime);
           if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
@@ -2380,84 +2380,45 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       }
     }
   } else {
-    let prevMonth = 0;
-    let hours = 0
-    let minutes = 0
-    let seconds = 0
-    let nextMonth = 0;
-    // formatType == 2 means that the total time goes by month
-    for (let i = 0; i < dates[0].length; i++) {
-      if (i != 0) {
-        prevMonth = this.getMonth(dates[0][i - 1].date);
-      }
-      if (i != dates[0].length - 1) {
-        nextMonth = this.getMonth(dates[0][i + 1].date);
-      } else {
-        nextMonth = 0;
-      }
-      let month = this.getMonth(dates[0][i].date);
-      console.log("MONTH: " + this.getMonthName(month));
-      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [
-        dates[0][i].date, user, "0"
-      ])
-      try {
-        if (prevMonth) {
-          if (prevMonth != month) {
-            console.log("MONTH CHANGED");
-            hours = 0;
-            minutes = 0;
-            seconds = 0;
-          }
-        }
-        //TIME
-        console.log("Hours:   " + hours);
-        console.log("Minutes: " + minutes);
-        console.log("Seconds: " + seconds);
-        // MONTHS
-        console.log("Month: " + month);
-        console.log("PrevMonth: " + prevMonth);
-        console.log("NextMonth: " + nextMonth);
-        for (let j = 0; j < timeOfPost[0].length; j++) {
-          hours += this.getHours(timeOfPost[0][j].totalTime);
-          if (minutes + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
-            hours++;
-            minutes = minutes + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
-          } else {
-            minutes += this.getMinutes(timeOfPost[0][j].totalTime);
-          }
-          if (seconds + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
-            minutes++;
-            seconds = seconds + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
-          } else {
-            seconds += this.getSeconds(timeOfPost[0][j].totalTime);
-          }
-          console.log(hours + ":" + minutes + ":" + seconds);
-        }
-        if (nextMonth || prevMonth) {
-          if (month != nextMonth || month != prevMonth) {
-            console.log("PREV MONTH IS NOT EQUAL TO MONTH")
-            returnTime.push({
-              month: this.getMonthName(month),
-              hr: hours,
-              min: minutes,
-              sec: seconds,
-            })
-            hours = 0;
-            minutes = 0;
-            seconds = 0;
-          }
-        }
-      } catch (err) {
-        throw new Error(err.message);
-      }
+    // expected date format 20230101 i need the month to calculate the total time of each month
+    let months = Array(this.getMonth(toDate)-1);
+    for(let k=0; k<months.length; k++){
+      months[k] = {month:this.getMonthName(k+1),hr:0, min:0, sec:0}
     }
+    let currentMonth;
+    console.log(months);
+      console.log(months);
+      for(let i=0; i<dates[0].length; i++){
+        currentMonth = this.getMonth(dates[0][i].date);
+        let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
+        for(let j=0; j<timeOfPost[0].length; j++){
+          months[currentMonth-1].hr += this.getHours(timeOfPost[0][j].totalTime);
+          if(months[currentMonth-1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60){
+            months[currentMonth-1].hr++;
+            months[currentMonth-1].min = months[currentMonth-1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+          }else{
+            months[currentMonth-1].min += this.getMinutes(timeOfPost[0][j].totalTime);
+          }
+          if(months[currentMonth-1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60){
+            months[currentMonth-1].min++;
+            months[currentMonth-1].sec = months[currentMonth-1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          }else{
+            months[currentMonth-1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
+          }
+        }
+
+      }
+      returnTime = months;
   }
+
+
 
 
   return returnTime;
 
 };
 exports.getMonthName = (month) => {
+  console.log(month);
   let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   return months[month - 1];
 }
@@ -2628,15 +2589,15 @@ exports.calculateTotalUserTime = (arrayOfTimes) => {
     sec: seconds,
   };
 }
-exports.userTime = async (user,fromDate,toDate) =>{
- let totalTime = await  database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+exports.userTime = async (user, fromDate, toDate) => {
+  let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
     user, fromDate, toDate
-  ]) .catch(err => {
+  ]).catch(err => {
     if (!err.statusCode) err.statusCode = 500;
     throw new Error(err);
   })
-      let time = this.calculateTotalUserTime(totalTime[0]);
-     return time
-   
-   
+  let time = this.calculateTotalUserTime(totalTime[0]);
+  return time
+
+
 }
