@@ -2371,6 +2371,11 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       } catch (err) {
         throw new Error(err.message);
       }
+      for(let date=0; date<allDates.length; date++){
+      allDates[date].hr = allDates[date].hr < 10 ? "0" + allDates[date].hr : allDates[date].hr;
+      allDates[date].min = allDates[date].min < 10 ? "0" + allDates[date].min : allDates[date].min;
+      allDates[date].sec = allDates[date].sec < 10 ? "0" + allDates[date].sec : allDates[date].sec;
+      }
       returnTime = allDates;
     }
   } else {
