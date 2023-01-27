@@ -2345,6 +2345,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
   let returnTime = [];
   if (formatType == 1 || formatType == "1") {
     let allDates = this.getDates(new Date(this.formatDate2(fromDate)), new Date(this.formatDate2(toDate)));
+    console.log(allDates);
     for (let i = 0; i < dates[0].length; i++) {
       console.log("QUERY RESULT");
       console.log(dates[0]);
@@ -2371,6 +2372,9 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       } catch (err) {
         throw new Error(err.message);
       }
+     
+       
+      }
       for (let date = 0; date < allDates.length; date++) {
         allDates[date].hr = +allDates[date].hr;
         allDates[date].min = +allDates[date].min;
@@ -2387,8 +2391,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         }
 
         }
-        returnTime = allDates;
-      }
+      returnTime = allDates;
     } else {
       // expected date format 20230101 i need the month to calculate the total time of each month
       let months = Array(this.getMonth(toDate) - 1);
