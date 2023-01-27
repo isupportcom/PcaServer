@@ -2353,285 +2353,306 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       ])
       try {
         for (let j = 0; j < timeOfPost[0].length; j++) {
-         allDates[this.findIndex(allDates,dates[0][i].date)].hr += this.getHours(timeOfPost[0][j].totalTime);
-          if (allDates[this.findIndex(allDates,dates[0][i].date)].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
-            allDates[this.findIndex(allDates,dates[0][i].date)].hr++;
-            allDates[this.findIndex(allDates,dates[0][i].date)].min +=  this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+          allDates[this.findIndex(allDates, dates[0][i].date)].hr += this.getHours(timeOfPost[0][j].totalTime);
+          if (allDates[this.findIndex(allDates, dates[0][i].date)].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+            allDates[this.findIndex(allDates, dates[0][i].date)].hr++;
+            allDates[this.findIndex(allDates, dates[0][i].date)].min += this.getMinutes(timeOfPost[0][j].totalTime) - 60;
           } else {
-            allDates[this.findIndex(allDates,dates[0][i].date)].min += this.getMinutes(timeOfPost[0][j].totalTime);
+            allDates[this.findIndex(allDates, dates[0][i].date)].min += this.getMinutes(timeOfPost[0][j].totalTime);
           }
-          if (allDates[this.findIndex(allDates,dates[0][i].date)].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
-            allDates[this.findIndex(allDates,dates[0][i].date)].min++;
-            allDates[this.findIndex(allDates,dates[0][i].date)].sec+= this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          if (allDates[this.findIndex(allDates, dates[0][i].date)].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+            allDates[this.findIndex(allDates, dates[0][i].date)].min++;
+            allDates[this.findIndex(allDates, dates[0][i].date)].sec += this.getSeconds(timeOfPost[0][j].totalTime) - 60;
           } else {
-            allDates[this.findIndex(allDates,dates[0][i].date)].sec += this.getSeconds(timeOfPost[0][j].totalTime);
+            allDates[this.findIndex(allDates, dates[0][i].date)].sec += this.getSeconds(timeOfPost[0][j].totalTime);
           }
         }
-       
+
       } catch (err) {
         throw new Error(err.message);
       }
-      returnTime = allDates;
-    }
-  } else {
-    // expected date format 20230101 i need the month to calculate the total time of each month
-    let months = Array(this.getMonth(toDate) - 1);
-    for (let k = 0; k < months.length; k++) {
-      months[k] = { month: this.getMonthName(k + 1), hr: 0, min: 0, sec: 0 }
-    }
-    let currentMonth;
-    console.log(months);
-    console.log(months);
-    for (let i = 0; i < dates[0].length; i++) {
-      currentMonth = this.getMonth(dates[0][i].date);
-      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
-      for (let j = 0; j < timeOfPost[0].length; j++) {
-        months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
-        if (months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
-          months[currentMonth - 1].hr++;
-          months[currentMonth - 1].min = months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
-        } else {
-          months[currentMonth - 1].min += this.getMinutes(timeOfPost[0][j].totalTime);
+      for (let date = 0; date < allDates.length; date++) {
+        allDates[date].hr = +allDates[date].hr;
+        allDates[date].min = +allDates[date].min;
+        allDates[date].sec = +allDates[date].sec;
+        if (allDates[date].hr < 10 &&  allDates[date].hr != "00" || allDates[date].hr == 0) {
+          console.log(allDates[date].hr);
+          allDates[date].hr = "0" + allDates[date].hr;
         }
-        if (months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
-          months[currentMonth - 1].min++;
-          months[currentMonth - 1].sec = months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
-        } else {
-          months[currentMonth - 1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
+        if (allDates[date].min < 10 && allDates[date].min != "00" || allDates[date].min == 0) {
+          allDates[date].min = "0" + allDates[date].min;
         }
+        if (allDates[date].sec < 10 && allDates[date].sec != "00" || allDates[date].sec == 0) {
+          allDates[date].sec = "0" + allDates[date].sec;
+        }
+
+        }
+        returnTime = allDates;
       }
+    } else {
+      // expected date format 20230101 i need the month to calculate the total time of each month
+      let months = Array(this.getMonth(toDate) - 1);
+      for (let k = 0; k < months.length; k++) {
+        months[k] = { month: this.getMonthName(k + 1), hr: 0, min: 0, sec: 0 }
+      }
+      let currentMonth;
+      console.log(months);
+      console.log(months);
+      for (let i = 0; i < dates[0].length; i++) {
+        currentMonth = this.getMonth(dates[0][i].date);
+        let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
+        for (let j = 0; j < timeOfPost[0].length; j++) {
+          months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
+          if (months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+            months[currentMonth - 1].hr++;
+            months[currentMonth - 1].min = months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            months[currentMonth - 1].min += this.getMinutes(timeOfPost[0][j].totalTime);
+          }
+          if (months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+            months[currentMonth - 1].min++;
+            months[currentMonth - 1].sec = months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+          } else {
+            months[currentMonth - 1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
+          }
+        }
 
+      }
+      for (let month = 0; month < months.length; month++) {
+        months[month].hr = months[month].hr < 10 ? "0" + months[month].hr : months[month].hr;
+        months[month].min = months[month].min < 10 ? "0" + months[month].min : months[month].min;
+        months[month].sec = months[month].sec < 10 ? "0" + months[month].sec : months[month].sec;
+      }
+      returnTime = months;
     }
-    returnTime = months;
-  }
 
 
 
 
-  return returnTime;
+    return returnTime;
 
-};
-exports.findIndex = (array, value) => {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i].date == value) {
-      return i;
+  };
+  exports.findIndex = (array, value) => {
+    for (let i = 0; i < array.length; i++) {
+      if (array[i].date == value) {
+        return i;
+      }
     }
   }
-}
-exports.getDates = (startDate, endDate) => {
-  console.log(startDate);
-  console.log(endDate);
-  const date = new Date(startDate.getTime());
+  exports.getDates = (startDate, endDate) => {
+    console.log(startDate);
+    console.log(endDate);
+    const date = new Date(startDate.getTime());
 
-  const dates = [];
+    const dates = [];
 
-  while (date <= endDate) {
-    let day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-    let month = date.getMonth() < 10 ? "0" + (date.getMonth() + 1) : date.getMonth();
-    let year = date.getFullYear();
-    dates.push({
-      date: year + month + day,
-      hr: 0,
-      min: 0,
-      sec: 0
-    });
-    date.setDate(date.getDate() + 1);
+    while (date <= endDate) {
+      let day = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+      let month = date.getMonth() < 10 ? "0" + (date.getMonth() + 1) : date.getMonth();
+      let year = date.getFullYear();
+      dates.push({
+        date: year + month + day,
+        hr: 0,
+        min: 0,
+        sec: 0
+      });
+      date.setDate(date.getDate() + 1);
+    }
+
+    return dates;
+
+
+
   }
+  exports.getMonthName = (month) => {
+    console.log(month);
+    let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return months[month - 1];
+  }
+  exports.formatDate = (date) => {
+    date = date.toString();
+    // expected format 20230101 to 2023-01-01
+    let year = date.slice(0, 4);
+    let month = date.slice(4, 6);
+    let day = date.slice(6, 8);
+    return day + "/" + month + "/" + year;
+  }
+  exports.formatDate2 = (date) => {
+    date = date.toString();
+    // expected format 20230101 to 2023-01-01
+    let year = date.slice(0, 4);
+    let month = date.slice(4, 6);
+    let day = date.slice(6, 8);
+    return year + "-" + month + "-" + day;
+  }
+  exports.getMonth = (date) => {
+    date = date.toString();
+    return +date.slice(4, 6);
+  }
+  exports.getMachineTimeByDate = async (post, date) => {
+    let timeOfPost = await database.execute(
+      "select totalTime from time where post=? and date=?",
+      [post, date]
+    );
+    console.log("QUERY");
+    console.log(
+      `select totalTime from time where post=${post} and date=${date}`,
+      [post, date]
+    );
+    console.log("QUERY RESULT");
+    console.log(timeOfPost[0]);
+    try {
+      let hours = 0;
+      let minutes = 0;
+      let seconds = 0;
+      for (let i = 0; i < timeOfPost[0].length; i++) {
+        hours += this.getHours(timeOfPost[0][i].totalTime);
+        if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
+          hours++;
+          minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
+        } else {
+          minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+        }
+        if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
+          minutes++;
+          seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
+        } else {
+          seconds += this.getSeconds(timeOfPost[0][i].totalTime);
+        }
+        console.log(hours + ":" + minutes + ":" + seconds);
+      }
+      hours = hours < 10 ? "0" + hours : hours;
+      minutes = minutes < 10 ? "0" + minutes : minutes;
+      seconds = seconds < 10 ? "0" + seconds : seconds;
+      return {
+        hr: hours,
+        min: minutes,
+        sec: seconds,
+      };
+    } catch (err) {
+      throw new Error(err.message);
+    }
+  };
 
-  return dates;
-
-
-
-}
-exports.getMonthName = (month) => {
-  console.log(month);
-  let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  return months[month - 1];
-}
-exports.formatDate = (date) => {
-  date = date.toString();
-  // expected format 20230101 to 2023-01-01
-  let year = date.slice(0, 4);
-  let month = date.slice(4, 6);
-  let day = date.slice(6, 8);
-  return day + "/" + month + "/" + year;
-}
-exports.formatDate2 = (date) => {
-  date = date.toString();
-  // expected format 20230101 to 2023-01-01
-  let year = date.slice(0, 4);
-  let month = date.slice(4, 6);
-  let day = date.slice(6, 8);
-  return year + "-" + month + "-" + day;
-}
-exports.getMonth = (date) => {
-  date = date.toString();
-  return +date.slice(4, 6);
-}
-exports.getMachineTimeByDate = async (post, date) => {
-  let timeOfPost = await database.execute(
-    "select totalTime from time where post=? and date=?",
-    [post, date]
-  );
-  console.log("QUERY");
-  console.log(
-    `select totalTime from time where post=${post} and date=${date}`,
-    [post, date]
-  );
-  console.log("QUERY RESULT");
-  console.log(timeOfPost[0]);
-  try {
+  exports.setProductionAsDone = async (findoc) => {
+    let totalTime = await database
+      .execute("select totalTime from time where findoc=?", [findoc])
+      .catch((err) => {
+        throw new Error(err.message);
+      });
     let hours = 0;
     let minutes = 0;
     let seconds = 0;
-    for (let i = 0; i < timeOfPost[0].length; i++) {
-      hours += this.getHours(timeOfPost[0][i].totalTime);
-      if (minutes + this.getMinutes(timeOfPost[0][i].totalTime) >= 60) {
+    for (let i = 0; i < totalTime[0].length; i++) {
+      hours += this.getHours(totalTime[0][i].totalTime);
+      if (minutes + this.getMinutes(totalTime[0][i].totalTime) >= 60) {
         hours++;
-        minutes = minutes + this.getMinutes(timeOfPost[0][i].totalTime) - 60;
+        minutes = minutes + this.getMinutes(totalTime[0][i].totalTime) - 60;
       } else {
-        minutes += this.getMinutes(timeOfPost[0][i].totalTime);
+        minutes += this.getMinutes(totalTime[0][i].totalTime);
       }
-      if (seconds + this.getSeconds(timeOfPost[0][i].totalTime) >= 60) {
+      if (seconds + this.getSeconds(totalTime[0][i].totalTime) >= 60) {
         minutes++;
-        seconds = seconds + this.getSeconds(timeOfPost[0][i].totalTime) - 60;
+        seconds = seconds + this.getSeconds(totalTime[0][i].totalTime) - 60;
       } else {
-        seconds += this.getSeconds(timeOfPost[0][i].totalTime);
+        seconds += this.getSeconds(totalTime[0][i].totalTime);
       }
-      console.log(hours + ":" + minutes + ":" + seconds);
     }
     hours = hours < 10 ? "0" + hours : hours;
     minutes = minutes < 10 ? "0" + minutes : minutes;
     seconds = seconds < 10 ? "0" + seconds : seconds;
+    let totalProductionTime = hours + ":" + minutes + ":" + seconds;
+
+    database
+      .execute("update production set time=? where findoc=?", [
+        totalProductionTime,
+        findoc,
+      ])
+      .then((results) => {
+        console.log(results);
+      })
+      .catch((err) => {
+        throw new Error(err.message);
+      });
+  };
+
+  exports.searchInPostsState = async (findoc) => {
+    let posts = await database.execute('select * from prodline where findoc=?', [findoc])
+      .catch(err => {
+        throw new Error(err.message);
+      })
+    for (let i = 0; i < posts[0].length; i++) {
+      if (posts[0][i].done == 2) {
+        if ((i + 1) == 1) {
+          return "ORDER IS STILL RUNNING ON " + (i + 1) + "ST POST";
+        } else if ((i + 1) == 2) {
+          return "ORDER IS STILL RUNNING ON " + (i + 1) + "ND POST";
+        } else if ((i + 1) == 3) {
+          return "ORDER IS STILL RUNNING ON " + (i + 1) + "RD POST";
+        } else {
+          return "ORDER IS STILL RUNNING ON " + (i + 1) + "TH POST";
+        }
+      }
+      if (posts[0][i].done == 3) {
+        if ((i + 1) == 1) {
+          return "ORDER IS PAUSED ON " + (i + 1) + "ST POST";
+        } else if ((i + 1) == 2) {
+          return "ORDER IS PAUSED ON " + (i + 1) + "ND POST";
+        } else if ((i + 1) == 3) {
+          return "ORDER IS PAUSED ON " + (i + 1) + "RD POST";
+        } else {
+          return "ORDER IS PAUSED ON " + (i + 1) + "TH POST";
+        }
+      }
+      if (posts[0][i].done == 1) {
+        if ((i + 1) == 1) {
+          return "ORDER IS Next Up  ON " + (i + 1) + "ST POST";
+        } else if ((i + 1) == 2) {
+          return "ORDER IS Next Up  ON " + (i + 1) + "ND POST";
+        } else if ((i + 1) == 3) {
+          return "ORDER IS Next Up  ON " + (i + 1) + "RD POST";
+        } else {
+          return "ORDER IS Next Up  ON " + (i + 1) + "TH POST";
+        }
+      }
+    }
+  }
+  exports.calculateTotalUserTime = (arrayOfTimes) => {
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    console.log(arrayOfTimes);
+    for (let i = 0; i < arrayOfTimes.length; i++) {
+      hours += this.getHours(arrayOfTimes[i].totalTime);
+      if (minutes + this.getMinutes(arrayOfTimes[i].totalTime) >= 60) {
+        hours++;
+        minutes = minutes + this.getMinutes(arrayOfTimes[i].totalTime) - 60;
+      } else {
+        minutes += this.getMinutes(arrayOfTimes[i].totalTime);
+      }
+      if (seconds + this.getSeconds(arrayOfTimes[i].totalTime) >= 60) {
+        minutes++;
+        seconds = seconds + this.getSeconds(arrayOfTimes[i].totalTime) - 60;
+      } else {
+        seconds += this.getSeconds(arrayOfTimes[i].totalTime);
+      }
+    }
+
     return {
       hr: hours,
       min: minutes,
       sec: seconds,
     };
-  } catch (err) {
-    throw new Error(err.message);
   }
-};
-
-exports.setProductionAsDone = async (findoc) => {
-  let totalTime = await database
-    .execute("select totalTime from time where findoc=?", [findoc])
-    .catch((err) => {
-      throw new Error(err.message);
-    });
-  let hours = 0;
-  let minutes = 0;
-  let seconds = 0;
-  for (let i = 0; i < totalTime[0].length; i++) {
-    hours += this.getHours(totalTime[0][i].totalTime);
-    if (minutes + this.getMinutes(totalTime[0][i].totalTime) >= 60) {
-      hours++;
-      minutes = minutes + this.getMinutes(totalTime[0][i].totalTime) - 60;
-    } else {
-      minutes += this.getMinutes(totalTime[0][i].totalTime);
-    }
-    if (seconds + this.getSeconds(totalTime[0][i].totalTime) >= 60) {
-      minutes++;
-      seconds = seconds + this.getSeconds(totalTime[0][i].totalTime) - 60;
-    } else {
-      seconds += this.getSeconds(totalTime[0][i].totalTime);
-    }
-  }
-  hours = hours < 10 ? "0" + hours : hours;
-  minutes = minutes < 10 ? "0" + minutes : minutes;
-  seconds = seconds < 10 ? "0" + seconds : seconds;
-  let totalProductionTime = hours + ":" + minutes + ":" + seconds;
-
-  database
-    .execute("update production set time=? where findoc=?", [
-      totalProductionTime,
-      findoc,
-    ])
-    .then((results) => {
-      console.log(results);
+  exports.userTime = async (user, fromDate, toDate) => {
+    let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
+      user, fromDate, toDate
+    ]).catch(err => {
+      if (!err.statusCode) err.statusCode = 500;
+      throw new Error(err);
     })
-    .catch((err) => {
-      throw new Error(err.message);
-    });
-};
+    let time = this.calculateTotalUserTime(totalTime[0]);
+    return time
 
-exports.searchInPostsState = async (findoc) => {
-  let posts = await database.execute('select * from prodline where findoc=?', [findoc])
-    .catch(err => {
-      throw new Error(err.message);
-    })
-  for (let i = 0; i < posts[0].length; i++) {
-    if (posts[0][i].done == 2) {
-      if ((i + 1) == 1) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "TH POST";
-      }
-    }
-    if (posts[0][i].done == 3) {
-      if ((i + 1) == 1) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS PAUSED ON " + (i + 1) + "TH POST";
-      }
-    }
-    if (posts[0][i].done == 1) {
-      if ((i + 1) == 1) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS Next Up  ON " + (i + 1) + "TH POST";
-      }
-    }
+
   }
-}
-exports.calculateTotalUserTime = (arrayOfTimes) => {
-  let hours = 0;
-  let minutes = 0;
-  let seconds = 0;
-  console.log(arrayOfTimes);
-  for (let i = 0; i < arrayOfTimes.length; i++) {
-    hours += this.getHours(arrayOfTimes[i].totalTime);
-    if (minutes + this.getMinutes(arrayOfTimes[i].totalTime) >= 60) {
-      hours++;
-      minutes = minutes + this.getMinutes(arrayOfTimes[i].totalTime) - 60;
-    } else {
-      minutes += this.getMinutes(arrayOfTimes[i].totalTime);
-    }
-    if (seconds + this.getSeconds(arrayOfTimes[i].totalTime) >= 60) {
-      minutes++;
-      seconds = seconds + this.getSeconds(arrayOfTimes[i].totalTime) - 60;
-    } else {
-      seconds += this.getSeconds(arrayOfTimes[i].totalTime);
-    }
-  }
-
-  return {
-    hr: hours,
-    min: minutes,
-    sec: seconds,
-  };
-}
-exports.userTime = async (user, fromDate, toDate) => {
-  let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
-    user, fromDate, toDate
-  ]).catch(err => {
-    if (!err.statusCode) err.statusCode = 500;
-    throw new Error(err);
-  })
-  let time = this.calculateTotalUserTime(totalTime[0]);
-  return time
-
-
-}
