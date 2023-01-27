@@ -2394,17 +2394,19 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       returnTime = allDates;
     } else {
       // expected date format 20230101 i need the month to calculate the total time of each month
-      let months = Array(this.getMonth(toDate) - 1);
+      let months = Array(this.getMonth(toDate));
+      
       for (let k = 0; k < months.length; k++) {
         months[k] = { month: this.getMonthName(k + 1), hr: 0, min: 0, sec: 0 }
       }
+
       let currentMonth;
-      console.log(months);
       console.log(months);
       for (let i = 0; i < dates[0].length; i++) {
         currentMonth = this.getMonth(dates[0][i].date);
         let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
         for (let j = 0; j < timeOfPost[0].length; j++) {
+          console.log(months[currentMonth - 1].hr);
           months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
           if (months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
             months[currentMonth - 1].hr++;
