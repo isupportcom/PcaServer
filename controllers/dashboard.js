@@ -525,7 +525,7 @@ exports.getUserTime = (req, res, next) => {
       database
         .execute("select * from users where id=?", [user])
         .then(async (userData) => {
-          res.status(200).json({ message: "User Time", user: [{ id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname, totalTime: await this.userTime(user, fromDate, toDate), times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) }] });
+          res.status(200).json({ message: "User Time", users: [{ id: userData[0][0].id, fname: userData[0][0].fname, lname: userData[0][0].lname, totalTime: await this.userTime(user, fromDate, toDate), times: await this.userTotalTime(userData[0][0].id, fromDate, toDate, formatType) }] });
         })
     }
   }
