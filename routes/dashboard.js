@@ -8,6 +8,7 @@ router.post('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
 router.post('/updatePosts',dashboardController.updatePosts);
 router.post('/deletePost',dashboardController.deletePost);
+router.post('/activePosts',dashboardController.activePosts);
 // Ποστα join Χρηστες
 router.post('/getUsersInPosts',dashboardController.usersInPost);
 // router.post('/test',dashboardController.activeUsers)
@@ -48,6 +49,7 @@ router.post('/getProductionState',dashboardController.getProductionState);
 router.post('/getStatesOfProductions',dashboardController.getStateOfProductions);
 router.post('/totalTimeOfProduction',dashboardController.totalTimeOfProduction);
 router.post('/getSingleStateOfProduction',dashboardController.getSingleStateOfProduction);
+
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 

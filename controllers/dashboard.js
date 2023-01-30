@@ -160,7 +160,24 @@ exports.usersInPost = (req, res, next) => {
       next(err);
     });
 };
-
+exports.activePosts = (req, res, next) => {
+  database.execute('select * from post')
+    .then(async (posts)=>{
+      let returnPost = [];
+      for(let i=0;i<posts[0].length;i++){
+        returnPost[i]= {
+          post:posts[0][i].post,
+          name : posts[0][i].name,
+          has: await this.whichOrder(posts[0][i].post)
+        }
+      }
+      res.status(200).json({message:"Active Posts",posts:returnPost});
+    })
+    .catch(err=>{
+      if(!err.statusCode) err.statusCode = 500;
+      next(err);
+    })
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -469,14 +486,9 @@ exports.activeUsers = async () => {
   });
 
   let returnPost = [];
-  //console.log(posts[0]);
   for (let i = 0; i < posts[0].length; i++) {
-    //console.log(posts);
-    //console.log(
-    // (await this.postIsSetInCurrentOrders(posts[0][i].post)) != false
-    // );
+
     if ((await this.postIsSetInCurrentOrders(posts[0][i].post)) != false) {
-      //console.log("IS TRUE");
       returnPost[i] = await this.countOfUsers(posts[0][i].post);
     } else {
       returnPost[i] = {
@@ -485,7 +497,6 @@ exports.activeUsers = async () => {
         users: [],
       };
     }
-    //console.log(returnPost);
   }
   return returnPost;
 };
@@ -715,6 +726,8 @@ exports.deletecatPost = (req, res, next) => {
  *                                                                            *
  *                                                                            *
  /******************************************************************************/
+
+
 exports.pausePost = async (req, res, next) => {
   const prodLine = req.body.prodLine;
   /*
@@ -1554,16 +1567,16 @@ exports.getMachineTime = (req, res, next) => {
         })
     }
     else {
-      database.execute("select * from post where post=?",[post])
-        .then(async (postsData)=>{
+      database.execute("select * from post where post=?", [post])
+        .then(async (postsData) => {
           res.status(200).json({
             message: "Machine Time",
-            post:{
+            post: [{
               id: postsData[0][0].post,
               name: postsData[0][0].name,
-              totalTime : await this.machineTotalTime(postsData[0][0].post, fromDate, toDate),
+              totalTime: await this.machineTotalTime(postsData[0][0].post, fromDate, toDate),
               time: await this.machineTime(postsData[0][0].post, fromDate, toDate, format)
-            }
+            }]
           })
         })
     }
@@ -2103,16 +2116,11 @@ exports.postIsSetInCurrentOrders = async (post) => {
       "select DISTINCT postId from catpost where postId=?",
       [post]
     );
-    //console.log(find[0]);
-    //console.log(find[0].length);
-    //console.log(find[0].length > 0);
-    //console.log("INSIDE LOOP");
     if (find[0].length > 0) {
       return true;
     }
   }
-  //console.log("AFTER LOOP");
-  //console.log(found);
+
   if (found) {
     return found;
   } else {
@@ -2737,43 +2745,44 @@ exports.machineTime = async (machinePost, from, to, format) => {
         if (allDates[this.findIndex(allDates, dates[0][i].date)].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
           allDates[this.findIndex(allDates, dates[0][i].date)].min++;
           allDates[this.findIndex(allDates, dates[0][i].date)].sec = allDates[this.findIndex(allDates, dates[0][i].date)].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
-        }else{
+        } else {
           allDates[this.findIndex(allDates, dates[0][i].date)].sec += this.getSeconds(timeOfPost[0][j].totalTime);
         }
       }
     }
     returnTime = allDates;
   } else {
-    let months =Array(this.getMonth(to));
-    for(let m=0;m<months.length;m++){
-      months[m]={
-        month:this.getMonthName(m+1),
-        hr:0,
-        min:0,
-        sec:0
+    console.log(dates);
+    let months = Array(this.getMonth(to));
+    for (let m = 0; m < months.length; m++) {
+      months[m] = {
+        month: this.getMonthName(m + 1),
+        hr: 0,
+        min: 0,
+        sec: 0
       };
     }
     console.log(months);
     let currentMonth;
-    for(let i=0;i<dates[0].length;i++){
+    for (let i = 0; i < dates[0].length; i++) {
       currentMonth = this.getMonth(dates[0][i].date);
       let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "00:00:00.000000", dates[0][i].date])
-      .catch(err=>{
-        throw new Error(err);
-      })
-      for(let j=0;j<timeOfPost[0].length;j++){
-        months[currentMonth-1].hr+=this.getHours(timeOfPost[0][j].totalTime);
-        if(months[currentMonth-1].min+this.getMinutes(timeOfPost[0][j].totalTime)>=60){
-          months[currentMonth-1].hr++;
-          months[currentMonth-1].min = months[currentMonth-1].min+this.getMinutes(timeOfPost[0][j].totalTime)-60;
-        }else{
-          months[currentMonth-1].min+=this.getMinutes(timeOfPost[0][j].totalTime);
+        .catch(err => {
+          throw new Error(err);
+        })
+      for (let j = 0; j < timeOfPost[0].length; j++) {
+        months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
+        if (months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) >= 60) {
+          months[currentMonth - 1].hr++;
+          months[currentMonth - 1].min = months[currentMonth - 1].min + this.getMinutes(timeOfPost[0][j].totalTime) - 60;
+        } else {
+          months[currentMonth - 1].min += this.getMinutes(timeOfPost[0][j].totalTime);
         }
-        if(months[currentMonth-1].sec+this.getSeconds(timeOfPost[0][j].totalTime)>=60){
-          months[currentMonth-1].min++;
-          months[currentMonth-1].sec = months[currentMonth-1].sec+this.getSeconds(timeOfPost[0][j].totalTime)-60;
-        }else{
-          months[currentMonth-1].sec+=this.getSeconds(timeOfPost[0][j].totalTime);
+        if (months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) >= 60) {
+          months[currentMonth - 1].min++;
+          months[currentMonth - 1].sec = months[currentMonth - 1].sec + this.getSeconds(timeOfPost[0][j].totalTime) - 60;
+        } else {
+          months[currentMonth - 1].sec += this.getSeconds(timeOfPost[0][j].totalTime);
         }
       }
     }
@@ -2785,4 +2794,12 @@ exports.machineTime = async (machinePost, from, to, format) => {
     returnTime = months;
   }
   return returnTime
+}
+
+exports.whichOrder = async (post) =>{
+  let order = await database.execute('select findoc from prodline where post=? and done=2',[post])
+  .catch(err=>{
+    throw new Error(err);
+  })
+  console.log(order[0]);
 }
