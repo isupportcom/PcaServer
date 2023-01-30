@@ -744,6 +744,7 @@ exports.pausePost = async (req, res, next) => {
         prodLine.post,
       ])
       .then((results) => {
+        this.emitOrderStarted(prodLine.findoc,prodLine.post);
         req.body.findoc = prodLine.findoc;
         req.body.post = prodLine.post;
         this.getSingleProduction(req, res, next);
@@ -2661,7 +2662,7 @@ exports.userTime = async (user, fromDate, toDate) => {
   return time
 }
 exports.machineTotalTime = async (machinePost, fromDate, toDate) => {
-  let totalTime = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "00:00:00.000000", fromDate, toDate])
+  let totalTime = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", fromDate, toDate])
     .catch(err => {
       throw new Error(err)
     })
@@ -2697,7 +2698,7 @@ exports.machineTotalTime = async (machinePost, fromDate, toDate) => {
 exports.machineTime = async (machinePost, from, to, format) => {
   let dates = await
     database
-      .execute('select DISTINCT date from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "00:00:00.000000", from, to])
+      .execute('select DISTINCT date from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", from, to])
       .catch(err => {
         throw new Error(err);
       })
@@ -2708,7 +2709,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     let allDates = this.getDates(new Date(this.formatDate2(from)), new Date(this.formatDate2(to)));
     console.log(allDates);
     for (let i = 0; i < dates[0].length; i++) {
-      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "00:00:00.000000", dates[0][i].date])
+      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
         .catch(err => {
           throw new Error(err);
         })
@@ -2760,7 +2761,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     let currentMonth;
     for (let i = 0; i < dates[0].length; i++) {
       currentMonth = this.getMonth(dates[0][i].date);
-      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "00:00:00.000000", dates[0][i].date])
+      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
         .catch(err => {
           throw new Error(err);
         })
