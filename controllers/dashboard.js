@@ -1551,7 +1551,7 @@ exports.getMachineTime = (req, res, next) => {
           for (let i = 0; i < posts[0].length; i++) {
             returnPosts[i] = {
               id: posts[0][i].post,
-              name: posts[0][i].name,
+              name: posts[0][i].username,
               totalTime: await this.machineTotalTime(posts[0][i].post, fromDate, toDate),
               time: await this.machineTime(posts[0][i].post, fromDate, toDate, format)
             };
@@ -2750,6 +2750,22 @@ exports.machineTime = async (machinePost, from, to, format) => {
         }
       }
     }
+    for (let date = 0; date < allDates.length; date++) {
+      allDates[date].hr = +allDates[date].hr;
+      allDates[date].min = +allDates[date].min;
+      allDates[date].sec = +allDates[date].sec;
+      if (allDates[date].hr < 10 && allDates[date].hr != "00" || allDates[date].hr == 0) {
+        console.log(allDates[date].hr);
+        allDates[date].hr = "0" + allDates[date].hr;
+      }
+      if (allDates[date].min < 10 && allDates[date].min != "00" || allDates[date].min == 0) {
+        allDates[date].min = "0" + allDates[date].min;
+      }
+      if (allDates[date].sec < 10 && allDates[date].sec != "00" || allDates[date].sec == 0) {
+        allDates[date].sec = "0" + allDates[date].sec;
+      }
+
+    }
     returnTime = allDates;
   } else {
     console.log(dates);
@@ -2802,4 +2818,11 @@ exports.whichOrder = async (post) =>{
     throw new Error(err);
   })
   console.log(order[0]);
+
+  if(order[0].length==0){
+      return "This Post Has No Order"
+  }else{
+
+    return order[0][0].findoc
+  }
 }
