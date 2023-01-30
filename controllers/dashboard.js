@@ -168,7 +168,7 @@ exports.activePosts = (req, res, next) => {
         returnPost[i] = {
           post: posts[0][i].post,
           name: posts[0][i].name,
-          has: await this.whichOrder(posts[0][i].post)
+          orders: await this.whichOrder(posts[0][i].post)
         }
       }
       res.status(200).json({ message: "Active Posts", posts: returnPost });
@@ -2822,7 +2822,7 @@ exports.emitOrderStarted = (findoc, post) => {
         returnPost[i] = {
           post: posts[0][i].post,
           name: posts[0][i].name,
-          has: await this.whichOrder(posts[0][i].post)
+          orders: await this.whichOrder(posts[0][i].post)
         }
       }
       console.log(returnPost);
