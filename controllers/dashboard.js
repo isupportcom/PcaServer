@@ -162,19 +162,19 @@ exports.usersInPost = (req, res, next) => {
 };
 exports.activePosts = (req, res, next) => {
   database.execute('select * from post')
-    .then(async (posts)=>{
+    .then(async (posts) => {
       let returnPost = [];
-      for(let i=0;i<posts[0].length;i++){
-        returnPost[i]= {
-          post:posts[0][i].post,
-          name : posts[0][i].name,
+      for (let i = 0; i < posts[0].length; i++) {
+        returnPost[i] = {
+          post: posts[0][i].post,
+          name: posts[0][i].name,
           has: await this.whichOrder(posts[0][i].post)
         }
       }
-      res.status(200).json({message:"Active Posts",posts:returnPost});
+      res.status(200).json({ message: "Active Posts", posts: returnPost });
     })
-    .catch(err=>{
-      if(!err.statusCode) err.statusCode = 500;
+    .catch(err => {
+      if (!err.statusCode) err.statusCode = 500;
       next(err);
     })
 }
@@ -791,6 +791,7 @@ exports.startPostAfterPause = async (req, res, next) => {
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
+    this.emitOrderStarted(prodLine.findoc,prodLine.post);
     (req.body.findoc = prodLine.findoc), (req.body.post = prodLine.post);
     this.getSingleProduction(req, res, next);
   }
@@ -821,6 +822,7 @@ exports.postHasStarted = async (findoc, post) => {
     "update prodline set done=2 where findoc=? and post=?",
     [findoc, post]
   );
+  this.emitOrderStarted(findoc, post);
 };
 exports.getSingleProduction = (req, res, next) => {
   const findoc = req.body.findoc;
@@ -1573,7 +1575,7 @@ exports.getMachineTime = (req, res, next) => {
             message: "Machine Time",
             post: [{
               id: postsData[0][0].post,
-              name: postsData[0][0].name,
+              name: postsData[0][0].username,
               totalTime: await this.machineTotalTime(postsData[0][0].post, fromDate, toDate),
               time: await this.machineTime(postsData[0][0].post, fromDate, toDate, format)
             }]
@@ -2611,37 +2613,13 @@ exports.searchInPostsState = async (findoc) => {
     })
   for (let i = 0; i < posts[0].length; i++) {
     if (posts[0][i].done == 2) {
-      if ((i + 1) == 1) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS STILL RUNNING ON " + (i + 1) + "TH POST";
-      }
+     return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
     if (posts[0][i].done == 3) {
-      if ((i + 1) == 1) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS PAUSED ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS PAUSED ON " + (i + 1) + "TH POST";
-      }
+      return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
     if (posts[0][i].done == 1) {
-      if ((i + 1) == 1) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "ST POST";
-      } else if ((i + 1) == 2) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "ND POST";
-      } else if ((i + 1) == 3) {
-        return "ORDER IS Next Up  ON " + (i + 1) + "RD POST";
-      } else {
-        return "ORDER IS Next Up  ON " + (i + 1) + "TH POST";
-      }
+      return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
   }
 }
@@ -2812,17 +2790,42 @@ exports.machineTime = async (machinePost, from, to, format) => {
   return returnTime
 }
 
-exports.whichOrder = async (post) =>{
-  let order = await database.execute('select findoc from prodline where post=? and done=2',[post])
-  .catch(err=>{
-    throw new Error(err);
-  })
+exports.whichOrder = async (post) => {
+  let order = await database.execute('select findoc from prodline where post=? and done=2', [post])
+    .catch(err => {
+      throw new Error(err);
+    })
   console.log(order[0]);
 
-  if(order[0].length==0){
-      return "This Post Has No Order"
-  }else{
-
-    return order[0][0].findoc
+  if (order[0].length == 0) {
+    return "This Post Has No Order"
+  } else {
+    let returnOrdes =[];
+    for(let i=0;i<order[0].length;i++){
+      returnOrdes[i]=order[0][i].findoc;
+    }
+    return returnOrdes;
   }
+}
+exports.emitOrderStarted = (findoc, post) => {
+  database.execute('select * from post')
+    .then(async posts => {
+      let returnPost = [];
+      let has = [];
+      for (let i = 0; i < posts[0].length; i++) {
+        returnPost[i] = {
+          post: posts[0][i].post,
+          name: posts[0][i].name,
+          has: await this.whichOrder(posts[0][i].post)
+        }
+      }
+      console.log(returnPost);
+      io.getIO().emit('activeOrder', {
+        message: "Active Posts",
+        posts: returnPost
+      });
+    })
+    .catch(err => {
+      throw new Error(err);
+    })
 }
