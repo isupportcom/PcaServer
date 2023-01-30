@@ -1573,7 +1573,7 @@ exports.getMachineTime = (req, res, next) => {
             message: "Machine Time",
             post: [{
               id: postsData[0][0].post,
-              name: postsData[0][0].name,
+              name: postsData[0][0].username,
               totalTime: await this.machineTotalTime(postsData[0][0].post, fromDate, toDate),
               time: await this.machineTime(postsData[0][0].post, fromDate, toDate, format)
             }]
