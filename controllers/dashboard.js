@@ -1554,6 +1554,18 @@ exports.getMachineTime = (req, res, next) => {
         })
     }
     else {
+      database.execute("select * from post where post=?",[post])
+        .then(async (postsData)=>{
+          res.status(200).json({
+            message: "Machine Time",
+            post:{
+              id: postsData[0][0].post,
+              name: postsData[0][0].name,
+              totalTime : await this.machineTotalTime(postsData[0][0].post, fromDate, toDate),
+              time: await this.machineTime(postsData[0][0].post, fromDate, toDate, format)
+            }
+          })
+        })
     }
   }
 };
