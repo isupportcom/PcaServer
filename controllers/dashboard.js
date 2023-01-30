@@ -1055,7 +1055,9 @@ exports.updateProdLine = (req, res, next) => {
       ])
       .then(async (results) => {
         if (prodLine.done == 4 || prodLine.done == 3) {
+          this.emitOrderStarted(prodLine.findoc, prodLine.post);
           if (prodLine.done == 4) {
+            
             //console.log("PROLINE.DONE == 4");
             await this.whoMakeItDone(
               prodLine.user,
@@ -1095,6 +1097,7 @@ exports.setNextUp = async (findoc, post) => {
         "update prodline set done=1 where findoc=? and post=?",
         [findoc, nextUp[0][0].post]
       );
+      this.emitOrderStarted(findoc,post);
     }
   } catch (err) {
     throw new Error(err.message);
@@ -1175,6 +1178,7 @@ exports.updateActionLines = async (req, res, next) => {
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
+          this.emitOrderStarted(actionLine[0].findoc, actionLine[0].post);
         if ((await this.allPostsAreDone(actionLine[0].findoc)) === true) {
           this.setProductionAsDone(actionLine[0].findoc);
         }
@@ -1484,6 +1488,7 @@ exports.updateTime = (req, res, next) => {
                 if (!err.statusCode) err.statusCode = 500;
                 next(err);
               });
+              this.emitOrderStarted(endTimer.findoc,"");
           }
 
           await this.updateMachineTime(
