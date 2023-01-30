@@ -2803,15 +2803,13 @@ exports.whichOrder = async (post) => {
     })
   console.log(order[0]);
 
-  if (order[0].length == 0) {
-    return "This Post Has No Order"
-  } else {
+  
     let returnOrdes =[];
     for(let i=0;i<order[0].length;i++){
       returnOrdes[i]=order[0][i].findoc;
     }
     return returnOrdes;
-  }
+  
 }
 exports.emitOrderStarted = (findoc, post) => {
   database.execute('select * from post')
