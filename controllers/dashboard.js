@@ -167,7 +167,7 @@ exports.activePosts = (req, res, next) => {
       for (let i = 0; i < posts[0].length; i++) {
         returnPost[i] = {
           post: posts[0][i].post,
-          name: posts[0][i].name,
+          name: posts[0][i].username,
           orders: await this.whichOrder(posts[0][i].post)
         }
       }
@@ -2821,7 +2821,7 @@ exports.emitOrderStarted = (findoc, post) => {
       for (let i = 0; i < posts[0].length; i++) {
         returnPost[i] = {
           post: posts[0][i].post,
-          name: posts[0][i].name,
+          name: posts[0][i].username,
           orders: await this.whichOrder(posts[0][i].post)
         }
       }
