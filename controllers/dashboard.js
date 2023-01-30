@@ -2613,13 +2613,13 @@ exports.searchInPostsState = async (findoc) => {
     })
   for (let i = 0; i < posts[0].length; i++) {
     if (posts[0][i].done == 2) {
-     return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
+     return "Post "+ await this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
     if (posts[0][i].done == 3) {
-      return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
+      return "Post "+ await this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
     if (posts[0][i].done == 1) {
-      return "Post "+ this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
+      return "Post "+ await this.findPostName(posts[0][i].post) + " is "+ this.getState(posts[0][i].done);
     }
   }
 }
