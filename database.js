@@ -7,5 +7,4 @@ const pool = mysql.createPool({
     database:'pca_production'
 })
 
-console.log(pool.promise());
 module.exports = pool.promise();
