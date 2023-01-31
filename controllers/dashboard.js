@@ -2808,7 +2808,6 @@ exports.whichOrder = async (post) => {
     for(let i=0;i<order[0].length;i++){
       returnOrdes[i]=order[0][i].findoc;
     }
-    
     return returnOrdes;
   
 }
