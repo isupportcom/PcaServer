@@ -2353,7 +2353,7 @@ exports.orderIsNotFinished = async (findoc, post) => {
   }
 };
 
-exports.postHasFinished = async (post, findoc) => {
+exports.postHasFinished = async (findoc,post) => {
   let count = await database.execute(
     "select * from time where post=? and findoc=? and end=? and totalTime=?",
     [post, findoc, "0", "0"]
