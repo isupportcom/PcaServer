@@ -2358,6 +2358,7 @@ exports.postHasFinished = async (post, findoc) => {
     "select * from time where post=? and findoc=? and end=? and totalTime=?",
     [post, findoc, "0", "0"]
   );
+  console.log(count[0].length);
   if (count[0].length == 0) {
     return true;
   } else {
