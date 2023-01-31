@@ -2332,13 +2332,13 @@ exports.totalTime = async (post, findoc, date) => {
 };
 
 exports.getHours = (time) => {
-  return +time.split(":")[0];
+  return  parseInt(time.split(":")[0]);
 };
 exports.getMinutes = (time) => {
-  return +time.split(":")[1];
+  return parseInt(time.split(":")[1]);
 };
 exports.getSeconds = (time) => {
-  return +time.split(":")[2];
+  return  parseInt(time.split(":")[2]);
 };
 exports.orderIsNotFinished = async (findoc, post) => {
   let state = await database.execute(
