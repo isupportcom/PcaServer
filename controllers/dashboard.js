@@ -1179,9 +1179,7 @@ exports.updateActionLines = async (req, res, next) => {
             next(err);
           });
           this.emitOrderStarted(actionLine[0].findoc, actionLine[0].post);
-        if ((await this.allPostsAreDone(actionLine[0].findoc)) === true) {
-          this.setProductionAsDone(actionLine[0].findoc);
-        }
+        
         await this.whoMakeItDone(
           user,
           actionLine[0].findoc,
@@ -1489,6 +1487,9 @@ exports.updateTime = (req, res, next) => {
                 next(err);
               });
               this.emitOrderStarted(endTimer.findoc,"");
+          }
+          if ((await this.allPostsAreDone(endTimer.findoc)) === true) {
+            this.setProductionAsDone(endTimer.findoc);
           }
 
           await this.updateMachineTime(
