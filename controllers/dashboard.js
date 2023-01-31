@@ -2593,7 +2593,9 @@ exports.setProductionAsDone = async (findoc) => {
     } else {
       seconds += this.getSeconds(totalTime[0][i].totalTime);
     }
-     console.log(hours + ":" + minutes + ":" + seconds);
+     console.log("HOURS :"+ hours);
+      console.log("MINUTES :"+ minutes);
+      console.log("SECONDS :"+ seconds);
   }
   hours = hours < 10 ? "0" + hours : hours;
   minutes = minutes < 10 ? "0" + minutes : minutes;
