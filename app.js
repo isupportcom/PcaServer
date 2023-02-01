@@ -1,6 +1,11 @@
 // main package
 const express = require("express");
 const bodyParser = require("body-parser");
+const fs = require('fs');
+const privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
+const certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+const credentials = {key: privateKey, cert: certificate};
+
 // initialize server
 const app = express();
 // port
@@ -13,6 +18,7 @@ try {
     process.exit(1);
   }
 }
+
 
 // initialize logger first
 var log4js = require("log4js");
@@ -55,12 +61,14 @@ app.use((error, req, res, next) => {
 });
 
 // app listener
-const server = app.listen(port, (req, res, next) => {
-  log.info('Express server listening on port ', server.address().port, " with pid ", process.pid);
-  console.log('Express server listening on port ', server.address().port, " with pid ", process.pid);
-});
-console.log(server.address());
-const io = require("./socket").init(server);
+var https = require('https');
+https.createServer(credentials, app).listen(port)
+//, (req, res, next) => {
+//   log.info('Express server listening on port ', server.address().port, " with pid ", process.pid);
+//   console.log('Express server listening on port ', server.address().port, " with pid ", process.pid);
+// });
+
+const io = require("./socket").init(https);
 io.on("connection", (socket) => {
   console.log("Client Connected");
 });
