@@ -1,0 +1,197 @@
+[2023-02-01T11:13:22.110] [INFO] startup - Express server listening on port  8080  with pid  27712
+[2023-02-01T11:14:00.935] [INFO] startup - Express server listening on port  8080  with pid  39632
+[2023-02-01T11:14:47.653] [INFO] startup - Express server listening on port  8080  with pid  58068
+[2023-02-01T11:15:10.281] [INFO] startup - Express server listening on port  8080  with pid  43796
+[2023-02-01T11:16:34.965] [INFO] startup - Express server listening on port  8080  with pid  26268
+[2023-02-01T11:17:15.444] [INFO] startup - Express server listening on port  8080  with pid  4748
+[2023-02-01T11:23:20.959] [INFO] startup - Express server listening on port  8080  with pid  36196
+[2023-02-01T11:25:10.255] [INFO] startup - Express server listening on port  8080  with pid  31280
+[2023-02-01T11:25:51.808] [INFO] startup - Express server listening on port  8080  with pid  40368
+[2023-02-01T11:26:29.397] [INFO] startup - Express server listening on port  8080  with pid  59792
+[2023-02-01T11:29:13.572] [INFO] startup - Express server listening on port  8080  with pid  60500
+[2023-02-01T11:29:32.165] [INFO] startup - Express server listening on port  8080  with pid  38208
+[2023-02-01T11:29:51.605] [INFO] startup - Express server listening on port  8080  with pid  57748
+[2023-02-01T11:31:19.123] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:31:19.181] [INFO] startup - Express server listening on port  8080  with pid  26932
+[2023-02-01T11:31:51.815] [ERROR] users - Oh noes, something has gone terribly wrong
+[2023-02-01T11:31:51.817] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:31:51.879] [INFO] startup - Express server listening on port  8080  with pid  42996
+[2023-02-01T11:32:35.514] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:32:35.573] [INFO] startup - Express server listening on port  8080  with pid  55736
+[2023-02-01T11:32:56.064] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:32:56.259] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:32:56.324] [INFO] startup - Express server listening on port  8080  with pid  52644
+[2023-02-01T11:33:19.115] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:33:19.301] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:33:19.365] [INFO] startup - Express server listening on port  8080  with pid  24272
+[2023-02-01T11:33:24.154] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:33:24.350] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:33:24.413] [INFO] startup - Express server listening on port  8080  with pid  58272
+[2023-02-01T11:33:25.455] [ERROR] users - Oh noes, something has gone terribly wrong
+[2023-02-01T11:33:25.456] [ERROR] app - Something Went Wrong ReferenceError: returnpsts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:33:36.831] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:33:37.014] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:33:37.074] [INFO] startup - Express server listening on port  8080  with pid  41652
+[2023-02-01T11:34:53.439] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:34:53.650] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:34:53.713] [INFO] startup - Express server listening on port  8080  with pid  60332
+[2023-02-01T11:35:52.787] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:35:52.978] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:35:53.044] [INFO] startup - Express server listening on port  8080  with pid  44392
+[2023-02-01T11:36:44.059] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:36:44.256] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:36:44.318] [INFO] startup - Express server listening on port  8080  with pid  45268
+[2023-02-01T11:36:49.891] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:36:50.122] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:36:50.191] [INFO] startup - Express server listening on port  8080  with pid  42120
+[2023-02-01T11:37:17.652] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:37:17.845] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:37:17.910] [INFO] startup - Express server listening on port  8080  with pid  47016
+[2023-02-01T11:37:18.186] [ERROR] error - Oh noes, something has gone terribly wrong
+[2023-02-01T11:37:18.187] [ERROR] app - Something Went Wrong ReferenceError: returposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:37:33.554] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:37:33.745] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:37:33.805] [INFO] startup - Express server listening on port  8080  with pid  46644
+[2023-02-01T11:37:35.293] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:37:35.294] [ERROR] app - Something Went Wrong ReferenceError: returposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:38:26.494] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:38:26.682] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:38:26.743] [INFO] startup - Express server listening on port  8080  with pid  19520
+[2023-02-01T11:38:53.344] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:38:53.532] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:38:53.594] [INFO] startup - Express server listening on port  8080  with pid  45360
+[2023-02-01T11:39:21.914] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:39:22.097] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:39:22.159] [INFO] startup - Express server listening on port  8080  with pid  41728
+[2023-02-01T11:39:41.933] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:39:42.123] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:39:42.184] [INFO] startup - Express server listening on port  8080  with pid  25584
+[2023-02-01T11:39:45.586] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:39:45.587] [ERROR] app - Something Went Wrong ReferenceError: returposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:40:12.713] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:40:12.900] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:40:12.959] [INFO] startup - Express server listening on port  8080  with pid  51892
+[2023-02-01T11:42:01.415] [DEBUG] index - This Is Auth Router
+[2023-02-01T11:42:01.599] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:42:01.659] [INFO] startup - Express server listening on port  8080  with pid  48460
+[2023-02-01T11:42:24.887] [DEBUG] auth - This Is Auth Router
+[2023-02-01T11:42:25.106] [DEBUG] index - This Is Dashboard Router
+[2023-02-01T11:42:25.171] [INFO] startup - Express server listening on port  8080  with pid  57372
+[2023-02-01T11:42:32.527] [DEBUG] auth - This Is Auth Router
+[2023-02-01T11:42:32.725] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T11:42:32.794] [INFO] startup - Express server listening on port  8080  with pid  40620
+[2023-02-01T11:45:38.703] [DEBUG] auth - This Is Auth Router
+[2023-02-01T11:45:38.894] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T11:45:38.956] [INFO] startup - Express server listening on port  8080  with pid  58764
+[2023-02-01T11:48:54.501] [DEBUG] auth - This Is Auth Router
+[2023-02-01T11:48:54.679] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T11:48:54.734] [INFO] startup - Express server listening on port  8080  with pid  24876
+[2023-02-01T11:53:43.686] [DEBUG] auth - This Is Auth Router
+[2023-02-01T11:53:43.870] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T11:53:43.937] [INFO] startup - Express server listening on port  8080  with pid  24376
+[2023-02-01T11:53:44.289] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:53:44.290] [ERROR] app - Something Went Wrong ReferenceError: retrnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:53:59.446] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:53:59.448] [ERROR] app - Something Went Wrong ReferenceError: retrnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:57:22.423] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:57:22.423] [ERROR] app - Something Went Wrong ReferenceError: retrnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T11:57:23.653] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T11:57:23.653] [ERROR] app - Something Went Wrong ReferenceError: retrnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T12:03:44.808] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:03:45.000] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:03:45.058] [INFO] startup - Express server listening on port  8080  with pid  50624
+[2023-02-01T12:20:58.043] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:20:58.435] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:20:58.517] [INFO] startup - Express server listening on port  8080  with pid  39204
+[2023-02-01T12:21:16.704] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:21:16.897] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:21:16.963] [INFO] startup - Express server listening on port  8080  with pid  9732
+[2023-02-01T12:28:20.766] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:28:21.064] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:28:21.166] [INFO] startup - Express server listening on port  8080  with pid  33360
+[2023-02-01T12:28:35.207] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:28:35.529] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:28:35.629] [INFO] startup - Express server listening on port  8080  with pid  45552
+[2023-02-01T12:28:48.125] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T12:28:48.126] [ERROR] app - Something Went Wrong ReferenceError: reurnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T12:29:02.406] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T12:29:02.406] [ERROR] app - Something Went Wrong ReferenceError: reurnposts is not defined
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:32:59
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T12:29:07.182] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:29:07.491] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:29:07.575] [INFO] startup - Express server listening on port  8080  with pid  58812
+[2023-02-01T12:30:08.608] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:30:08.858] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:30:08.950] [INFO] startup - Express server listening on port  8080  with pid  54292
+[2023-02-01T12:30:11.100] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-01T12:30:11.101] [ERROR] app - Something Went Wrong TypeError: Cannot read properties of undefined (reading 'length')
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:24:36
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  statusCode: 500
+}
+[2023-02-01T12:30:15.963] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:30:16.239] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:30:16.308] [INFO] startup - Express server listening on port  8080  with pid  59732
+[2023-02-01T12:30:28.560] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:30:28.809] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:30:28.879] [INFO] startup - Express server listening on port  8080  with pid  42744
+[2023-02-01T12:31:47.510] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:31:47.735] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:31:47.813] [INFO] startup - Express server listening on port  8080  with pid  38016
+[2023-02-01T12:32:00.138] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:32:00.353] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:32:00.429] [INFO] startup - Express server listening on port  8080  with pid  46768
+[2023-02-01T12:33:46.517] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:33:46.853] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:33:46.929] [INFO] startup - Express server listening on port  8080  with pid  53260
+[2023-02-01T12:38:57.341] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:38:57.588] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:38:57.663] [INFO] startup - Express server listening on port  8080  with pid  38284
+[2023-02-01T12:40:11.900] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:40:12.107] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:40:12.173] [INFO] startup - Express server listening on port  8080  with pid  58668
+[2023-02-01T12:42:37.539] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:42:37.814] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:42:37.884] [INFO] startup - Express server listening on port  8080  with pid  48992
+[2023-02-01T12:43:17.432] [DEBUG] auth - This Is Auth Router
+[2023-02-01T12:43:17.705] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-01T12:43:17.791] [INFO] startup - Express server listening on port  8080  with pid  8940

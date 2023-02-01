@@ -2,7 +2,8 @@ const express = require('express');
 
 const router = express.Router();
 const dashboardController = require('../controllers/dashboard')
-
+var log = require('log4js').getLogger("dashboard");
+log.debug("This Is Dashboard Router")
 //Ποστα
 router.post('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
