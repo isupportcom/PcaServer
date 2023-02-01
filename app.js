@@ -5,11 +5,25 @@ const bodyParser = require("body-parser");
 const app = express();
 // port
 const port = 8080;
+try {
+  require('fs').mkdirSync('./log');
+} catch (e) {
+  if (e.code != 'EEXIST') {
+    console.error("Could not set up log directory, error was: ", e);
+    process.exit(1);
+  }
+}
 
+// initialize logger first
+var log4js = require("log4js");
+log4js.configure('./config/log4js.json');
+var log = log4js.getLogger("startup");
+var applogger = log4js.getLogger("app");
 // initialize routes
 const authRoute = require("./routes/auth");
 const adminDashboard = require("./routes/dashboard");
 //application/jason
+app.use(log4js.connectLogger(log4js.getLogger("http"), { level: 'auto' }));
 app.use(bodyParser.json());
 // headers
 app.use((req, res, next) => {
@@ -33,7 +47,7 @@ app.use("/dashboard", adminDashboard);
 
 // error
 app.use((error, req, res, next) => {
-  console.log(error);
+  applogger.error("Something Went Wrong", error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
@@ -42,7 +56,8 @@ app.use((error, req, res, next) => {
 
 // app listener
 const server = app.listen(port, (req, res, next) => {
-  console.log("App Is Listening on http://localhost:" + port);
+  log.info('Express server listening on port ', server.address().port, " with pid ", process.pid);
+  console.log('Express server listening on port ', server.address().port, " with pid ", process.pid);
 });
 console.log(server.address());
 const io = require("./socket").init(server);
