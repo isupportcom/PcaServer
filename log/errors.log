@@ -65,3 +65,10 @@
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
   statusCode: 500
 }
+[2023-02-02T12:04:27.576] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-02T12:04:27.576] [ERROR] app - Something Went Wrong TypeError: Cannot read properties of undefined (reading 'post')
+    at exports.postData (C:\Users\User\Desktop\PcaServer\controllers\dashboard.js:1886:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async C:\Users\User\Desktop\PcaServer\controllers\dashboard.js:1426:17 {
+  statusCode: 500
+}

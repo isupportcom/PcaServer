@@ -1552,6 +1552,7 @@ exports.updateTime = (req, res, next) => {
         io.getIO().emit("logout", {
           action: "logout",
           users_data: await this.activeUsers(),
+          user_logged_out: await this.getUserData(endTimer.user)
         });
 
         this.getTime(req, res, next);

@@ -214,3 +214,36 @@
 [2023-02-01T15:22:14.699] [DEBUG] dashboard - This Is Dashboard Router
 [2023-02-01T16:05:22.819] [DEBUG] auth - This Is Auth Router
 [2023-02-01T16:05:23.187] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:37:38.798] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:37:39.471] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:38:54.753] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:38:55.096] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:42:09.502] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:42:09.928] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:42:15.194] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:42:15.639] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:42:18.194] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:42:18.773] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:42:20.750] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:42:21.229] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:42:23.167] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:42:23.635] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:51:41.991] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:51:42.207] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:51:42.288] [INFO] startup - Express server listening on port  8080  with pid  15176
+[2023-02-02T11:54:55.671] [DEBUG] auth - This Is Auth Router
+[2023-02-02T11:54:55.989] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T11:54:56.119] [INFO] startup - Express server listening on port  8080  with pid  1240
+[2023-02-02T12:03:08.804] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:03:09.023] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:03:09.110] [INFO] startup - Express server listening on port  8080  with pid  8132
+[2023-02-02T12:04:21.805] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:04:22.085] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:04:22.186] [INFO] startup - Express server listening on port  8080  with pid  22260
+[2023-02-02T12:04:27.576] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-02T12:04:27.576] [ERROR] app - Something Went Wrong TypeError: Cannot read properties of undefined (reading 'post')
+    at exports.postData (C:\Users\User\Desktop\PcaServer\controllers\dashboard.js:1886:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async C:\Users\User\Desktop\PcaServer\controllers\dashboard.js:1426:17 {
+  statusCode: 500
+}
