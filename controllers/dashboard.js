@@ -3,7 +3,7 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
-var logger = require('log4js').getLogger("dashboard")
+
 
 
 /******************************************************************************                                                   
@@ -32,7 +32,7 @@ exports.getAllPosts = (req, res, next) => {
       res.status(200).json({ message: "All Posts", posts: returnposts });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");
+       // logger.error("Oh noes, something has gone terribly wrong");
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -65,7 +65,7 @@ exports.addPosts = (req, res, next) => {
         });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -103,7 +103,7 @@ exports.updatePosts = async (req, res, next) => {
             );
           }
         } catch (err) {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         }
@@ -129,7 +129,7 @@ exports.deletePost = (req, res, next) => {
           });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -162,7 +162,7 @@ exports.usersInPost = (req, res, next) => {
       res.status(200).json({ message: "Active Users", users_data: returnPost });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -181,7 +181,7 @@ exports.activePosts = (req, res, next) => {
       res.status(200).json({ message: "Active Posts", posts: returnPost });
     })
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     })
@@ -210,7 +210,7 @@ exports.getAllActions = (req, res, next) => {
       res.status(200).json({ message: "All Actions", actions: returnactions });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -228,7 +228,7 @@ exports.addActions = (req, res, next) => {
         this.getAllActions(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -249,7 +249,7 @@ exports.updateActions = async (req, res, next) => {
             [actions[i].name, actions[i].actions]
           );
         } catch (err) {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         }
@@ -273,7 +273,7 @@ exports.deleteAction = async (req, res, next) => {
           this.getAllActions(req, res, next);
         })
         .catch((err) => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         });
@@ -315,7 +315,7 @@ exports.getUsers = (req, res, next) => {
       }
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -336,7 +336,7 @@ exports.addUsers = (req, res, next) => {
         this.getUsers(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -369,7 +369,7 @@ exports.deleteUser = (req, res, next) => {
         this.getUsers(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -412,7 +412,7 @@ exports.pauseUser = (req, res, next) => {
         this.getSingleProduction(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -443,7 +443,7 @@ exports.startUser = (req, res, next) => {
         this.getSingleProduction(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -468,7 +468,7 @@ exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
           });
         })
         .catch(err => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         })
@@ -480,7 +480,7 @@ exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
             let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
               users[0][i].id, fromDate, toDate
             ]).catch(err => {
-               logger.error("Oh noes, something has gone terribly wrong");;
+               // logger.error("Oh noes, something has gone terribly wrong");;
               if (!err.statusCode) err.statusCode = 500;
               next(err);
             })
@@ -492,7 +492,7 @@ exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
           res.status(200).json(returnUsers);
         })
         .catch(err => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         })
@@ -502,7 +502,7 @@ exports.getTotalUserTimeBeetwenDates = (req, res, next) => {
 }
 exports.activeUsers = async () => {
   let posts = await database.execute("select post from post").catch((err) => {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   });
 
@@ -550,7 +550,7 @@ exports.getUserTime = (req, res, next) => {
           res.status(200).json({ message: "Users Time", users: returnUsers });
         })
         .catch((err) => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         });
@@ -574,7 +574,7 @@ exports.getSingleUserTime = (req, res, next) => {
         let findocs = await database
           .execute("select * from production")
           .catch((err) => {
-             logger.error("Oh noes, something has gone terribly wrong");;
+             // logger.error("Oh noes, something has gone terribly wrong");;
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
@@ -595,7 +595,7 @@ exports.getSingleUserTime = (req, res, next) => {
         });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -631,7 +631,7 @@ exports.getcatPost = (req, res, next) => {
         .json({ message: "All Categories", categories: returnCategory });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -669,13 +669,13 @@ exports.addcatPost = (req, res, next) => {
             this.getcatPost(req, res, next);
           })
           .catch((err) => {
-             logger.error("Oh noes, something has gone terribly wrong");;
+             // logger.error("Oh noes, something has gone terribly wrong");;
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -698,7 +698,7 @@ exports.updatecatPost = async (req, res, next) => {
           ]
         );
       } catch (err) {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       }
@@ -740,7 +740,7 @@ exports.deletecatPost = (req, res, next) => {
       })
 
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -779,7 +779,7 @@ exports.pausePost = async (req, res, next) => {
         this.getSingleProduction(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -819,7 +819,7 @@ exports.startPostAfterPause = async (req, res, next) => {
         prodLine.post,
       ])
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -844,7 +844,7 @@ exports.sendProduction = (req, res, next) => {
         .status(200)
         .json({ message: "Production Has Been sent Successfully" });
     } catch (err) {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     }
@@ -882,7 +882,7 @@ exports.getSingleProduction = (req, res, next) => {
         });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1011,7 +1011,7 @@ exports.addProdLine = (req, res, next) => {
       this.getProduction(req, res, next);
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -1060,12 +1060,12 @@ exports.orderByOnProdLine = async (category) => {
         //// console.log("DONE");
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         throw new Error(err.message);
       });
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -1111,7 +1111,7 @@ exports.updateProdLine = (req, res, next) => {
         this.getProduction(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1137,7 +1137,7 @@ exports.setNextUp = async (findoc, post) => {
       this.emitOrderStarted(findoc,post);
     }
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -1163,7 +1163,7 @@ exports.getProduction = (req, res, next) => {
         .json({ message: "Production", production: returnProductions });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -1197,7 +1197,7 @@ exports.updateActionLines = async (req, res, next) => {
 
         
     
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1217,7 +1217,7 @@ exports.updateActionLines = async (req, res, next) => {
           ])
 
           .catch((err) => {
-             logger.error("Oh noes, something has gone terribly wrong");;
+             // logger.error("Oh noes, something has gone terribly wrong");;
             if (!err.statusCode) err.statusCode = 500;
             next(err);
           });
@@ -1252,7 +1252,7 @@ exports.getSingleProd = async (findoc, post) => {
   let prod = await database
     .execute("select * from production where findoc=?", [findoc])
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err.message);
     });
 
@@ -1319,7 +1319,7 @@ exports.allActionsOnPostAreDone = async (findoc, post) => {
       return false;
     }
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -1341,7 +1341,7 @@ exports.getStateOfProductions = (req, res, next) => {
         .json({ message: "All Productions", productions: returnProduction });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -1363,7 +1363,7 @@ exports.allPostsAreDone = async (findoc) => {
       return false;
     }
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -1385,7 +1385,7 @@ exports.getProductionState = (req, res, next) => {
       res.status(200).json({ message: "All Productions States", states: returnStates })
     })
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     })
@@ -1434,7 +1434,7 @@ exports.getTime = (req, res, next) => {
       res.status(200).json({ message: "Time Data", time: returnTime });
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       next(err);
     });
@@ -1484,7 +1484,7 @@ exports.addTime = async (req, res, next) => {
         this.getTime(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1533,7 +1533,7 @@ exports.updateTime = (req, res, next) => {
                 endTimer.post,
               ])
               .catch((err) => {
-                 logger.error("Oh noes, something has gone terribly wrong");;
+                 // logger.error("Oh noes, something has gone terribly wrong");;
                 if (!err.statusCode) err.statusCode = 500;
                 next(err);
               });
@@ -1552,13 +1552,13 @@ exports.updateTime = (req, res, next) => {
         io.getIO().emit("logout", {
           action: "logout",
           users_data: await this.activeUsers(),
-          user_logged_out: await this.getUserData(endTimer.user)
+          user_logged_out: await this.getUserData(endTimer.user),
         });
 
         this.getTime(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1583,7 +1583,7 @@ exports.getSingleStateOfProduction = (req, res, next) => {
         });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });
@@ -1625,7 +1625,7 @@ exports.getMachineTime = (req, res, next) => {
           })
         })
         .catch(err => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           if (!err.statusCode) err.statusCode = 500;
           next(err);
         })
@@ -1654,7 +1654,7 @@ exports.addMachineTime = async (post, date, start) => {
       date,
     ])
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       throw err;
     });
@@ -1672,7 +1672,7 @@ exports.updateMachineTime = (end, post, date) => {
       return;
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       throw err;
     });
@@ -1714,7 +1714,7 @@ exports.getActions = async (action) => {
 
     return actionObj;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1761,7 +1761,7 @@ exports.isInPost = async (actionId) => {
     if (findAction[0].length > 0) return false;
     else return true;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1799,7 +1799,7 @@ exports.getCatPostData = async (catId) => {
     }
     return returnData;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1839,7 +1839,7 @@ exports.findPostActions = async (postId) => {
     }
     return returnActions;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1872,7 +1872,7 @@ exports.getprodLineSteps = async (findoc) => {
     }
     return returnData;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1918,7 +1918,7 @@ exports.getUserData = async (user) => {
       password: userdata[0][0].password,
     };
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1934,7 +1934,7 @@ exports.actionData = async (action) => {
       name: actiondata[0][0].name,
     };
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -1957,7 +1957,7 @@ exports.login = async () => {
     loginData = JSON.parse(loginData);
     return loginData.clientID;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -1978,7 +1978,7 @@ exports.authenticate = async (clientID) => {
     authenticatedata = JSON.parse(authenticatedata);
     return authenticatedata.clientID;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -1997,7 +1997,7 @@ exports.production1 = async (clientID) => {
     //// console.log(productionData);
     return productionData;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -2016,7 +2016,7 @@ exports.production2 = async (clientID, findoc) => {
     //// console.log(productionData);
     return productionData;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -2035,7 +2035,7 @@ exports.production3 = async (clientID, mtrl) => {
     //// console.log(production);
     return production;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -2073,7 +2073,7 @@ exports.getIngredients = async (mtrl) => {
     }
     return returnIng;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw err;
   }
@@ -2123,7 +2123,7 @@ exports.machineHasStarted = async (post, date) => {
       "0",
     ])
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       if (!err.statusCode) err.statusCode = 500;
       throw err;
     });
@@ -2180,7 +2180,7 @@ exports.actionLineExists = async (findoc, action, post) => {
       return false;
     }
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw err;
   }
 };
@@ -2267,7 +2267,7 @@ exports.whoMakeItDone = async (user, findoc, post) => {
       post,
     ])
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err.message);
     });
 };
@@ -2299,7 +2299,7 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
         [post, findoc, "0", "0"]
       )
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         throw new Error(err.message);
       });
 
@@ -2352,7 +2352,7 @@ exports.calculateTotalTime = async (post, findoc, min, max) => {
       end: max,
     };
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -2364,7 +2364,7 @@ exports.getStateOfPost = async (post, findoc) => {
   try {
     return state[0][0].done;
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -2479,7 +2479,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
         }
 
       } catch (err) {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         throw new Error(err.message);
       }
 
@@ -2645,7 +2645,7 @@ exports.getMachineTimeByDate = async (post, date) => {
       sec: seconds,
     };
   } catch (err) {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     throw new Error(err.message);
   }
 };
@@ -2654,7 +2654,7 @@ exports.setProductionAsDone = async (findoc) => {
   let totalTime = await database
     .execute("select totalTime from time where findoc=?", [findoc])
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err.message);
     });
   let hours = 0;
@@ -2693,7 +2693,7 @@ exports.setProductionAsDone = async (findoc) => {
       // console.log(results);
     })
     .catch((err) => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err.message);
     });
 };
@@ -2701,7 +2701,7 @@ exports.setProductionAsDone = async (findoc) => {
 exports.searchInPostsState = async (findoc) => {
   let posts = await database.execute('select * from prodline where findoc=?', [findoc])
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err.message);
     })
   for (let i = 0; i < posts[0].length; i++) {
@@ -2747,7 +2747,7 @@ exports.userTime = async (user, fromDate, toDate) => {
   let totalTime = await database.execute('select totalTime from time where user=? and (date >= ? and date <= ?)', [
     user, fromDate, toDate
   ]).catch(err => {
-     logger.error("Oh noes, something has gone terribly wrong");;
+     // logger.error("Oh noes, something has gone terribly wrong");;
     if (!err.statusCode) err.statusCode = 500;
     throw new Error(err);
   })
@@ -2757,7 +2757,7 @@ exports.userTime = async (user, fromDate, toDate) => {
 exports.machineTotalTime = async (machinePost, fromDate, toDate) => {
   let totalTime = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", fromDate, toDate])
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err)
     })
   // console.log(totalTime[0]);
@@ -2794,7 +2794,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     database
       .execute('select DISTINCT date from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", from, to])
       .catch(err => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         // logger.error("Oh noes, something has gone terribly wrong");;
         throw new Error(err);
       })
   // console.log("DATES");
@@ -2806,7 +2806,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     for (let i = 0; i < dates[0].length; i++) {
       let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
         .catch(err => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           throw new Error(err);
         })
       for (let j = 0; j < timeOfPost[0].length; j++) {
@@ -2859,7 +2859,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
       currentMonth = this.getMonth(dates[0][i].date);
       let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
         .catch(err => {
-           logger.error("Oh noes, something has gone terribly wrong");;
+           // logger.error("Oh noes, something has gone terribly wrong");;
           throw new Error(err);
         })
       for (let j = 0; j < timeOfPost[0].length; j++) {
@@ -2891,7 +2891,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
 exports.whichOrder = async (post) => {
   let order = await database.execute('select findoc from prodline where post=? and done=2', [post])
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err);
     })
   // console.log(order[0]);
@@ -2923,7 +2923,7 @@ exports.emitOrderStarted = (findoc, post) => {
       });
     })
     .catch(err => {
-       logger.error("Oh noes, something has gone terribly wrong");;
+       // logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err);
     })
 }

@@ -247,3 +247,15 @@
     at async C:\Users\User\Desktop\PcaServer\controllers\dashboard.js:1426:17 {
   statusCode: 500
 }
+[2023-02-02T12:09:52.103] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:09:52.333] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:09:52.418] [INFO] startup - Express server listening on port  8080  with pid  15376
+[2023-02-02T12:47:48.644] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:47:49.045] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:47:49.345] [INFO] startup - Express server listening on port  8080  with pid  5360
+[2023-02-02T12:47:50.734] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:47:51.065] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:47:51.272] [INFO] startup - Express server listening on port  8080  with pid  17832
+[2023-02-02T12:48:27.510] [DEBUG] auth - This Is Auth Router
+[2023-02-02T12:48:27.896] [DEBUG] dashboard - This Is Dashboard Router
+[2023-02-02T12:48:27.986] [INFO] startup - Express server listening on port  8080  with pid  18504

@@ -1,7 +1,7 @@
 // main package
 const express = require('express');
-var log = require('log4js').getLogger("auth");
-log.debug("This Is Auth Router")
+// var log = require('log4js').getLogger("auth");
+// log.debug("This Is Auth Router")
 // initialize router
 const router = express.Router();
 // initialize controller 
