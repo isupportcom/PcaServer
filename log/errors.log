@@ -65,3 +65,14 @@
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
   statusCode: 500
 }
+[2023-02-10T15:39:25.714] [ERROR] app - Something Went Wrong Error: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1
+    at PromisePool.execute (C:\Users\User1\Desktop\pca\node_modules\mysql2\promise.js:359:22)
+    at C:\Users\User1\Desktop\pca\controllers\dashboard.js:1522:45
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ER_PARSE_ERROR',
+  errno: 1064,
+  sql: 'update prodline set done=2 where findoc=? and orderBy=',
+  sqlState: '42000',
+  sqlMessage: "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1",
+  statuCode: 500
+}

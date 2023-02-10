@@ -5,6 +5,7 @@ const fs = require('fs');
 const privateKey  = fs.readFileSync('sslcert/server.key', 'utf8');
 const certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
 const credentials = {key: privateKey, cert: certificate};
+const logger = require('morgan');
 
 // initialize server
 const app = express();
@@ -29,6 +30,7 @@ var applogger = log4js.getLogger("app");
 const authRoute = require("./routes/auth");
 const adminDashboard = require("./routes/dashboard");
 //application/jason
+app.use(logger('dev'));
 app.use(log4js.connectLogger(log4js.getLogger("http"), { level: 'auto' }));
 app.use(bodyParser.json());
 // headers
@@ -62,13 +64,12 @@ app.use((error, req, res, next) => {
 
 // app listener
 var https = require('https');
-https.createServer(credentials, app).listen(port)
-//, (req, res, next) => {
-//   log.info('Express server listening on port ', server.address().port, " with pid ", process.pid);
-//   console.log('Express server listening on port ', server.address().port, " with pid ", process.pid);
-// });
+var server = https.createServer(credentials, app).listen(port,()=>{
+  log.info('Express server listening on port ', port, " with pid ", process.pid);
+  console.log('Express server listening on port ', port, " with pid ", process.pid);
+})
 
-const io = require("./socket").init(https);
-io.on("connection", (socket) => {
+const io = require("./socket").init(server);
+io.on("connection", (https) => {
   console.log("Client Connected");
 });
