@@ -50,7 +50,11 @@ router.post('/getProductionState',dashboardController.getProductionState);
 router.post('/getStatesOfProductions',dashboardController.getStateOfProductions);
 router.post('/totalTimeOfProduction',dashboardController.totalTimeOfProduction);
 router.post('/getSingleStateOfProduction',dashboardController.getSingleStateOfProduction);
-
+router.post('/addExtraPostInProduction',dashboardController.addExtraPostInProd);
+router.post('/removePostFromProduction',dashboardController.removePostFromProd);
+router.post('/addActionInProduction',dashboardController.addExtraActionInProd);
+router.post('/removeActionFromProduction',dashboardController.removeActionFromProd);
+router.post('/resetProduction',dashboardController.resetProduction);
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 
