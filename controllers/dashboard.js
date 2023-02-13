@@ -4,7 +4,7 @@ const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
 
-
+var logger = require('log4js').getLogger("dashboard")
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -369,7 +369,7 @@ exports.deleteUser = (req, res, next) => {
         this.getUsers(req, res, next);
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         logger.error("Oh noes, something has gone terribly wrong");
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });

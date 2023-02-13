@@ -1,4 +1,0 @@
-[2023-02-08T14:37:22.115] [ERROR] http - ::ffff:192.168.1.110 - - "GET / HTTP/1.1" 404 139 "" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 OPR/93.0.0.0 (Edition std-1)"
-[2023-02-08T14:37:24.012] [ERROR] http - ::ffff:192.168.1.110 - - "GET / HTTP/1.1" 404 139 "" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 OPR/93.0.0.0 (Edition std-1)"
-[2023-02-08T14:50:03.759] [ERROR] http - ::ffff:192.168.1.101 - - "GET / HTTP/1.1" 404 139 "" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0 (Edition std-1)"
-[2023-02-08T14:50:38.510] [ERROR] http - ::ffff:192.168.1.101 - - "GET / HTTP/1.1" 404 139 "" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0 (Edition std-1)"
