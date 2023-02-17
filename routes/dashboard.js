@@ -2,10 +2,11 @@ const express = require('express');
 
 const router = express.Router();
 const dashboardController = require('../controllers/dashboard')
+const isAuth = require('../middleware/is-auth');
 // var log = require('log4js').getLogger("dashboard");
 // log.debug("This Is Dashboard Router")
 //Ποστα
-router.post('/getPosts',dashboardController.getAllPosts);
+router.get('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
 router.post('/updatePosts',dashboardController.updatePosts);
 router.post('/deletePost',dashboardController.deletePost);
