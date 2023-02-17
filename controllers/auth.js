@@ -31,12 +31,13 @@ exports.login = (req, res, next) => {
                                     name: results[0][0].username,
                                     id: results[0][0].id,
                                 },
-                                "somesupersecretsecret"
+                                "somesupersecretsecret",
+                                {
+                                    expiresIn:"365d"
+                                }
                             );
                             
                             res.status(200).json({
-                                success:1,
-                                message: "You Have Successfully Logged In",
                                 token: token,
                                 username:results[0][0].username,
                                 id:results[0][0].post,
@@ -91,15 +92,18 @@ exports.userLogin = (req,res,next) =>{
                                     id: results[0][0].id,
                                 },
                                 "somesupersecretsecret"
+                                ,
+                                {
+                                    expiresIn:"365d"
+                                }
                             );
 
                             res.status(200).json({
-                                success:1,
-                                message: "You Have Successfully Logged In",
+                               
                                 token: token,
-                                name:results[0][0].fname,
-                                last:results[0][0].lname,
-                                password:results[0][0].password,
+                                fname:results[0][0].fname,
+                                lname:results[0][0].lname,
+                              
                                 id:results[0][0].id,
                             });
                             console.log(token);
@@ -170,6 +174,10 @@ exports.adminLogin = (req,res,next) =>{
                                     id: results[0][0].id,
                                 },
                                 "somesupersecretsecret"
+                                ,
+                                {
+                                    expiresIn:"365d"
+                                }
                             );
                             res.status(200).json({
                                 success:1,

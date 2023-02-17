@@ -3,7 +3,6 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
-
 var logger = require('log4js').getLogger("dashboard")
 
 /******************************************************************************                                                   
@@ -17,6 +16,7 @@ var logger = require('log4js').getLogger("dashboard")
  /******************************************************************************/
 
 exports.getAllPosts = (req, res, next) => {
+
   database
     .execute("SELECT * FROM post")
     .then(async (posts) => {
@@ -1625,10 +1625,10 @@ exports.addTime = async (req, res, next) => {
             postsTime.start
           );
         }
-        this.getTime(req, res, next);
+        res.status(200).json({ message: "Time Added Successfully" });
       })
       .catch((err) => {
-         logger.error("Oh noes, something has gone terribly wrong");;
+         logger.error("Oh noes, something has gone terribly wrong");
         if (!err.statusCode) err.statusCode = 500;
         next(err);
       });

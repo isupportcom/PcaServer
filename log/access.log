@@ -1,2 +1,2 @@
-[2023-02-13T10:23:32.425] [ERROR] http - ::ffff:192.168.1.110 - - "POST /dashboard/resetProduction HTTP/1.1" 500 43 "" "PostmanRuntime/7.28.4"
-[2023-02-13T10:23:44.065] [INFO] http - ::ffff:192.168.1.110 - - "POST /dashboard/resetProduction HTTP/1.1" 200 43 "" "PostmanRuntime/7.28.4"
+[2023-02-17T11:34:49.021] [INFO] http - 192.168.1.101 - - "OPTIONS /auth/login HTTP/1.1" 200 4 "http://localhost:8100/" "Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320"
+[2023-02-17T11:34:49.118] [INFO] http - 192.168.1.101 - - "POST /auth/login HTTP/1.1" 200 187 "http://localhost:8100/" "Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320"
