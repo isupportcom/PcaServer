@@ -1,7 +1,9 @@
 // main package
 const express = require("express");
 const bodyParser = require("body-parser");
-
+const fs = require('fs');
+// const privateKey = fs.readFileSync('sslcert/test.key', 'utf8');
+// const certificate = fs.readFileSync('sslcert/test.crt', 'utf8');
 
 const logger = require('morgan');
 
@@ -21,8 +23,9 @@ try {
 
 // initialize logger first
 var log4js = require("log4js");
- log4js.configure('./config/log4js.json');
- var log = log4js.getLogger("startup");
+log4js.configure('./config/log4js.json');
+var log = log4js.getLogger("startup");
+// var applogger = log4js.getLogger("app");
 // initialize routes
 const authRoute = require("./routes/auth");
 const adminDashboard = require("./routes/dashboard");
@@ -52,19 +55,18 @@ app.use("/dashboard", adminDashboard);
 
 // error
 app.use((error, req, res, next) => {
+  // applogger.error("Something Went Wrong", error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
   res.status(status).json({ message: message, data: data });
 });
 
-var serverApp=app.listen(port,"192.168.1.110", () => {
-   log.info('Express server listening on port ', port, " with pid ", process.pid);
-   console.log('Express server listening on port ', port, " with pid ", process.pid);
-});
-
-const io = require("./socket").init(serverApp);
+var server = app.listen(port, () => {
+    log.info('Express server listening on port ', port, " with pid ", process.pid);
+  console.log('Express server listening on port ', port, " with pid ", process.pid);
+})
+const io = require("./socket").init(server);
 io.on("connection", (https) => {
   console.log("Client Connected");
 });
-

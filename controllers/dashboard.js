@@ -3,7 +3,9 @@ const database = require("../database");
 const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
-var logger = require('log4js').getLogger("dashboard")
+var logger = require('log4js').getLogger("dashboard");
+const mssql = require("../mssqlDb");
+const mssqlDb = require("../mssqlDb");
 
 /******************************************************************************                                                   
  *                                                                            *
@@ -851,10 +853,12 @@ exports.sendProduction = (req, res, next) => {
   }
 };
 exports.postHasStarted = async (findoc, post) => {
+  console.log("POST HAS STARTED");
   let update = await database.execute(
     "update prodline set done=2 where findoc=? and post=?",
     [findoc, post]
   );
+  console.log(update);
   this.emitOrderStarted(findoc, post);
 };
 exports.getSingleProduction = (req, res, next) => {
@@ -1194,9 +1198,6 @@ exports.updateActionLines = async (req, res, next) => {
           actionLine[i].action,
         ]
       ).catch(err => {
-
-        
-    
          logger.error("Oh noes, something has gone terribly wrong");;
         if (!err.statusCode) err.statusCode = 500;
         next(err);
@@ -1650,13 +1651,14 @@ exports.updateTime = (req, res, next) => {
     */
   if (!endTimer) res.status(402).json({ message: "fill the required fields" });
   else {
+    console.log(endTimer);
+
     database
       .execute(
-        "update time set end=?,totalTime=? where end=? and findoc=? and date=? and user=? and post=?",
+        "update time set end=? where end=? and findoc=? and date=? and user=? and post=?",
         [
           endTimer.end,
-          endTimer.totalTime,
-          "0",
+          "00:00:00.000000",
           endTimer.findoc,
           endTimer.date,
           endTimer.user,
@@ -1664,6 +1666,7 @@ exports.updateTime = (req, res, next) => {
         ]
       )
       .then(async (results) => {
+        await database.execute('update time set totalTime=subtime(end,start) where findoc=? and post=? and date=? and user=?', [endTimer.findoc, endTimer.post, endTimer.date, endTimer.user])
         if (
           (await this.postHasFinished(endTimer.findoc, endTimer.post)) == true
         ) {
@@ -2357,7 +2360,7 @@ exports.countOfUsers = async (post) => {
   //// console.log("COUNT");
   let users = await database.execute(
     "select DISTINCT user from time where post=? and end=? and totalTime=?",
-    [post, "0", "0"]
+    [post, "00:00:00.000000", "00:00:00.000000"]
   );
   let count = 0;
   let returnUsers = [];
@@ -2423,11 +2426,11 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
     // console.log("POST IS DONE");
     let min = await database.execute(
       "select min(date) as min from time where post=? and findoc=?  and end != ? and totalTime!= ?",
-      [post, findoc, "0", "0"]
+      [post, findoc, "00:00:00.000000", "00:00:00.000000"]
     );
     let max = await database.execute(
       "select max(date) as max from time where post=? and findoc=?  and end != ? and totalTime!= ?",
-      [post, findoc, "0", "0"]
+      [post, findoc, "00:00:00.000000", "00:00:00.000000"]
     );
     let minDate = min[0][0].min;
     let maxDate = max[0][0].max;
@@ -2440,7 +2443,7 @@ exports.calcTotalTimeOfPost = async (post, findoc) => {
     let dates = await database
       .execute(
         "select DISTINCT date from time where post=? and findoc=? and end != ? and totalTime!= ?",
-        [post, findoc, "0", "0"]
+        [post, findoc, "00:00:00.000000", "00:00:00.000000"]
       )
       .catch((err) => {
          logger.error("Oh noes, something has gone terribly wrong");;
@@ -2515,7 +2518,7 @@ exports.getStateOfPost = async (post, findoc) => {
 exports.totalTime = async (post, findoc, date) => {
   let timeOfPost = await database.execute(
     "select * from time where post=? and findoc=? and end != ? and totalTime != ? and date=?",
-    [post, findoc, "0", "0", date]
+    [post, findoc, "00:00:00.000000", "00:00:00.000000", date]
   );
   // console.log("QUERY");
   // // console.log(
@@ -2576,7 +2579,7 @@ exports.orderIsNotFinished = async (findoc, post) => {
 exports.postHasFinished = async (findoc, post) => {
   let count = await database.execute(
     "select * from time where post=? and findoc=? and end=? and totalTime=?",
-    [post, findoc, "0", "0"]
+    [post, findoc, "00:00:00.000000", "00:00:00.000000"]
   );
   console.log(count[0].length);
   if (count[0].length == 0) {
@@ -2591,7 +2594,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
   // console.log("USER TOTAL TIME");
   let dates = await database.execute(
     "select DISTINCT date  from time where (date >= ? and date <= ?) and user=?  and end!=?",
-    [fromDate, toDate, user, "0"]
+    [fromDate, toDate, user, "00:00:00.000000"]
   );
 
 
@@ -2603,7 +2606,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
       // console.log("QUERY RESULT");
       // console.log(dates[0]);
       let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [
-        dates[0][i].date, user, "0"
+        dates[0][i].date, user, "00:00:00.000000"
       ])
       try {
         for (let j = 0; j < timeOfPost[0].length; j++) {
@@ -2658,7 +2661,7 @@ exports.userTotalTime = async (user, fromDate, toDate, formatType) => {
     // console.log(months);
     for (let i = 0; i < dates[0].length; i++) {
       currentMonth = this.getMonth(dates[0][i].date);
-      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "0"]);
+      let timeOfPost = await database.execute('select totalTime from time where date=? and user=? and end!=?', [dates[0][i].date, user, "00:00:00.000000"]);
       for (let j = 0; j < timeOfPost[0].length; j++) {
         // console.log(months[currentMonth - 1].hr);
         months[currentMonth - 1].hr += this.getHours(timeOfPost[0][j].totalTime);
@@ -2899,7 +2902,7 @@ exports.userTime = async (user, fromDate, toDate) => {
   return time
 }
 exports.machineTotalTime = async (machinePost, fromDate, toDate) => {
-  let totalTime = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", fromDate, toDate])
+  let totalTime = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "00:00:00.000000", fromDate, toDate])
     .catch(err => {
        logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err)
@@ -2936,7 +2939,7 @@ exports.machineTotalTime = async (machinePost, fromDate, toDate) => {
 exports.machineTime = async (machinePost, from, to, format) => {
   let dates = await
     database
-      .execute('select DISTINCT date from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "0", from, to])
+      .execute('select DISTINCT date from machinetime where post=? and end!=?  and (date >= ? and date <= ?)', [machinePost, "00:00:00.000000", from, to])
       .catch(err => {
          logger.error("Oh noes, something has gone terribly wrong");;
         throw new Error(err);
@@ -2948,7 +2951,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     let allDates = this.getDates(new Date(this.formatDate2(from)), new Date(this.formatDate2(to)));
     // console.log(allDates);
     for (let i = 0; i < dates[0].length; i++) {
-      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
+      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "00:00:00.000000", dates[0][i].date])
         .catch(err => {
            logger.error("Oh noes, something has gone terribly wrong");;
           throw new Error(err);
@@ -3001,7 +3004,7 @@ exports.machineTime = async (machinePost, from, to, format) => {
     let currentMonth;
     for (let i = 0; i < dates[0].length; i++) {
       currentMonth = this.getMonth(dates[0][i].date);
-      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "0", dates[0][i].date])
+      let timeOfPost = await database.execute('select subtime(end,start) as totalTime from machinetime where post=? and end!=? and date=?', [machinePost, "00:00:00.000000", dates[0][i].date])
         .catch(err => {
            logger.error("Oh noes, something has gone terribly wrong");;
           throw new Error(err);
@@ -3070,4 +3073,22 @@ exports.emitOrderStarted = (findoc, post) => {
        logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err);
     })
+}
+
+exports.test =async (req,res,next) =>{
+   let name ="Δανειακός λογαριασμός";
+   let query = (await mssqlDb.connection()).req
+   let mssql = (await mssqlDb.connection()).mssql
+ query
+ .input('name',mssql.VarChar(50),name)
+ .query('select * from trdr where name = @name ')
+  .then(results=>{
+    console.log(results);
+    res.send(results.recordsets[0][0])
+  })
+  .catch(err=>{
+    console.log(err);
+    next(err);
+  })
+  
 }

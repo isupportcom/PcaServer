@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.0",
     "log4js": "^6.7.1",
     "morgan": "^1.10.0",
+    "mssql": "^9.1.1",
     "mysql2": "^2.3.3",
     "socket.io": "^4.5.4",
     "xml2js": "^0.4.23"

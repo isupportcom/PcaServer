@@ -76,3 +76,11 @@
   sqlMessage: "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 1",
   statuCode: 500
 }
+[2023-02-22T14:14:06.531] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:15:06.724] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:16:17.854] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:16:31.395] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:16:47.117] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:16:54.738] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:17:03.850] [ERROR] dashboard - Oh noes, something has gone terribly wrong
+[2023-02-22T14:18:39.483] [ERROR] dashboard - Oh noes, something has gone terribly wrong
