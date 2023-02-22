@@ -103,7 +103,7 @@ exports.userLogin = (req,res,next) =>{
                                 token: token,
                                 fname:results[0][0].fname,
                                 lname:results[0][0].lname,
-                              
+                                password: results[0][0].password,
                                 id:results[0][0].id,
                             });
                             console.log(token);

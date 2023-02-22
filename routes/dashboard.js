@@ -6,7 +6,7 @@ const isAuth = require('../middleware/is-auth');
 // var log = require('log4js').getLogger("dashboard");
 // log.debug("This Is Dashboard Router")
 //Ποστα
-router.get('/getPosts',dashboardController.getAllPosts);
+router.post('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
 router.post('/updatePosts',dashboardController.updatePosts);
 router.post('/deletePost',dashboardController.deletePost);
@@ -67,6 +67,7 @@ router.post('/updateActionLines',dashboardController.updateActionLines)
 //machinetime 
 router.post('/getMachineTime',dashboardController.getMachineTime);
 
+router.post('/test',dashboardController.test)
 
 
 module.exports = router;
