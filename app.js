@@ -2,9 +2,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require('fs');
-// const privateKey = fs.readFileSync('sslcert/test.key', 'utf8');
-// const certificate = fs.readFileSync('sslcert/test.crt', 'utf8');
-
 const logger = require('morgan');
 
 // initialize server
@@ -19,16 +16,14 @@ try {
     process.exit(1);
   }
 }
-
-
 // initialize logger first
 var log4js = require("log4js");
 log4js.configure('./config/log4js.json');
 var log = log4js.getLogger("startup");
-// var applogger = log4js.getLogger("app");
 // initialize routes
 const authRoute = require("./routes/auth");
 const adminDashboard = require("./routes/dashboard");
+const { clear } = require("console");
 //application/jason
 app.use(logger('dev'));
 app.use(log4js.connectLogger(log4js.getLogger("http"), { level: 'auto' }));
@@ -70,3 +65,5 @@ const io = require("./socket").init(server);
 io.on("connection", (https) => {
   console.log("Client Connected");
 });
+
+

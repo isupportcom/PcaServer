@@ -1,10 +1,7 @@
 const express = require('express');
-
 const router = express.Router();
 const dashboardController = require('../controllers/dashboard')
 const isAuth = require('../middleware/is-auth');
-// var log = require('log4js').getLogger("dashboard");
-// log.debug("This Is Dashboard Router")
 //Ποστα
 router.post('/getPosts',dashboardController.getAllPosts);
 router.post('/addPosts',dashboardController.addPosts);
@@ -25,21 +22,16 @@ router.post('/getSigleUserTime',dashboardController.getSingleUserTime);
 //user join time
 router.post('/pauseUser',dashboardController.pauseUser);
 router.post('/startUser',dashboardController.startUser);
-
 //Ενεργειες
 router.post('/getActions',dashboardController.getAllActions);
 router.post('/addActions',dashboardController.addActions);
 router.post('/updateActions',dashboardController.updateActions);
 router.post('/deleteAction',dashboardController.deleteAction);
-
 //Kατηγοριες
 router.post('/getCatPost',dashboardController.getcatPost);
 router.post('/addcatPost',dashboardController.addcatPost);
 router.post('/updatecatPost',dashboardController.updatecatPost);
 router.post('/deletecatPost',dashboardController.deletecatPost);
-
-
-
 //production
 router.post('/getProduction',dashboardController.getProduction);
 router.post('/addProduction',dashboardController.addProduction);
@@ -67,7 +59,7 @@ router.post('/updateActionLines',dashboardController.updateActionLines)
 //machinetime 
 router.post('/getMachineTime',dashboardController.getMachineTime);
 
-router.post('/test',dashboardController.test)
+
 
 
 module.exports = router;
