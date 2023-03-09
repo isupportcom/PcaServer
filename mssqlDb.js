@@ -75,6 +75,47 @@ let test = async () => {
                         console.log(err)
                         throw new Error(err);
                     })
+                //κλείνω τις εκκρεμότητες του παραστατικού Πρώτα στο findoc
+                await getRq()
+                    .input('findoc', mssql.Int, findoc)
+                    .query(`
+                update findoc
+                set FULLYTRANSF = 1 , bool01 = 1
+                where findoc = @FINDOC
+                `).catch(err => {
+                        console.log(err);
+                        throw new Error(err);
+                    })
+                //Και μετα τρέχω για κάθε γραμμή
+                await getRq()
+                    .input('findoc', mssql.Int, findoc)
+                    .input('mtrl', mssql.Int, results.recordset[i].MTRL)
+                    .input('qty', mssql.Int, results.recordset[i].pos_parag)
+                    .query(`
+                    update mtrlines
+                    set PENDING = 0, QTY1COV = @qty
+                    where findoc = @findoc  
+                    and mtrl = @mtrl
+                    `).catch(err => {
+                        console.log(err);
+                        throw new Error(err);
+                    })
+                for (let j = 0; j < grammesParastatikou.recordset.length; j++) {
+                    await getRq()
+                        .input('findoc', mssql.Int, findoc)
+                        .input('mtrl', mssql.Int, grammesParastatikou.recordset[j].MTRL)
+                        .input('qty', mssql.Int, grammesParastatikou.recordset[j].QTY1)
+                        .query(`
+                        update mtrlines
+                        set PENDING = 0, QTY1COV = @qty
+                        where findoc = @findoc  
+                        and mtrl = @mtrl
+                        `)
+                        .catch(err => {
+                            console.log(err);
+                            throw new Error(err);
+                        })
+                }
                 console.log('grammesParastatikou', grammesParastatikou.recordset[0].fincode)
                 console.log('fiscprd', results.recordset[i].FISCPRD)
                 //Παίρνω το SERIESNUM με το query 
@@ -181,15 +222,13 @@ let test = async () => {
                     .input('MTRLINES', mssql.Int, j)
                     .input('LINENUM', mssql.Int, j)
                     .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                    .input('QTY1', mssql.Int, results.recordset[i].pos_parag)
+                    .input('QTY', mssql.Int, results.recordset[i].pos_parag)
                     .query(`
-                        INSERT INTO MTRLINES (COMPANY,FINDOC,MTRLINES,LINENUM,SODTYPE,MTRL,SOSOURCE,MTRTYPE,WHOUSE,VAT,QTY1,SPCS) 
-                        VALUES (1001 ,@FINDOC,@MTRLINES ,@LINENUM ,51 ,@MTRL,7151,1,1000,1410,@QTY1,0)
-                        `)
-                    .catch(err => {
-                        console.log(err);
-                        throw new Error(err);
-                    })
+                    INSERT INTO MTRLINES 
+                    (COMPANY,FINDOC,MTRLINES,LINENUM,SODTYPE,MTRL,SOSOURCE,MTRTYPE,WHOUSE,VAT,QTY1,SPCS,PENDING,RESTMODE) 
+                    VALUES
+                    (1001 ,@FINDOC,@MTRLINES ,@LINENUM ,51 ,@MTRL,7151,1,1000,1410,@QTY,0,1,8) 
+                    `)
                 //Απο εδώ και πέρα βάζω τα εμπορεύματα που θα αναλωθούν
                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
                     j++;
@@ -200,8 +239,8 @@ let test = async () => {
                         .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
                         .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
                         .query(`
-                    INSERT INTO MTRLINES (COMPANY,FINDOC,MTRLINES,LINENUM,SODTYPE,MTRL,SOSOURCE,WHOUSE,VAT,QTY1) 
-                    VALUES (1001,@FINDOC,@MTRLINES,@LINENUM,51,@MTRL,7151,1000,1410,@QTY1)
+                        INSERT INTO MTRLINES (COMPANY,FINDOC,MTRLINES,LINENUM,SODTYPE,MTRL,SOSOURCE,WHOUSE,VAT,QTY1,PENDING,RESTMODE) 
+                        VALUES (1001,@FINDOC,@MTRLINES,@LINENUM,51,@MTRL,7151,1000,1410,@QTY1,1,9)
                     `).catch(err => {
                             console.log(err);
                             throw new Error(err);
@@ -219,484 +258,24 @@ let test = async () => {
                         console.log(err);
                         throw new Error(err);
                     })
-                //                 //MTRTRN
-                //                 // Αλλάζω τη κατάσταση της παραγωγής σε Completed
-                //                 await getRq()
-                //                     .input('findoc', mssql.Int, findocMtrdocMtrlines.recordset[0].findoc)
-                //                     .query('update MTRDOC set MTRSTS = 1 where findoc = @findoc')
-                //                     .catch(err => {
-                //                         console.log(err);
-                //                         throw new Error(err);
-                //                     })
-                //                 //Τρέχω το query(Πάντα το πρώτο είναι το παραγόμενο)
-                //                 await getRq()
-                //                     .input('FINDOC', mssql.Int, findocMtrdocMtrlines.recordset[0].findoc)
-                //                     .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                     .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                     .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                     .input('TRNDATE', mssql.Date, results.recordset[i].TRNDATE)
-                //                     .input('FINCODE', mssql.VarChar, results.recordset[i].FINCODE)
-                //                     .input('QTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                     .query(`
-                //                     INSERT INTO MTRTRN (COMPANY,FINDOC,MTRTRN,LINENUM,FISCPRD,PERIOD,BRANCH,SODTYPE,MTRL,MTRTYPE,SOSOURCE,SOREDIR,FPRMS,TPRMS,SERIES,TRNDATE,FINCODE,SOCURRENCY,WHOUSE,QTY1,VAT) 
-                //                     VALUES (1001 ,@FINDOC ,1 ,1 ,@FISCPRD ,@PERIOD ,1000 ,51 ,@MTRL ,1 ,7151 ,0 ,1001 ,1001 ,1001 ,@TRNDATE ,@FINCODE ,100 ,1000 ,@QTY1 ,1410)
-                //                     `).catch(err => {
-                //                         console.log(err)
-                //                         throw new Error(err);
-                //                     })
-                //                 //Τρέχω το query για τα εμπορεύματα που θα αναλωθούν
-                //                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
-                //                     await getRq()
-                //                         .input('FINDOC', mssql.Int, findocMtrdocMtrlines.recordset[0].findoc)
-                //                         .input('MTRTRN', mssql.Int, k + 2)
-                //                         .input('LINENUM', mssql.Int, k + 2)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                         .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                         .input('TRNDATE', mssql.Date, results.recordset[i].TRNDATE)
-                //                         .input('FINCODE', mssql.VarChar, results.recordset[i].FINCODE)
-                //                         .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                         .query(`
-                //                     INSERT INTO MTRTRN (COMPANY,FINDOC,MTRTRN,LINENUM,FISCPRD,PERIOD,BRANCH,SODTYPE,MTRL,MTRTYPE,SOSOURCE,SOREDIR,FPRMS,TPRMS,SERIES,TRNDATE,FINCODE,SOCURRENCY,WHOUSE,QTY1,VAT) 
-                //                     VALUES (1001 ,@FINDOC ,@MTRTRN ,@LINENUM ,@FISCPRD ,@PERIOD ,1000 ,51 ,@MTRL ,0 ,7151 ,0 ,1001 ,1003 ,1001 ,@TRNDATE ,@FINCODE ,100 ,1000 ,@QTY1 ,1410)
-                //                     `)
-                //                         .catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-
-                //                 //MTRBALSHEET
-                //                 /*
-                //                 MTRBALSHEET δείχνει γενικός τις κινήσεις του είδους ανά μήνα έτους και για πιο
-                //                 λόγο μετακινήθηκε (μάλλον)Για την πρώτη γραμμή που είναι το παραγόμενο τρέχω 
-                //                 query για να δω αν έχει γίνει καταχώριση στο πίνακα και αν χρειαστεί insert ή update 
-                //                 Τσεκαρω fiscprd, period(μήνας),whouse, και mtrl (στην ουσία βλεπω αν έχει κινηθεί μέσα 
-                //                 στο μήνα του έτους το συγκεκριμένο είδος)
-                //                 */
-                //                 let mtrbalsheet = await getRq()
-                //                     .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                     .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                     .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                     .query(`
-                //                     select COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,IMPQTY1,PROQTY
-                //                     from MTRBALSHEET
-                //                     where company = 1001 and fiscprd = @FISCPRD and period = @PERIOD and whouse = 1000 and mtrl = @MTRL
-                //                     `).catch(err => {
-                //                         console.log(err)
-                //                         throw new Error(err);
-                //                     })
-                //                 /*Αν βρω εγγραφή προσθέτω τη ποσότητα που βρήκα στο query με τη ποσότητα που
-                //                  θέλω να περάσω και κάνω update το IMPQTY1 και το PROQTY με αυτό το νούμερο*/
-                //                 if (mtrbalsheet.recordset.length > 0) {
-                //                     await getRq()
-                //                         .input('QTY', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('fiscprd', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('period', mssql.Int, results.recordset[i].PERIOD)
-                //                         .input('mtrl', mssql.Int, results.recordset[i].paragomeno)
-                //                         .query(`
-                //                     update MTRBALSHEET
-                //                     set IMPQTY1 = IMPQTY1 + @QTY ,PROQTY = PROQTY + @QTY
-                //                     where company = 1001 and fiscprd = @fiscprd and period = @period 
-                //                     and whouse = 1000 and mtrl = @mtrl
-                //                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 //Αν δεν έχω βρεί εγγραφή απλά κάνω insert τη ποσότητα μου με το query
-                //                 else {
-                //                     await getRq()
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                         .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('PROQTY', mssql.Int, results.recordset[i].pos_parag)
-                //                         .query(`
-                //                     INSERT INTO MTRBALSHEET (COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,IMPQTY1,PROQTY) 
-                // 	                VALUES (1001 ,@FISCPRD ,@PERIOD ,@MTRL ,1000 ,@IMPQTY1 ,@PROQTY)
-                //                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 /*Το ίδιο ισχύει και για τις επόμενες γραμμές που είναι τα αναλώσιμα 
-                //         με τη διαφορά οτι χρησιμοποιώ άλλα πεδία του πίνακα.
-                //         Τσεκαρω fiscprd, period(μήνας), και mtrl
-                //         (στην ουσία βλεπω αν έχει κινηθεί μέσα στο μήνα του έτους το συγκεκριμένο είδος)
-                //          */
-
-
-                //                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
-
-                //                     let mtrbalsheetParagomeno = await getRq()
-                //                         .input('fiscprd', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('period', mssql.Int, results.recordset[i].PERIOD)
-                //                         .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                         .query(`
-                //                     select COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,EXPQTY1,CONQTY
-                //                     from MTRBALSHEET
-                //                     where company = 1001 and fiscprd = @fiscprd and period = @period and whouse = 1000 and mtrl = @mtrl                
-                //                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                     console.log(mtrbalsheetParagomeno.recordset)
-                //                     /*	Αν βρω εγγραφή προσθέτω τη ποσότητα που βρήκα στο query 
-                //                     με τη ποσότητα που θέλω 
-                //                     να περάσω και κάνω update το IMPQTY1 και το PROQTY με αυτό το νούμερο*/
-                //                     if (mtrbalsheetParagomeno.recordset.length > 0) {
-                //                         await getRq()
-                //                             .input('qty', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('fiscprd', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('period', mssql.Int, results.recordset[i].PERIOD)
-                //                             .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .query(`
-                //                         update MTRBALSHEET
-                //                         set EXPQTY1 = EXPQTY1 + @qty ,CONQTY = CONQTY + @qty
-                //                         where company = 1001 and fiscprd = @fiscprd and period = @period 
-                //                         and whouse = 1000 and mtrl = @mtrl
-                //                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-
-                //                     }
-                //                     //	Αν δεν έχω βρεί εγγραφή απλά κάνω insert τη ποσότητα μου με το query
-                //                     else {
-                //                         await getRq()
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                             .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('CONQTY', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .query(`
-                //                         INSERT INTO MTRBALSHEET (COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,EXPQTY1,CONQTY) 
-                // 	                    VALUES (1001 ,@FISCPRD ,@PERIOD ,@MTRL ,1000 ,@EXPQTY1 ,@CONQTY)
-                //                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     }
-
-                //                 }
-                //                 //MTRFINDATA
-                //                 /*
-                //                 MTRFINDATA υπάρχει για μέτρηση κινήσεων στο έτος
-                //                 Οπότε ακολουθώ την ίδια διαδικασία με πριν με τη μόνη διαφορά οτι στο QTY1 
-                //                 όταν η γραμμή αναλώνει μπαίνει με αρνητικό πρόσιμο, άρα όταν κάνω update η 
-                //                 πράξη είναι αντίστοιχη.
-                //                 Για την πρώτη γραμμή που είναι το παραγόμενο τρέχω query για να δω αν έχει 
-                //                 γίνει καταχώριση στο πίνακα και αν χρειαστεί insert ή update 
-                //                 */
-                //                 let mtrfindata = await getRq()
-                //                     .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                     .input('mtrl', mssql.Int, results.recordset[i].paragomeno)
-                //                     .query(`
-                //                                 select COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1
-                //                                 from mtrfindata
-                //                                 where company = 1001 and FISCPRD = @FISCPRD and whouse = 1000 and mtrl = @mtrl
-                //                                 `).catch(err => {
-                //                         console.log(err)
-                //                         throw new Error(err);
-                //                     })
-                //                 /*	Αν βρω εγγραφή προσθέτω τη ποσότητα που βρήκα στο query με τη ποσότητα 
-                //                 που θέλω να περάσω και κάνω update το IMPQTY1 και το QTY1 με αυτό το νούμερο
-                //                 */
-                //                 if (mtrfindata.recordset.length > 0) {
-                //                     await getRq()
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('QTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('mtrl', mssql.Int, results.recordset[i].paragomeno)
-                //                         .query(`
-                //                                     update MTRFINDATA
-                //                                     set IMPQTY1 = IMPQTY1 + @IMPQTY1 ,QTY1 = QTY1 + @QTY1
-                //                                     where company = 1001 and fiscprd = @FISCPRD 
-                //                                     and whouse = 1000 and mtrl = @mtrl                
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 //Αν δεν έχω βρεί εγγραφή απλά κάνω insert τη ποσότητα μου με το query
-                //                 else {
-                //                     await getRq()
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('QTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .query(`
-                //                                     INSERT INTO MTRFINDATA (COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1) 
-                //                                     VALUES(1001,@FISCPRD,@MTRL,1000,@IMPQTY1,@QTY1)
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 /*Το ίδιο ισχύει και για τις επόμενες γραμμές που είναι τα αναλώσιμα 
-                //                 με τη διαφορά οτι χρησιμοποιώ άλλα πεδία του πίνακα και το qty παίρνει αφαίρεση.
-                //                 Τσεκαρω fiscprd,whouse και mtrl (στην ουσία βλεπω αν έχει κινηθεί 
-                //                 μέσα στο μήνα του έτους το συγκεκριμένο είδος)*/
-                //                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
-                //                     let mtrfindataanalosima = await getRq()
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                         .query(`
-                //                                     select COMPANY,FISCPRD,MTRL,WHOUSE,EXPQTY1,QTY1
-                //                                     from mtrfindata
-                //                                     where company = 1001 and FISCPRD = @FISCPRD and whouse = 1000 and mtrl = @mtrl 
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                     /*	Αν βρω εγγραφή προσθέτω τη ποσότητα που βρήκα στο query με τη 
-                //                     ποσότητα που θέλω να περάσω και κάνω update το IMPQTY1 και το PROQTY 
-                //                     με αυτό το νούμερο
-                // */
-                //                     if (mtrfindataanalosima.recordset.length > 0) {
-                //                         await getRq()
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .query(`
-                //                                         update MTRFINDATA
-                //                                         set EXPQTY1 = EXPQTY1 + @EXPQTY1,QTY1 = QTY1 - @QTY1
-                //                                         where company = 1001 and fiscprd = @FISCPRD and whouse = 1000 and mtrl = @mtrl
-                //                                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     }
-                //                     //	Αν δεν έχω βρεί εγγραφή απλά κάνω insert τη ποσότητα μου με το query
-
-                //                     else {
-                //                         await getRq()
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1 * (-1))
-                //                             .query(`
-                //                                         INSERT INTO MTRFINDATA (COMPANY,FISCPRD,MTRL,WHOUSE,EXPQTY1,QTY1) 
-                //                                         VALUES(1001,@FISCPRD,@mtrl,1000,@EXPQTY1,@QTY1)                    
-                //                                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     }
-
-                //                 }
-
-                //                 //MTRDATA
-                //                 /* Aκολουθώ την ίδια διαδικασία, στο QTY1 όταν η γραμμή αναλώνει 
-                //                 μπαίνει με αρνητικό πρόσιμο, άρα όταν κάνω update η πράξη είναι 
-                //                 αντίστοιχη */
-                //                 let mtrData = await getRq()
-                //                     .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                     .input('mtrl', mssql.Int, results.recordset[i].paragomeno)
-                //                     .query(`
-                //                                 select COMPANY,MTRL,FISCPRD,IMPQTY1,QTY1
-                //                                 from mtrdata
-                //                                 where company = 1001 and fiscprd = @FISCPRD and mtrl = @mtrl
-
-                //                                 `)
-                //                     .catch(err => {
-                //                         console.log(err)
-                //                         throw new Error(err);
-                //                     })
-                //                 if (mtrData.recordset.length > 0) {
-                //                     //  αν έχω κάνω update
-                //                     await getRq()
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('MTLR', mssql.Int, results.recordset[i].paragomeno)
-                //                         .query(`
-                //                                     update MTRDATA
-                //                                     set IMPQTY1 = IMPQTY1 + @IMPQTY1 , QTY1 = QTY1 + @IMPQTY1
-                //                                     where company = 1001 and fiscprd = @FISCPRD and mtrl = @MTLR                
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 //	αν δεν έχω κάνω insert
-                //                 else {
-                //                     await getRq()
-                //                         .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('QTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .query(`
-                //                                     INSERT INTO MTRDATA (COMPANY,MTRL,FISCPRD,IMPQTY1,QTY1) 
-                //                                     VALUES (1001,@MTRL,@FISCPRD,@IMPQTY1,@QTY1)
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 /*Εδώ είναι τα αναλώσιμα και χρησιμοποιώ το EXPQTY1 αντί για το IMPQTY1
-                //                 Τσεκάρω αν έχω γραμμή*/
-                //                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
-                //                     let mtrDataAnalosima = await getRq()
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('mtrl', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                         .query(`
-                //                                     select COMPANY,MTRL,FISCPRD,EXPQTY1,QTY1
-                //                                     from mtrdata
-                //                                     where company = 1001 and fiscprd = @FISCPRD and mtrl = @mtrl
-                //                                     `)
-                //                         .catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                     if (mtrDataAnalosima.recordset.length > 0) {
-                //                         //  αν έχω κάνω update
-                //                         await getRq()
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1 * (-1))
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('MTLR', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .query(`
-                //                                             update MTRDATA
-                //                                             set EXPQTY1 = EXPQTY1 + @EXPQTY1 , QTY1 = QTY1+ @QTY1
-                //                                             where company = 1001 and fiscprd = @FISCPRD and mtrl = @MTLR                
-                //                                             `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     } else {
-                //                         // αν δεν έχω κάνω insert
-                //                         await getRq()
-                //                             .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1 * (-1))
-                //                             .query(`
-                //                                         INSERT INTO MTRDATA (COMPANY,MTRL,FISCPRD,EXPQTY1,QTY1) 
-                //                                         VALUES (1001,@MTRL,@FISCPRD,@EXPQTY1,@QTY1)
-                //                                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     }
-
-                //                 }
-                //                 //MTREXTDATA
-                //                 /*Aκολουθώ την ίδια διαδικασία, στο QTY1 όταν η γραμμή αναλώνει 
-                //                 μπαίνει με αρνητικό πρόσιμο, άρα όταν κάνω update η πράξη είναι αντίστοιχη
-                //                 Εδώ είναι η πρώτη γραμμή που είναι το παραγόμενο
-                //                 Τσεκάρω αν έχω γραμμή*/
-                //                 let mtrextdata = await getRq()
-                //                     .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                     .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                     .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                     .query(`
-                //                                     select COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1
-                //                                     from MTREXTDATA
-                //                                     where COMPANY = 1001 and MTRL = @MTRL and FISCPRD = @FISCPRD and PERIOD = @PERIOD and WHOUSE = 1000 and SALESMAN = 0
-                //                                     `).catch(err => {
-                //                         console.log(err)
-                //                         throw new Error(err);
-                //                     })
-                //                 if (mtrextdata.recordset.length > 0) {
-                //                     // αν έχω κάνω update
-                //                     await getRq()
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                         .query(`
-                //                                         UPDATE MTREXTDATA
-                //                                         SET IMPQTY1 = IMPQTY1 + @IMPQTY1, QTY1 = QTY1 + @IMPQTY1
-                //                                         where COMPANY = 1001 and MTRL = @MTRL and FISCPRD = @FISCPRD and PERIOD = @PERIOD and WHOUSE = 1000 and SALESMAN = 0                    
-                //                                         `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 } else {
-                //                     //	αν δεν έχω κάνω insert
-                //                     await getRq()
-                //                         .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                         .input('IMPQTY1', mssql.Int, results.recordset[i].pos_parag)
-                //                         .query(`
-                //                                     INSERT INTO MTREXTDATA (COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1,SALESMAN) 
-                //                                     VALUES(1001,@MTRL,@FISCPRD,@PERIOD,1000,@IMPQTY1,@IMPQTY1,0)                
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                 }
-                //                 /*Εδώ είναι τα αναλώσιμα και χρησιμοποιώ το EXPQTY1 αντί για το IMPQTY1
-                //                 Τσεκάρω αν έχω γραμμή */
-                //                 for (let k = 0; k < grammesParastatikou.recordset.length; k++) {
-                //                     let mtrextdataAnalosima = await getRq()
-                //                         .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                         .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                         .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                         .query(`
-                //                                     select COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1
-                //                                     from MTREXTDATA
-                //                                     where COMPANY = 1001 and MTRL = @MTRL and FISCPRD = @FISCPRD and 
-                //                                     PERIOD = @PERIOD and WHOUSE = 1000 and SALESMAN = 0
-                //                                     `).catch(err => {
-                //                             console.log(err)
-                //                             throw new Error(err);
-                //                         })
-                //                     if (mtrextdataAnalosima.recordset.length > 0) {
-                //                         // αν έχω κάνω update
-                //                         await getRq()
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                             .query(`	
-                //                                         UPDATE MTREXTDATA
-                //                                         SET EXPQTY1 = EXPQTY1 + @EXPQTY1, QTY1 = QTY1 - @EXPQTY1
-                //                                         where COMPANY = 1001 and MTRL = @MTRL and FISCPRD = @FISCPRD and 
-                //                                         PERIOD = @PERIOD and WHOUSE = 1000 and SALESMAN = 0
-                //                                     `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     } else {
-                //                         //	αν δεν έχω κάνω insert
-                //                         await getRq()
-                //                             .input('MTRL', mssql.Int, grammesParastatikou.recordset[k].MTRL)
-                //                             .input('FISCPRD', mssql.Int, results.recordset[i].FISCPRD)
-                //                             .input('PERIOD', mssql.Int, results.recordset[i].PERIOD)
-                //                             .input('EXPQTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1)
-                //                             .input('QTY1', mssql.Int, grammesParastatikou.recordset[k].QTY1 * (-1))
-                //                             .query(`
-                //                                         INSERT INTO MTREXTDATA (COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,EXPQTY1,QTY1) 
-                //                                         VALUES(1001,@MTRL,@FISCPRD,@PERIOD,1000,@EXPQTY1,@QTY1)                    
-                //                                         `).catch(err => {
-                //                                 console.log(err)
-                //                                 throw new Error(err);
-                //                             })
-                //                     }
-
-                //                 }
                 // paramenei sto telos.
                 let category = await getRq()
                     .input('MTRL', mssql.Int, results.recordset[i].paragomeno)
                     .query(`
-                                    select MTRGROUP as category from MTRL where MTRL = @MTRL
-                                `).catch(err => {
+                            select MTRGROUP as category from MTRL where MTRL = @MTRL
+                        `).catch(err => {
                         console.log(err)
                         throw new Error(err);
                     })
-                await insertProductionToDb(category.recordset[0].category, results.recordset[i].findoc, results.recordset[i].paragomeno, grammesParastatikou.recordset[0].fincode, results.recordset[i].TRNDATE, results.recordset[i].pos_parag)
+            //    await insertProductionToDb(category.recordset[0].category, results.recordset[i].findoc, results.recordset[i].paragomeno, grammesParastatikou.recordset[0].fincode, results.recordset[i].TRNDATE, results.recordset[i].pos_parag)
                 console.log("DONE");
-                let production = await getProduction();
+              //  let production = await getProduction();
                 console.log("PRODUCTION");
-                console.log(production);
-                io.getIO().emit('newProduction', {
-                    action: "New Production",
-                    production: production
-                })
+              //  console.log(production);
+                // io.getIO().emit('newProduction', {
+                //     action: "New Production",
+                //     production: production
+                // })
 
             }
 
@@ -782,5 +361,7 @@ let findocExists = async (findoc) => {
         return false;
     }
 }
-
 // test();
+
+
+ module.exports = {rq:getRq(),config:config}

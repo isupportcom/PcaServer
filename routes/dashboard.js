@@ -48,6 +48,7 @@ router.post('/removePostFromProduction',dashboardController.removePostFromProd);
 router.post('/addActionInProduction',dashboardController.addExtraActionInProd);
 router.post('/removeActionFromProduction',dashboardController.removeActionFromProd);
 router.post('/resetProduction',dashboardController.resetProduction);
+router.post('/productionDone',dashboardController.productionDone);
 // production Line 
 router.post('/updateProductionLine',dashboardController.updateProdLine);
 // time 

@@ -4,9 +4,8 @@ const generator = require("generate-password");
 const decoder = new TextDecoder("ISO-8859-7");
 const io = require("../socket");
 var logger = require('log4js').getLogger("dashboard");
-const mssql = require("../mssqlDb");
-const mssqlDb = require("../mssqlDb");
-
+const mssql = require('mssql')
+const { rq, config } = require('../mssqlDb');
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -1607,6 +1606,736 @@ exports.resetProduction = (req, res, next) => {
       })
   }
 }
+exports.productionDone = async (req, res, next) => {
+  const findoc = req.body.findoc;
+  if (!findoc) {
+    res.status(402).json({ message: 'Fill The Requried Fields' })
+  } else {
+    await mssql.connect(config);
+    await this.getRq()
+      //Αλλάζω τη κατάσταση της παραγωγής σε Completed
+      .input('findoc', mssql.Int, findoc)
+      .query(`
+        update MTRDOC set MTRSTS = 1 where findoc = @findoc
+      `).catch(err => {
+        if (!err.statsuCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    let extraData = await this.getExtraData(findoc);
+    console.log(extraData);
+    //Κάνω Update τις γραμμές για να φυγουν αναμενόμενα και δεσμευμενα σε όλες τις γραμμές
+    await this.getRq()
+      .input('QTY1COV', mssql.Int, extraData.qty)
+      .input('findoc', mssql.Int, findoc)
+      .input('mtrl', mssql.Int, extraData.mtrl)
+      .query(`
+        update mtrlines
+        set PENDING = 0, QTY1COV = @QTY1COV
+        where findoc = @findoc and mtrl = @mtrl
+      `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    let analosima = await this.getAnalosimaMtrl(findoc);
+    const findocData = await this.getRq()
+      .input('findoc', mssql.Int, findoc)
+      .query(`
+            select FISCPRD, PERIOD ,FINCODE, TRNDATE
+            from findoc
+            where findoc = @findoc
+          `).catch(err => { throw new Error(err); })
+
+    console.log(analosima);
+    //MTRTRN 
+    //Τρέχω το query(Πάντα το πρώτο είναι το παραγόμενο)
+    let j = 1;
+    await this.getRq()
+      .input('FINDOC', mssql.Int, findoc)
+      .input('MTRTRN', mssql.Int, j)
+      .input('LINENUM', mssql.Int, j)
+      .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+      .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+      .input('MTRL', mssql.Int, extraData.mtrl)
+      .input('TRNDATE', mssql.Int, findocData[0][0].TRNDATE)
+      .input('FINCODE', mssql.VarChar, findocData[0][0].FINCODE)
+      .input('QTY1', mssql.Int, extraData.qty)
+      .query(`
+        INSERT INTO
+        MTRTRN
+        (COMPANY,FINDOC,MTRTRN,LINENUM,FISCPRD,PERIOD,BRANCH,SODTYPE,MTRL
+          ,MTRTYPE,SOSOURCE,SOREDIR,FPRMS,TPRMS,SERIES,TRNDATE,FINCODE,SOCURRENCY,
+          WHOUSE,QTY1,VAT) 
+                VALUES 
+          (
+          1001 ,@FINDOC ,@MTRTRN ,@LINENUM ,@FISCPRD 
+          ,@PERIOD ,1000 ,51 ,@MTRL ,1 ,7151 ,0 ,1001 ,1001 ,1001 
+          ,@TRNDATE ,@FINCODE ,100 ,1000 ,@QTY1 ,1410
+          )
+        `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    for (let i = 0; i < analosima.length; i++) {
+      j++;
+      await this.getRq()
+        .input('FINDOC', mssql.Int, findoc)
+        .input('MTRTRN', mssql.Int, j)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .input('MTRL', mssql.Int, analosima[i].mtrl)
+        .input('TRNDATE', mssql.Int, findocData[0][0].TRNDATE)
+        .input('FINCODE', mssql.VarChar, findocData[0][0].FINCODE)
+        .input('QTY1', mssql.Int, analosima[i].qty)
+        .query(`
+        INSERT INTO
+        MTRTRN 
+        (
+          COMPANY,FINDOC,MTRTRN,LINENUM,FISCPRD,PERIOD,BRANCH,SODTYPE,MTRL,
+          MTRTYPE,SOSOURCE,SOREDIR,FPRMS,TPRMS,SERIES,TRNDATE,FINCODE,SOCURRENCY
+          ,WHOUSE,QTY1,VAT
+          ) 
+        VALUES (
+          1001 ,@FINDOC ,@MTRTRN ,1 ,@FISCPRD ,@PERIOD ,1000 ,51 ,@MTRL 
+          ,0 ,7151 ,0 ,1001 ,1003 ,1001 ,
+          @TRNDATE ,@FINCODE ,100 ,1000 ,@QTY1 ,1410
+          )    
+        `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    }
+    //MTRBALSHEET
+    /**
+      MTRBALSHEET δείχνει γενικός τις κινήσεις του είδους ανά μήνα έτους και 
+      για πιο λόγο μετακινήθηκε (μάλλον)
+      Για την πρώτη γραμμή που είναι το παραγόμενο τρέχω query για 
+      να δω αν έχει γίνει καταχώριση στο πίνακα και αν χρειαστεί insert ή update 
+      Τσεκαρω fiscprd, period(μήνας),whouse, και mtrl (στην ουσία βλεπω αν έχει 
+      κινηθεί μέσα στο μήνα του έτους το συγκεκριμένο είδος)
+      */
+    let mtrbalsheet = await this.getRq()
+      .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+      .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+      .input('MTRL', mssql.Int, extraData.mtrl)
+      .query(`
+              select COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,IMPQTY1,PROQTY 
+              from  MTRBALSHEET
+              where company = 1001 and fiscprd = @FISCPRD and period = @PERIOD 
+                    and whouse = 1000 and mtrl = @MTRL
+          `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    if (mtrbalsheet.recordset.length > 0) {
+      /*	Αν βρω εγγραφή προσθέτω τη ποσότητα που βρήκα στο query με 
+      τη ποσότητα που θέλω να περάσω και κάνω update το IMPQTY1 και το 
+      PROQTY με αυτό το νούμερο*/
+      await this.getRq()
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .input('PROQTY', mssql.Int, extraData.qty)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .query(`
+            update MTRBALSHEET
+            set IMPQTY1 = IMPQTY1 + @IMPQTY1 ,PROQTY = @PROQTY
+            where company = 1001 and fiscprd = @FISCPRD and period = @PERIOD 
+                  and whouse = 1000 and mtrl = @MTRL
+          `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    } else {
+      //Αν δεν έχω βρεί εγγραφή απλά κάνω insert τη ποσότητα μου με το query
+      await this.getRq()
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .query(`
+            INSERT INTO MTRBALSHEET (COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,IMPQTY1,PROQTY) 
+            VALUES (1001 ,@FISCPRD ,@PERIOD ,@MTRL ,1000 ,@IMPQTY1 ,@IMPQTY1)
+            `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    }
+    /*Το ίδιο ισχύει και για τις επόμενες γραμμές που είναι τα αναλώσιμα με 
+      τη διαφορά οτι χρησιμοποιώ άλλα πεδία του πίνακα.
+      Τσεκαρω fiscprd, period(μήνας), και mtrl 
+      (στην ουσία βλεπω αν έχει κινηθεί μέσα στο μήνα του έτους το συγκεκριμένο είδος) 
+      */
+    for (let i = 0; i < analosima.length; i++) {
+      let mtrbalsheetAnalosima = await this.getRq()
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .input('MTRL', mssql.Int, analosima[i].mtrl)
+        .query(`
+       select COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,EXPQTY1,CONQTY
+       from MTRBALSHEET
+       where company = 1001 and fiscprd = @FISCPRD and period = @PERIOD and whouse = 1000 and mtrl = @MTRL
+       `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+      if (mtrbalsheetAnalosima.recordset.length > 0) {
+        await this.getRq()
+          .input('EXPQTY1', mssql.Int, analosima[i].qty)
+          .input('CONQTY', mssql.Int, analosima[i].qty)
+          .query(`
+            update MTRBALSHEET
+            set EXPQTY1 = EXPQTY1 + @EXPQTY1,CONQTY = CONQTY + @CONQTY 
+            where company = 1001 and fiscprd = 2023 and period = 2 and whouse = 1000 and mtrl = 30742
+          `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      } else {
+        await this.getRq()
+          .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+          .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+          .input('MTRL', mssql.Int, analosima[i].mtrl)
+          .input('EXPQTY1', mssql.Int, analosima[i].qty)
+          .query(`
+            INSERT INTO MTRBALSHEET (COMPANY,FISCPRD,PERIOD,MTRL,WHOUSE,EXPQTY1,CONQTY) 
+            VALUES (1001 ,@FISCPRD ,@PERIOD ,@MTRL ,1000 ,@EXPQTY1 ,@EXPQTY1)
+          `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      }
+    }
+    //MTRFINDATA
+    /*MTRFINDATA υπάρχει για μέτρηση κινήσεων στο έτος
+Οπότε ακολουθώ την ίδια διαδικασία με πριν με τη μόνη διαφορά οτι στο QTY1 όταν η γραμμή 
+αναλώνει μπαίνει με αρνητικό πρόσιμο, άρα όταν κάνω update η πράξη είναι αντίστοιχη.
+
+Για την πρώτη γραμμή που είναι το παραγόμενο τρέχω query για να δω αν έχει γίνει 
+καταχώριση στο πίνακα και αν χρειαστεί insert ή update 
+Τσεκαρω fiscprd,whouse, και mtrl (στην ουσία βλεπω αν έχει κινηθεί μέσα στο έτους 
+  το συγκεκριμένο είδος)
+*/
+    let mtrfindata = await this.getRq()
+      .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+      .input('MTRL', mssql.Int, extraData.mtrl)
+      .query(`
+        select COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1
+        from mtrfindata
+        where company = 1001 and FISCPRD = @FISCPRD and whouse = 1000 and mtrl = @MTRL
+        `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    if (mtrfindata.recordset.length > 0) {
+      await this.getRq()
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .query(`
+        update MTRFINDATA
+        set IMPQTY1 = @IMPQTY1+IMPQTY1,QTY1 = @IMPQTY1+QTY1
+        where company = 1001 and fiscprd = 2023 and whouse = 1000 and mtrl = 30743
+      `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    } else {
+      await this.getRq()
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .query(`
+        INSERT INTO MTRFINDATA (COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1) 
+        VALUES (1001 ,@FISCPRD ,@MTRL ,1000 ,@IMPQTY1 ,@IMPQTY1)
+      `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    }
+    for (let i = 0; i < analosima.length; i++) {
+      let mtrfindata = await this.getRq()
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('MTRL', mssql.Int, analosima[i].mtrl)
+        .query(`
+          select COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1
+          from mtrfindata
+          where company = 1001 and FISCPRD = @FISCPRD and whouse = 1000 and mtrl = @MTRL
+          `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+      if (mtrfindata.recordset.length > 0) {
+        await this.getRq()
+          .input('QTY1', mssql.Int, analosima[i].qty)
+          .query(`
+          update MTRFINDATA
+          set EXPQTY1 = EXPQTY1 + @QTY1 ,QTY1 = QTY1 - @QTY1
+          where company = 1001 and fiscprd = 2023 and whouse = 1000 and mtrl = 30742
+        `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      } else {
+        await this.getRq()
+          .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+          .input('MTRL', mssql.Int, analosima[i].mtrl)
+          .input('QTY1', mssql.Int, analosima[i].qty)
+          .query(`
+          INSERT INTO MTRFINDATA (COMPANY,FISCPRD,MTRL,WHOUSE,IMPQTY1,QTY1) 
+          VALUES (1001 ,@FISCPRD ,@MTRL ,1000 ,0 ,@QTY1)
+        `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      }
+    }
+    /*MTRDATA
+      Aκολουθώ την ίδια διαδικασία, στο QTY1 όταν η γραμμή αναλώνει μπαίνει 
+      με αρνητικό πρόσιμο, άρα όταν κάνω update η πράξη είναι αντίστοιχη
+ */
+    let mtrdata = await this.getRq()
+      .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+      .input('MTRL', mssql.Int, extraData.mtrl)
+      .query(`
+      select COMPANY,MTRL,FISCPRD,IMPQTY1,QTY1
+      from mtrdata
+      where company = 1001 and fiscprd = @FISCPRD and mtrl = @MTRL  
+      `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    if (mtrdata.recordset.length > 0) {
+      await this.getRq()
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .input('fiscprd', mssql.Int, findocData[0][0].FISCPRD)
+        .input('mtrl', mssql.Int, extraData.mtrl)
+        .query(`
+        update MTRDATA
+        set IMPQTY1 = @IMPQTY1+IMPQTY1,QTY1 = @IMPQTY1+QTY1
+        where company = 1001 and fiscprd = @fiscprd and mtrl = @mtrl
+      `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    } else {
+      await this.getRq()
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('QTY', mssql.Int, extraData.qty)
+        .query(`	
+        INSERT INTO MTRDATA (COMPANY,MTRL,FISCPRD,IMPQTY1,QTY1) 
+        VALUES (1001,@MTRL,@FISCPRD,@QTY,@QTY)
+      `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    }
+    //Εδώ είναι τα αναλώσιμα και χρησιμοποιώ το EXPQTY1 αντί για το IMPQTY1
+    //Τσεκάρω αν έχω γραμμή
+    for (let i = 0; i < analosima.length; i++) {
+      let mtrdataAnalosima = await this.getRq()
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('MTRL', mssql.Int, analosima[i].mtrl)
+        .query(`
+      select COMPANY,MTRL,FISCPRD,EXPQTY1,QTY1
+      from mtrdata
+      where company = 1001 and fiscprd = @FISCPRD and mtrl = @MTRL
+      `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+      if (mtrdataAnalosima.recordset.length > 0) {
+        await this.getRq()
+          .input('EXPQTY1', mssql.Int, analosima[i].qty)
+          .input('fiscprd', mssql.Int, findocData[0][0].FISCPRD)
+          .input('mtrl', mssql.Int, analosima[i].mtrl)
+          .query(`	
+          update MTRDATA
+          set EXPQTY1 = EXPQTY1 + @EXPQTY1 , QTY1 = QTY1 - @EXPQTY1 
+          where company = 1001 and fiscprd = @fiscprd and mtrl = @mtrl
+        `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      } else {
+        await this.getRq()
+          .input('MTRL', mssql.Int, analosima[i].mtrl)
+          .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+          .input('QTY', mssql.Int, analosima[i].qty)
+          .input('QTY1', mssql.Int, analosima[i].qty * (-1))
+          .query(`	
+            INSERT INTO MTRDATA (COMPANY,MTRL,FISCPRD,EXPQTY1,QTY1) 
+            VALUES (1001,@MTRL,@FISCPRD,@QTY,@QTY1)
+          `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      }
+    }
+    //MTREXTDATA
+    /*Aκολουθώ την ίδια διαδικασία, στο QTY1 όταν η γραμμή αναλώνει μπαίνει με αρνητικό πρόσιμο,
+     άρα όταν κάνω update η πράξη είναι αντίστοιχη
+      Εδώ είναι η πρώτη γραμμή που είναι το παραγόμενο
+      Τσεκάρω αν έχω γραμμή
+    */
+    let mtrextdata = await this.getRq()
+      .input('MTRL', mssql.Int, extraData.mtrl)
+      .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+      .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+      .query(`
+      select COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1
+      from MTREXTDATA
+      where COMPANY = 1001     and MTRL   = @MTRL       and 
+            FISCPRD = @FISCPRD and PERIOD = @PERIOD     and 
+            WHOUSE  = 1000 and SALESMAN = 0
+      `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    if (mtrextdata.recordset.length > 0) {
+      /*	
+      UPDATE MTREXTDATA
+      SET IMPQTY1 = IMPQTY1+2, QTY1 = QTY1 + 2
+      where COMPANY = 1001 and MTRL = 30743 and 
+            FISCPRD = 2023 and PERIOD = 2 and 
+            WHOUSE = 1000 and SALESMAN = 0
+      */
+      await this.getRq()
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .query(`
+        UPDATE MTREXTDATA
+        SET IMPQTY1 = IMPQTY1 + @IMPQTY1, QTY1 = QTY1 + @IMPQTY1
+        where COMPANY = 1001 and MTRL = @MTRL and 
+              FISCPRD = @FISCPRD and PERIOD = @PERIOD and 
+              WHOUSE = 1000 and SALESMAN = 0
+              `)
+        .catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    } else {
+      /*	
+       INSERT INTO MTREXTDATA (COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1,SALESMAN) 
+       VALUES(1001,30743,2023,2,1000,2,2,0)
+      */
+      await this.getRq()
+        .input('MTRL', mssql.Int, extraData.mtrl)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .input('IMPQTY1', mssql.Int, extraData.qty)
+        .query(`
+          INSERT INTO MTREXTDATA (COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1,SALESMAN) 
+          VALUES(1001,@MTRL,@FISCPRD,@PERIOD,1000,@IMPQTY1,@IMPQTY1,0)
+        `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+    }
+    /*Εδώ είναι τα αναλώσιμα και χρησιμοποιώ το EXPQTY1 αντί για το IMPQTY1
+      Τσεκάρω αν έχω γραμμή
+ */
+    for (let i = 0; i < analosima.length; i++) {
+      let mtrextdataAnalosima = await this.getRq()
+        .input('MTRL', mssql.Int, analosima[i].mtrl)
+        .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+        .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+        .query(`
+          select COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,IMPQTY1,QTY1
+          from MTREXTDATA
+          where 
+                COMPANY = 1001 and MTRL = @MTRL and 
+                FISCPRD = @FISCPRD and PERIOD = @PERIOD and 
+                WHOUSE = 1000 and SALESMAN = 0
+          `).catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        })
+      if (mtrextdataAnalosima.recordset.length > 0) {
+        //	αν έχω κάνω update
+        await this.getRq()
+          .input('EXPQTY1', mssql.Int, analosima[i].qty)
+          .input('MTRL', mssql.Int, analosima[i].mtrl)
+          .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+          .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+          .query(`	
+                UPDATE MTREXTDATA
+                SET EXPQTY1 = EXPQTY1 + @EXPQTY1, QTY1 = QTY1 - @EXPQTY1
+                where COMPANY = 1001 and MTRL = @MTRL and 
+                FISCPRD = @FISCPRD and PERIOD = @PERIOD and 
+                WHOUSE = 1000 and SALESMAN = 0
+              `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      } else {
+        //	αν δεν έχω κάνω insert
+        await this.getRq()
+          .input('MTRL', mssql.Int, analosima[i].mtrl)
+          .input('FISCPRD', mssql.Int, findocData[0][0].FISCPRD)
+          .input('PERIOD', mssql.Int, findocData[0][0].PERIOD)
+          .input('EXPQTY1', mssql.Int, analosima[i].qty)
+          .input('QTY1', mssql.Int, analosima[i].qty * (-1))
+          .query(`
+            INSERT INTO 
+            MTREXTDATA 
+            (COMPANY,MTRL,FISCPRD,PERIOD,WHOUSE,EXPQTY1,QTY1) 
+                  VALUES
+            (1001,@MTRL,@FISCPRD,@PERIOD,1000,@EXPQTY1,@QTY1)
+          `).catch(err => {
+            if (!err.statusCode) {
+              err.statusCode = 500;
+            }
+            next(err);
+          })
+      }
+    }
+    //	ΚΑΤΑΧΩΡΗΣΗ  Picking Mantis Παραγόμενου (7015)
+    //Τρέχω query για να πάρω τα πεδία findoc της αρχικής παραγγελίας
+    const findoc = await this.getRq()
+      .input('findoc', mssql.Int, extraData.findoc)
+      .query(`
+        SELECT 
+          COMPANY,BRANCH,TRDR,ISNULL(TRDBRANCH,'') AS TRDBRANCH,SALESMAN,ISNULL(COMMENTS,0)
+          AS COMMENTS,SHIPKIND,ISNULL(PAYMENT,0) AS PAYMENT,VATSTS,ISNULL(SHIPMENT,0) 
+          AS SHIPMENT,BGDOCDATE1,ISNULL(REMARKS,0) AS REMARKS,DISC1PRC,DISC1VAL,DISC2PRC,
+          NETAMNT,VATAMNT,EXPN,SUMAMNT,INT01 as PARAGOMENO,INT02 AS POS_PARAG 
+        from findoc 
+        where findoc = @findoc
+      `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    //Τρέχω query για να αλλάξω το seriesnum και να το πάρω
+    await this.getRq()
+      .query(`
+            UPDATE seriesnum
+            SET SERIESNUM=SERIESNUM+1
+            WHERE series = 7015 and sosource = 1351 and company = 1001
+          `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    const seriesnum = await this.getRq()
+      .query(`
+            SELECT seriesnum
+            FROM SERIESNUM
+            WHERE series = 7015 and sosource = 1351 and company = 1001
+        `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() > 10 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1);
+    const day = date.getDate() > 10 ? date.getDate() : '0' + date.getDate();
+    const TRNDATE = year + '' + month + '' + day;
+    //Κάνω insert με τα δεδομένα που βρήκα ενώ κάποια είναι σταθερα
+    await this.getRq()
+      .input('COMPANY', mssql.Int, findoc.recordset[0].COMPANY)
+      .input('TRNDATE', mssql.Date, TRNDATE)
+      .input('FISCPRD', mssql.Int, findoc.recordset[0].FISCPRD)
+      .input('PERIOD', mssql.Int, findoc.recordset[0].PERIOD)
+      .input('SERIESNUM', mssql.Int, seriesnum.recordset[0].seriesnum)
+      .input('FINCODE', mssql.Int, findocData[0][0].FINCODE)
+      .input('BRANCH', mssql.Int, findoc.recordset[0].BRANCH)
+      .input('TRDR', mssql.Int, findoc.recordset[0].TRDR)
+      .input('TRDBRANCH', mssql.Int, findoc.recordset[0].TRDBRANCH)
+      .input('COMMENTS', mssql.NVarChar, findoc.recordset[0].COMMENTS)
+      .input('SHIPKIND', mssql.Int, findoc.recordset[0].SHIPKIND)
+      .input('PAYMENT', mssql.Int, findoc.recordset[0].PAYMENT)
+      .input('VATSTS', mssql.Int, findoc.recordset[0].VATSTS)
+      .input('SHIPMENT', mssql.Int, findoc.recordset[0].SHIPMENT)
+      .input('BGDOCDATE1', mssql.Date, findoc.recordset[0].BGDOCDATE1)
+      .input('REMARKS', mssql.NVarChar, findoc.recordset[0].REMARKS)
+      .input('DISC1PRC', mssql.Int, findoc.recordset[0].DISC1PRC)
+      .input('NETAMNT', mssql.Int, findoc.recordset[0].NETAMNT)
+      .input('DISC1VAL', mssql.Int, findoc.recordset[0].DISC1VAL)
+      .input('DISC2PRC', mssql.Int, findoc.recordset[0].DISC2PRC)
+      .input('VATAMNT', mssql.Int, findoc.recordset[0].VATAMNT)
+      .input('EXPN', mssql.Int, findoc.recordset[0].EXPN)
+      .input('SUMAMNT', mssql.Int, findoc.recordset[0].SUMAMNT)
+      .query(`
+        INSERT INTO 
+        FINDOC 
+            (COMPANY,SOSOURCE,TRNDATE,FISCPRD,PERIOD,SERIES,SERIESNUM,FPRMS,TFPRMS,FINCODE,
+            BRANCH,SODTYPE,TRDR,SOCURRENCY,TRDBRANCH,SALESMAN,COMMENTS,SHIPKIND,PAYMENT,VATSTS,
+            SHIPMENT,BGDOCDATE1,REMARKS,DISC1PRC,DISC1VAL,DISC2PRC,NETAMNT,VATAMNT,EXPN,SUMAMNT) 
+        VALUES
+            (@COMPANY,1351,@TRNDATE,@FISCPRD,@PERIOD,7015,@SERIESNUM,7015,100,@FINCODE,@BRANCH,13,
+            @TRDR,100,@TRDBRANCH,13,@COMMENTS,@SHIPKIND,@PAYMENT,@VATSTS,@SHIPMENT,@BGDOCDATE1,@REMARKS,
+            @DISC1PRC,@NETAMNT,@DISC1VAL,@DISC2PRC,@VATAMNT,@EXPN,@SUMAMNT)
+        `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    //αντίστοιχα στον mtrdoc
+    //Τρέχω query για να πάρω τα πεδία MTRDOC της αρχικής παραγγελίας
+    const mtrdoc = await this.getRq()
+      .input('findoc', mssql.Int, findoc.recordset[0].FINDOC)
+      .query(`
+                    select 
+                    COMPANY,FINDOC,WHOUSE,SHPCOUNTRY,DISTRICT,SHIPPINGADDR,SHPZIP,SHPDISTRICT,SHPCITY,ISNULL(DELIVDATE,0) AS DELIVDATE,ISNULL(SOCARRIER,0) AS SOCARRIER,QTY
+                    FROM MTRDOC
+                    where findoc = @findoc
+                    `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    /*Κάνω insert με τα δεδομένα που βρήκα //////ενώ κάποια είναι σταθερα
+      Πρώτα βρίσκω το findoc
+    */
+    const mtrdocFindoc = await this.getRq()
+      .input('fincode', mssql.Int, findocData[0][0].FINCODE)
+      .query(`
+        select findoc
+       from findoc
+       where fincode = @fincode
+       `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    await this.getRq()
+      .input('COMPANY', mssql.Int, mtrdoc.recordset[0].COMPANY)
+      .input('FINDOC', mssql.Int, mtrdocFindoc.recordset[0].FINDOC)
+      .input('WHOUSE', mssql.Int, mtrdoc.recordset[0].WHOUSE)
+      .input('SHPCOUNTRY', mssql.Int, mtrdoc.recordset[0].SHPCOUNTRY)
+      .input('DISTRICT', mssql.Int, mtrdoc.recordset[0].DISTRICT)
+      .input('SHIPPINGADDR', mssql.NVarChar, mtrdoc.recordset[0].SHIPPINGADDR)
+      .input('SHPZIP', mssql.NVarChar, mtrdoc.recordset[0].SHPZIP)
+      .input('SHPDISTRICT', mssql.NVarChar, mtrdoc.recordset[0].SHPDISTRICT)
+      .input('SHPCITY', mssql.NVarChar, mtrdoc.recordset[0].SHPCITY)
+      .input('DELIVDATE', mssql.Date, mtrdoc.recordset[0].DELIVDATE)
+      .input('SOCARRIER', mssql.Int, mtrdoc.recordset[0].SOCARRIER)
+      .input('QTY', mssql.Int, mtrdoc.recordset[0].QTY)
+      .query(`
+        INSERT INTO MTRDOC 
+          (COMPANY,FINDOC,WHOUSE,SHPCOUNTRY,DISTRICT,SHIPPINGADDR,SHPZIP,SHPDISTRICT,SHPCITY,
+           DELIVDATE,SOCARRIER,QTY)
+        VALUES
+          (@COMPANY,@FINDOC,@WHOUSE,@SHPCOUNTRY,@DISTRICT,@SHIPPINGADDR,@SHPZIP,@SHPDISTRICT,@SHPCITY,
+           @DELIVDATE,@SOCARRIER,@QTY)
+        `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    /**
+     * Καταχωρώ στη γραμμή το παραγώμενο με τη ποσότητα που έχει δηλωθεί στην 
+     * αρχική παραγγελία (pos_parag) και την αξία του saldoc (NETAMNT)
+    */
+    await this.getRq()
+      .input('COMPANY', mssql.Int, mtrdoc.recordset[0].COMPANY)
+      .input('FINDOC', mssql.Int, mtrdocFindoc.recordset[0].FINDOC)
+      .input('MTRL', mssql.Int, mtrdoc.recordset[0].MTRL)
+      .input('WHOUSE', mssql.Int, mtrdoc.recordset[0].WHOUSE)
+      .input('QTY', mssql.Int, mtrdoc.recordset[0].QTY)
+      .input('NETAMNT', mssql.Int, findoc.recordset[0].NETAMNT)
+      .query(`
+          INSERT INTO MTRLINES (COMPANY,FINDOC,MTRLINES,LINENUM,SODTYPE,MTRL,PENDING,SOSOURCE,WHOUSE,VAT,QTY1,LINEVAL)
+          VALUES (@COMPANY ,@FINDOC ,1 ,1 ,51 ,@MTRL ,0 ,1351 ,@WHOUSE,1410,@QTY,@NETAMNT)
+          `).catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      })
+    res.status(200).json({message:"Production Completed"});
+  }
+}
+exports.getAnalosimaMtrl = async (findoc) => {
+  let mtrls = await this.getRq()
+    .input('findoc', mssql.Int, findoc)
+    .query(`
+      select mtrl , qty1cov as qty
+      from MTRLINES
+      where findoc = @findoc
+    `)
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      throw new Error(err);
+    })
+  return mtrls.recordset;
+}
+exports.getExtraData = async (findoc) => {
+  let extraData = await database.execute('select * from production where findoc=?', [findoc])
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      throw new Error(err);
+    })
+  return extraData[0][0];
+}
 /******************************************************************************                                                   
  *                                                                            *
  *                                                                            *
@@ -3125,4 +3854,8 @@ exports.emitOrderStarted = (findoc, post) => {
       logger.error("Oh noes, something has gone terribly wrong");;
       throw new Error(err);
     })
+}
+
+exports.getRq = () => {
+  return new mssql.Request();
 }
